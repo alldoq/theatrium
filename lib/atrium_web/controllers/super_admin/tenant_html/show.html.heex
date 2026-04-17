@@ -1,0 +1,5 @@
+<main class="p-8">
+  <h1 class="text-xl font-semibold"><%= @tenant.name %> (<%= @tenant.slug %>)</h1>
+  <p class="text-gray-600">Status: <%= @tenant.status %></p>
+  <.link navigate={~p"/super/tenants/#{@tenant.id}/edit"} class="inline-block mt-4 rounded bg-slate-900 text-white px-3 py-1">Edit</.link>
+</main>

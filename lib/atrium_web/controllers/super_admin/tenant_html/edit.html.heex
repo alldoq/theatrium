@@ -1,0 +1,14 @@
+<main class="max-w-lg p-8">
+  <h1 class="text-xl font-semibold mb-4">Edit <%= @tenant.slug %></h1>
+  <.form :let={f} for={@changeset} action={~p"/super/tenants/#{@tenant.id}"} method="put" class="space-y-4">
+    <div>
+      <label class="block text-sm">Name</label>
+      <.input field={f[:name]} class="mt-1 w-full border rounded p-2" />
+    </div>
+    <div>
+      <label class="block text-sm">Enabled sections (comma-separated keys)</label>
+      <.input field={f[:enabled_sections]} class="mt-1 w-full border rounded p-2" />
+    </div>
+    <button type="submit" class="rounded bg-slate-900 text-white px-3 py-1">Save</button>
+  </.form>
+</main>

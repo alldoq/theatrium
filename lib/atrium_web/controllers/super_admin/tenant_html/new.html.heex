@@ -1,0 +1,14 @@
+<main class="max-w-lg p-8">
+  <h1 class="text-xl font-semibold mb-4">New tenant</h1>
+  <.form :let={f} for={@changeset} action={~p"/super/tenants"} class="space-y-4">
+    <div>
+      <label class="block text-sm">Slug</label>
+      <.input field={f[:slug]} class="mt-1 w-full border rounded p-2" />
+    </div>
+    <div>
+      <label class="block text-sm">Name</label>
+      <.input field={f[:name]} class="mt-1 w-full border rounded p-2" />
+    </div>
+    <button type="submit" class="rounded bg-slate-900 text-white px-3 py-1">Create</button>
+  </.form>
+</main>
