@@ -29,6 +29,7 @@ defmodule Atrium.Accounts.IdpConfiguration do
     |> validate_inclusion(:kind, @kinds)
     |> validate_inclusion(:provisioning_mode, @modes)
     |> validate_by_kind()
+    |> unique_constraint(:is_default, name: :one_default_idp)
   end
 
   def update_changeset(idp, attrs), do: create_changeset(idp, attrs)
