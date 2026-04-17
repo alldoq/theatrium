@@ -79,3 +79,26 @@ if (process.env.NODE_ENV === "development") {
   })
 }
 
+// Vue 3 island framework
+import { createApp } from "vue"
+
+const VueIslands = {}
+
+export function registerVueIsland(name, component) {
+  VueIslands[name] = component
+}
+
+function mountIslands() {
+  document.querySelectorAll("[data-vue]").forEach((el) => {
+    const name = el.dataset.vue
+    const component = VueIslands[name]
+    if (!component) return
+    const props = el.dataset.props ? JSON.parse(el.dataset.props) : {}
+    createApp(component, props).mount(el)
+  })
+}
+
+window.addEventListener("DOMContentLoaded", mountIslands)
+
+import "./islands/hello.js"
+
