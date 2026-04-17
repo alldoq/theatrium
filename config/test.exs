@@ -32,6 +32,8 @@ config :phoenix_live_view,
 
 config :atrium, Oban, testing: :manual
 
+config :atrium, Atrium.Mailer, adapter: Swoosh.Adapters.Test
+
 config :atrium, Atrium.Vault,
   ciphers: [
     default:

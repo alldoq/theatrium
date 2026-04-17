@@ -53,10 +53,10 @@ defmodule AtriumWeb.Router do
     get "/invitations/:token", InvitationController, :edit
     post "/invitations/:token", InvitationController, :update
 
-    # TODO Task 9: get "/password-reset/new", PasswordResetController, :new
-    # TODO Task 9: post "/password-reset", PasswordResetController, :create
-    # TODO Task 9: get "/password-reset/:token", PasswordResetController, :edit
-    # TODO Task 9: post "/password-reset/:token", PasswordResetController, :update
+    get "/password-reset/new", PasswordResetController, :new
+    post "/password-reset", PasswordResetController, :create
+    get "/password-reset/:token", PasswordResetController, :edit
+    post "/password-reset/:token", PasswordResetController, :update
 
     scope "/" do
       pipe_through [AtriumWeb.Plugs.RequireUser]
