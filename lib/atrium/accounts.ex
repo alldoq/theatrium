@@ -85,8 +85,9 @@ defmodule Atrium.Accounts do
       user_agent: Map.get(metadata, :user_agent)
     }
 
-    {:ok, session} = Session.new_changeset(attrs) |> Repo.insert(prefix: prefix)
-    {:ok, %{session: session, token: raw}}
+    with {:ok, session} <- Session.new_changeset(attrs) |> Repo.insert(prefix: prefix) do
+      {:ok, %{session: session, token: raw}}
+    end
   end
 
   def get_session_by_token(prefix, raw_token) do
@@ -220,7 +221,7 @@ defmodule Atrium.Accounts do
     |> UserIdentity.changeset(%{
       user_id: user.id,
       provider: "local",
-      provider_subject: user.id
+      provider_subject: Ecto.UUID.cast!(user.id)
     })
     |> Repo.insert(prefix: prefix, on_conflict: :nothing, conflict_target: [:provider, :provider_subject])
   end
