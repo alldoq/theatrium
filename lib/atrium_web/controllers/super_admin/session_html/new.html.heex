@@ -1,0 +1,19 @@
+<main class="max-w-sm mx-auto py-16">
+  <h1 class="text-2xl font-semibold mb-6">Sign in</h1>
+
+  <%= if @error do %>
+    <div class="mb-4 rounded bg-red-50 text-red-700 p-3"><%= @error %></div>
+  <% end %>
+
+  <.form :let={_f} for={%{}} as={:auth} action={~p"/super/login"} method="post" class="space-y-4">
+    <div>
+      <label class="block text-sm">Email</label>
+      <input type="email" name="email" value={@email} class="mt-1 w-full border rounded p-2" required />
+    </div>
+    <div>
+      <label class="block text-sm">Password</label>
+      <input type="password" name="password" class="mt-1 w-full border rounded p-2" required />
+    </div>
+    <button type="submit" class="w-full rounded bg-slate-900 text-white p-2">Sign in</button>
+  </.form>
+</main>

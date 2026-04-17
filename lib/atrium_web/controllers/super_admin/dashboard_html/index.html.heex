@@ -1,0 +1,17 @@
+<main class="p-8">
+  <h1 class="text-2xl font-semibold">Atrium — Platform</h1>
+  <p class="text-gray-600">Signed in as <%= @super_admin.email %></p>
+
+  <section class="mt-6">
+    <h2 class="text-lg font-medium mb-2">Tenants</h2>
+    <.link navigate={~p"/super/tenants/new"} class="inline-block mb-4 rounded bg-slate-900 text-white px-3 py-1">New tenant</.link>
+    <ul class="divide-y border rounded">
+      <%= for t <- @tenants do %>
+        <li class="p-3 flex justify-between">
+          <span><%= t.slug %> — <%= t.name %></span>
+          <span class="text-sm text-gray-500"><%= t.status %></span>
+        </li>
+      <% end %>
+    </ul>
+  </section>
+</main>
