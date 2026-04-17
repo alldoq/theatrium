@@ -55,6 +55,7 @@ defmodule Atrium.Accounts do
         {:error, :invalid_credentials}
 
       is_nil(user.hashed_password) ->
+        Argon2.no_user_verify()
         {:error, :invalid_credentials}
 
       not Argon2.verify_pass(password, user.hashed_password) ->
@@ -181,7 +182,10 @@ defmodule Atrium.Accounts do
   # -- User lifecycle --------------------------------------------------------
 
   def suspend_user(prefix, user) do
-    user |> User.status_changeset("suspended") |> Repo.update(prefix: prefix)
+    with {:ok, u} <- user |> User.status_changeset("suspended") |> Repo.update(prefix: prefix),
+         {:ok, _} <- revoke_all_sessions_for_user(prefix, u) do
+      {:ok, u}
+    end
   end
 
   def get_user(prefix, id), do: Repo.get(User, id, prefix: prefix)
