@@ -22,6 +22,16 @@ config :atrium, AtriumWeb.Endpoint,
   pubsub_server: Atrium.PubSub,
   live_view: [signing_salt: "+VWkDIzA"]
 
+config :triplex,
+  repo: Atrium.Repo,
+  tenant_prefix: "tenant_",
+  migrations_path: "priv/repo/tenant_migrations"
+
+config :atrium, Oban,
+  repo: Atrium.Repo,
+  plugins: [Oban.Plugins.Pruner],
+  queues: [default: 10, maintenance: 2, audit: 5]
+
 # Configure esbuild (the version is required)
 config :esbuild,
   version: "0.17.11",

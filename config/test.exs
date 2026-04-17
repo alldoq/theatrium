@@ -29,3 +29,14 @@ config :phoenix, :plug_init_mode, :runtime
 # Enable helpful, but potentially expensive runtime checks
 config :phoenix_live_view,
   enable_expensive_runtime_checks: true
+
+config :atrium, Oban, testing: :manual
+
+config :atrium, Atrium.Vault,
+  ciphers: [
+    default:
+      {Cloak.Ciphers.AES.GCM,
+       tag: "AES.GCM.V1",
+       key: Base.decode64!("rQh7p5xQy9m+Uy8fN5TkLQJ8q8fM1N6lL6K/nHcRzq4="),
+       iv_length: 12}
+  ]

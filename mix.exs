@@ -56,7 +56,12 @@ defmodule Atrium.MixProject do
       {:gettext, "~> 0.26"},
       {:jason, "~> 1.2"},
       {:dns_cluster, "~> 0.1.1"},
-      {:bandit, "~> 1.5"}
+      {:bandit, "~> 1.5"},
+      {:triplex, "~> 1.3"},
+      {:oban, "~> 2.18"},
+      {:cloak, "~> 1.1"},
+      {:cloak_ecto, "~> 1.3"},
+      {:argon2_elixir, "~> 4.0"}
     ]
   end
 

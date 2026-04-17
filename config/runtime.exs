@@ -55,6 +55,15 @@ if config_env() == :prod do
 
   config :atrium, :dns_cluster_query, System.get_env("DNS_CLUSTER_QUERY")
 
+  cloak_key =
+    System.get_env("ATRIUM_CLOAK_KEY") ||
+      raise "ATRIUM_CLOAK_KEY must be set in production (32 bytes, base64-encoded)"
+
+  config :atrium, Atrium.Vault,
+    ciphers: [
+      default: {Cloak.Ciphers.AES.GCM, tag: "AES.GCM.V1", key: Base.decode64!(cloak_key), iv_length: 12}
+    ]
+
   config :atrium, AtriumWeb.Endpoint,
     url: [host: host, port: 443, scheme: "https"],
     http: [
