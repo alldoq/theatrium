@@ -47,4 +47,7 @@ defmodule Atrium.Tenants do
 
   @spec change_tenant(Tenant.t(), map()) :: Ecto.Changeset.t()
   def change_tenant(tenant, attrs \\ %{}), do: Tenant.update_changeset(tenant, attrs)
+
+  @spec delete_tenant(Tenant.t()) :: {:ok, Tenant.t()} | {:error, Ecto.Changeset.t()}
+  def delete_tenant(%Tenant{} = tenant), do: Repo.delete(tenant)
 end

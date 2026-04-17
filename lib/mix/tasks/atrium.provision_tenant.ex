@@ -26,6 +26,7 @@ defmodule Mix.Tasks.Atrium.ProvisionTenant do
             Mix.shell().info("Provisioned tenant #{provisioned.slug} (#{provisioned.id})")
 
           {:error, reason} ->
+            _ = Tenants.delete_tenant(tenant)
             Mix.raise("Failed to provision: #{inspect(reason)}")
         end
 
