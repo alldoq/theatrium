@@ -61,7 +61,8 @@ defmodule Atrium.MixProject do
       {:oban, "~> 2.18"},
       {:cloak, "~> 1.1"},
       {:cloak_ecto, "~> 1.3"},
-      {:argon2_elixir, "~> 4.0"}
+      {:argon2_elixir, "~> 4.0"},
+      {:swoosh, "~> 1.16"}
     ]
   end
 
