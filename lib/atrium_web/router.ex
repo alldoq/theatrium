@@ -10,28 +10,46 @@ defmodule AtriumWeb.Router do
     plug :put_secure_browser_headers
   end
 
+  pipeline :tenant do
+    plug AtriumWeb.Plugs.TenantResolver
+  end
+
+  pipeline :super_admin_required do
+    plug AtriumWeb.Plugs.RequireSuperAdmin
+  end
+
   pipeline :api do
     plug :accepts, ["json"]
   end
 
-  scope "/", AtriumWeb do
-    pipe_through :browser
+  # Platform (super-admin) routes
+  scope "/", AtriumWeb, host: "admin." do
+    pipe_through [:browser]
+    get "/super/login", SuperAdmin.SessionController, :new
+    post "/super/login", SuperAdmin.SessionController, :create
+    delete "/super/logout", SuperAdmin.SessionController, :delete
 
+    scope "/super", as: :super_admin do
+      pipe_through [:super_admin_required]
+      get "/", SuperAdmin.DashboardController, :index
+      resources "/tenants", SuperAdmin.TenantController, except: [:delete]
+    end
+  end
+
+  # Health endpoint on platform host
+  scope "/", AtriumWeb, host: "admin." do
+    pipe_through [:api]
+    get "/healthz", HealthController, :index
+  end
+
+  # Tenant-scoped routes (any other host)
+  scope "/", AtriumWeb do
+    pipe_through [:browser, :tenant]
     get "/", PageController, :home
   end
 
-  # Other scopes may use custom stacks.
-  # scope "/api", AtriumWeb do
-  #   pipe_through :api
-  # end
-
   # Enable LiveDashboard in development
   if Application.compile_env(:atrium, :dev_routes) do
-    # If you want to use the LiveDashboard in production, you should put
-    # it behind authentication and allow only admins to access it.
-    # If your application does not have an admins-only section yet,
-    # you can use Plug.BasicAuth to set up some basic authentication
-    # as long as you are also using SSL (which you should anyway).
     import Phoenix.LiveDashboard.Router
 
     scope "/dev" do
