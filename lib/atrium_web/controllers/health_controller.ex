@@ -3,6 +3,6 @@ defmodule AtriumWeb.HealthController do
 
   def index(conn, _params) do
     tenants = length(Atrium.Tenants.list_active_tenants())
-    json(conn, %{status: "ok", active_tenants: tenants, time: DateTime.utc_now()})
+    json(conn, %{status: "ok", active_tenants: tenants})
   end
 end

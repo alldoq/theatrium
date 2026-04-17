@@ -10,7 +10,8 @@ defmodule AtriumWeb.Plugs.RequireSuperAdmin do
         conn |> redirect(to: "/super/login") |> halt()
 
       id ->
-        case Atrium.SuperAdmins.get_super_admin!(id) do
+        case Atrium.SuperAdmins.get_super_admin(id) do
+          nil -> conn |> clear_session() |> redirect(to: "/super/login") |> halt()
           %{status: "active"} = sa -> assign(conn, :super_admin, sa)
           _ -> conn |> clear_session() |> redirect(to: "/super/login") |> halt()
         end

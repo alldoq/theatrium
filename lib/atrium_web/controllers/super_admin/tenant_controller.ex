@@ -13,12 +13,17 @@ defmodule AtriumWeb.SuperAdmin.TenantController do
   end
 
   def create(conn, %{"tenant" => attrs}) do
-    with {:ok, tenant} <- Tenants.create_tenant_record(attrs),
-         {:ok, provisioned} <- Provisioner.provision(tenant, actor: {:super_admin, conn.assigns.super_admin.id}) do
-      redirect(conn, to: ~p"/super/tenants/#{provisioned.id}")
-    else
-      {:error, %Ecto.Changeset{} = cs} -> render(conn, :new, changeset: cs)
-      {:error, reason} -> render(conn, :new, changeset: Tenants.change_tenant(%Tenant{}), error: inspect(reason))
+    case Tenants.create_tenant_record(attrs) do
+      {:ok, tenant} ->
+        case Provisioner.provision(tenant, actor: {:super_admin, conn.assigns.super_admin.id}) do
+          {:ok, provisioned} ->
+            redirect(conn, to: ~p"/super/tenants/#{provisioned.id}")
+          {:error, reason} ->
+            _ = Tenants.delete_tenant(tenant)
+            render(conn, :new, changeset: Tenants.change_tenant(%Tenant{}), error: "Provisioning failed: #{inspect(reason)}")
+        end
+      {:error, %Ecto.Changeset{} = cs} ->
+        render(conn, :new, changeset: cs)
     end
   end
 
@@ -36,7 +41,7 @@ defmodule AtriumWeb.SuperAdmin.TenantController do
 
     case Tenants.update_tenant(tenant, attrs) do
       {:ok, updated} ->
-        Atrium.Audit.log_global("tenant.theme_updated", %{
+        {:ok, _} = Atrium.Audit.log_global("tenant.theme_updated", %{
           actor: {:super_admin, conn.assigns.super_admin.id},
           resource: {"Tenant", updated.id},
           changes: diff(tenant, updated)

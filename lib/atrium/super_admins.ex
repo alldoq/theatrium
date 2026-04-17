@@ -13,6 +13,9 @@ defmodule Atrium.SuperAdmins do
   @spec get_super_admin!(Ecto.UUID.t()) :: SuperAdmin.t()
   def get_super_admin!(id), do: Repo.get!(SuperAdmin, id)
 
+  @spec get_super_admin(Ecto.UUID.t()) :: SuperAdmin.t() | nil
+  def get_super_admin(id), do: Repo.get(SuperAdmin, id)
+
   @spec authenticate(String.t(), String.t()) ::
           {:ok, SuperAdmin.t()} | {:error, :invalid_credentials | :suspended}
   def authenticate(email, password) when is_binary(email) and is_binary(password) do
