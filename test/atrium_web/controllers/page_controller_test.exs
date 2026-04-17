@@ -1,8 +1,17 @@
 defmodule AtriumWeb.PageControllerTest do
-  use AtriumWeb.ConnCase
+  use AtriumWeb.ConnCase, async: false
+  alias Atrium.Tenants
+  alias Atrium.Tenants.Provisioner
 
-  test "GET /", %{conn: conn} do
-    conn = get(conn, ~p"/")
-    assert html_response(conn, 200) =~ "Peace of mind from prototype to production"
+  setup do
+    {:ok, tenant} = Tenants.create_tenant_record(%{slug: "page_test", name: "Page Test"})
+    {:ok, tenant} = Provisioner.provision(tenant)
+    on_exit(fn -> _ = Triplex.drop("page_test") end)
+    {:ok, tenant: tenant}
+  end
+
+  test "GET / renders tenant name", %{conn: conn, tenant: tenant} do
+    conn = conn |> Map.put(:host, "page_test.atrium.example") |> get("/")
+    assert html_response(conn, 200) =~ tenant.name
   end
 end
