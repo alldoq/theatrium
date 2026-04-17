@@ -50,8 +50,10 @@ defmodule Atrium.Tenants.Tenant do
     ])
   end
 
-  def status_changeset(tenant, status) when status in @statuses do
-    change(tenant, status: status)
+  def status_changeset(tenant, status) do
+    tenant
+    |> change(status: status)
+    |> validate_inclusion(:status, @statuses, message: "must be one of: #{Enum.join(@statuses, ", ")}")
   end
 
   def statuses, do: @statuses

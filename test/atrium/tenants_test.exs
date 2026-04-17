@@ -37,6 +37,12 @@ defmodule Atrium.TenantsTest do
       {:ok, tenant} = Tenants.update_status(tenant, "suspended")
       assert tenant.status == "suspended"
     end
+
+    test "returns error changeset for invalid status" do
+      {:ok, tenant} = Tenants.create_tenant_record(%{slug: "mcl", name: "MCL"})
+      {:error, changeset} = Tenants.update_status(tenant, "invalid")
+      assert errors_on(changeset)[:status]
+    end
   end
 
   describe "update_tenant/2" do

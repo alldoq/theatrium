@@ -27,6 +27,23 @@ defmodule Atrium.Tenants.TenantTest do
     end
   end
 
+  describe "status_changeset/2" do
+    test "valid statuses produce a valid changeset" do
+      tenant = %Tenant{slug: "mcl", name: "MCL", status: "provisioning"}
+      for status <- Tenant.statuses() do
+        changeset = Tenant.status_changeset(tenant, status)
+        assert changeset.valid?, "expected #{inspect(status)} to be valid"
+      end
+    end
+
+    test "invalid status produces an invalid changeset" do
+      tenant = %Tenant{slug: "mcl", name: "MCL", status: "provisioning"}
+      changeset = Tenant.status_changeset(tenant, "invalid")
+      refute changeset.valid?
+      assert errors_on(changeset)[:status]
+    end
+  end
+
   describe "update_changeset/2" do
     test "does not allow changing slug" do
       tenant = %Tenant{slug: "mcl", name: "MCL", status: "active"}
