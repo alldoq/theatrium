@@ -50,8 +50,8 @@ defmodule AtriumWeb.Router do
     post "/login", SessionController, :create
     delete "/logout", SessionController, :delete
 
-    # TODO Task 8: get "/invitations/:token", InvitationController, :edit
-    # TODO Task 8: post "/invitations/:token", InvitationController, :update
+    get "/invitations/:token", InvitationController, :edit
+    post "/invitations/:token", InvitationController, :update
 
     # TODO Task 9: get "/password-reset/new", PasswordResetController, :new
     # TODO Task 9: post "/password-reset", PasswordResetController, :create
