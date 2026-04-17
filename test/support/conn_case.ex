@@ -32,7 +32,23 @@ defmodule AtriumWeb.ConnCase do
   end
 
   setup tags do
-    Atrium.DataCase.setup_sandbox(tags)
+    # For non-async tests that call Provisioner.provision/1, Triplex runs DDL
+    # and tenant migrations via Ecto.Migrator, which spawns `:proc_lib` processes.
+    # Those processes cannot check out from a sandboxed connection, so we switch
+    # to :auto mode for the duration of non-async tests and restore :manual after.
+    unless tags[:async] do
+      Ecto.Adapters.SQL.Sandbox.mode(Atrium.Repo, :auto)
+
+      on_exit(fn ->
+        # Clean up any tenant records written during the test (Triplex.drop in the
+        # test's own on_exit already dropped the schema; we just need the public row).
+        Atrium.Repo.delete_all(Atrium.Tenants.Tenant)
+        Ecto.Adapters.SQL.Sandbox.mode(Atrium.Repo, :manual)
+      end)
+    else
+      Atrium.DataCase.setup_sandbox(tags)
+    end
+
     {:ok, conn: Phoenix.ConnTest.build_conn()}
   end
 end

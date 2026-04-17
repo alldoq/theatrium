@@ -45,7 +45,23 @@ defmodule AtriumWeb.Router do
   # Tenant-scoped routes (any other host)
   scope "/", AtriumWeb do
     pipe_through [:browser, :tenant]
-    get "/", PageController, :home
+
+    get "/login", SessionController, :new
+    post "/login", SessionController, :create
+    delete "/logout", SessionController, :delete
+
+    # TODO Task 8: get "/invitations/:token", InvitationController, :edit
+    # TODO Task 8: post "/invitations/:token", InvitationController, :update
+
+    # TODO Task 9: get "/password-reset/new", PasswordResetController, :new
+    # TODO Task 9: post "/password-reset", PasswordResetController, :create
+    # TODO Task 9: get "/password-reset/:token", PasswordResetController, :edit
+    # TODO Task 9: post "/password-reset/:token", PasswordResetController, :update
+
+    scope "/" do
+      pipe_through [AtriumWeb.Plugs.RequireUser]
+      get "/", PageController, :home
+    end
   end
 
   # Enable LiveDashboard in development
