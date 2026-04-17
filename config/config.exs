@@ -29,7 +29,13 @@ config :triplex,
 
 config :atrium, Oban,
   repo: Atrium.Repo,
-  plugins: [Oban.Plugins.Pruner],
+  plugins: [
+    Oban.Plugins.Pruner,
+    {Oban.Plugins.Cron,
+     crontab: [
+       {"*/15 * * * *", Atrium.Accounts.SessionSweeper}
+     ]}
+  ],
   queues: [default: 10, maintenance: 2, audit: 5]
 
 # Configure esbuild (the version is required)
