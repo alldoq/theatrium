@@ -1,5 +1,5 @@
 import { h } from "vue"
-import { registerVueIsland } from "../app.js"
+import { registerVueIsland } from "./registry.js"
 
 registerVueIsland("hello", {
   props: ["name"],

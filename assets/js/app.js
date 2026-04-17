@@ -81,12 +81,9 @@ if (process.env.NODE_ENV === "development") {
 
 // Vue 3 island framework
 import { createApp } from "vue"
+import { VueIslands, registerVueIsland } from "./islands/registry.js"
 
-const VueIslands = {}
-
-export function registerVueIsland(name, component) {
-  VueIslands[name] = component
-}
+export { registerVueIsland }
 
 function mountIslands() {
   document.querySelectorAll("[data-vue]").forEach((el) => {
@@ -98,7 +95,11 @@ function mountIslands() {
   })
 }
 
-window.addEventListener("DOMContentLoaded", mountIslands)
+if (document.readyState === "loading") {
+  window.addEventListener("DOMContentLoaded", mountIslands)
+} else {
+  mountIslands()
+}
 
 import "./islands/hello.js"
 
