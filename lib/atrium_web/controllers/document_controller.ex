@@ -43,7 +43,9 @@ defmodule AtriumWeb.DocumentController do
         |> redirect(to: ~p"/sections/#{section_key}/documents/#{doc.id}")
 
       {:error, changeset} ->
-        render(conn, :new, changeset: changeset, section_key: section_key, status: 422)
+        conn
+        |> put_status(422)
+        |> render(:new, changeset: changeset, section_key: section_key)
     end
   end
 
@@ -78,7 +80,9 @@ defmodule AtriumWeb.DocumentController do
         |> redirect(to: ~p"/sections/#{section_key}/documents/#{id}")
 
       {:error, changeset} ->
-        render(conn, :edit, document: doc, changeset: changeset, section_key: section_key, status: 422)
+        conn
+        |> put_status(422)
+        |> render(:edit, document: doc, changeset: changeset, section_key: section_key)
     end
   end
 

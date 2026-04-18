@@ -1,0 +1,30 @@
+<main class="p-8 max-w-3xl">
+  <div class="mb-4">
+    <a href={~p"/sections/#{@section_key}/documents"} class="text-sm text-slate-500 hover:underline">
+      ← Back to documents
+    </a>
+  </div>
+
+  <h1 class="text-xl font-semibold mb-6">New document</h1>
+
+  <.form :let={f} for={@changeset} action={~p"/sections/#{@section_key}/documents"} method="post">
+    <div class="mb-4">
+      <label class="block text-sm font-medium mb-1">Title</label>
+      <input type="text" name="document[title]" value={Phoenix.HTML.Form.input_value(f, :title) || ""} class="w-full border rounded p-2" />
+      <%= if msg = f[:title].errors |> Enum.map(fn {msg, _} -> msg end) |> List.first() do %>
+        <p class="text-red-600 text-sm mt-1"><%= msg %></p>
+      <% end %>
+    </div>
+
+    <div class="mb-4">
+      <label class="block text-sm font-medium mb-1">Body</label>
+      <input type="hidden" id="document_body_html" name="document[body_html]" value={Phoenix.HTML.Form.input_value(f, :body_html) || ""} />
+      <trix-editor input="document_body_html" class="border rounded min-h-48 p-2"></trix-editor>
+    </div>
+
+    <div class="flex gap-2">
+      <button type="submit" class="rounded bg-slate-900 text-white px-4 py-2">Save draft</button>
+      <a href={~p"/sections/#{@section_key}/documents"} class="rounded border px-4 py-2">Cancel</a>
+    </div>
+  </.form>
+</main>

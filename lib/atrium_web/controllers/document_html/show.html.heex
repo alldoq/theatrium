@@ -1,0 +1,76 @@
+<main class="p-8 max-w-4xl">
+  <div class="mb-4">
+    <a href={~p"/sections/#{@section_key}/documents"} class="text-sm text-slate-500 hover:underline">
+      ← Back to documents
+    </a>
+  </div>
+
+  <div class="flex items-start justify-between mb-6">
+    <div>
+      <h1 class="text-2xl font-semibold"><%= @document.title %></h1>
+      <p class="text-sm text-slate-500 mt-1">
+        v<%= @document.current_version %> ·
+        <span class={"rounded px-2 py-0.5 text-xs font-medium #{status_badge_class(@document.status)}"}>
+          <%= @document.status %>
+        </span>
+      </p>
+    </div>
+
+    <div class="flex gap-2">
+      <%= if @document.status == "draft" do %>
+        <a href={~p"/sections/#{@section_key}/documents/#{@document.id}/edit"}
+           class="rounded border px-3 py-1 text-sm">Edit</a>
+        <form method="post" action={~p"/sections/#{@section_key}/documents/#{@document.id}/submit"}>
+          <input type="hidden" name="_csrf_token" value={Plug.CSRFProtection.get_csrf_token()} />
+          <button class="rounded bg-blue-600 text-white px-3 py-1 text-sm">Submit for review</button>
+        </form>
+      <% end %>
+      <%= if @document.status == "in_review" do %>
+        <form method="post" action={~p"/sections/#{@section_key}/documents/#{@document.id}/reject"}>
+          <input type="hidden" name="_csrf_token" value={Plug.CSRFProtection.get_csrf_token()} />
+          <button class="rounded border px-3 py-1 text-sm">Reject</button>
+        </form>
+        <form method="post" action={~p"/sections/#{@section_key}/documents/#{@document.id}/approve"}>
+          <input type="hidden" name="_csrf_token" value={Plug.CSRFProtection.get_csrf_token()} />
+          <button class="rounded bg-green-600 text-white px-3 py-1 text-sm">Approve</button>
+        </form>
+      <% end %>
+      <%= if @document.status == "approved" do %>
+        <form method="post" action={~p"/sections/#{@section_key}/documents/#{@document.id}/archive"}>
+          <input type="hidden" name="_csrf_token" value={Plug.CSRFProtection.get_csrf_token()} />
+          <button class="rounded border px-3 py-1 text-sm text-slate-600">Archive</button>
+        </form>
+      <% end %>
+    </div>
+  </div>
+
+  <div class="prose max-w-none mb-8 border rounded p-4 bg-white">
+    <%= if @document.body_html && @document.body_html != "" do %>
+      <%= Phoenix.HTML.raw(@document.body_html) %>
+    <% else %>
+      <p class="text-slate-400 italic">No content yet.</p>
+    <% end %>
+  </div>
+
+  <section class="mt-8">
+    <h2 class="text-sm font-semibold text-slate-700 mb-2">Version history</h2>
+    <table class="w-full text-sm border">
+      <thead class="bg-slate-50">
+        <tr>
+          <th class="p-2 text-left">Version</th>
+          <th class="p-2 text-left">Title</th>
+          <th class="p-2 text-left">Saved at</th>
+        </tr>
+      </thead>
+      <tbody>
+        <%= for v <- @versions do %>
+          <tr class="border-t">
+            <td class="p-2">v<%= v.version %></td>
+            <td class="p-2"><%= v.title %></td>
+            <td class="p-2"><%= Calendar.strftime(v.saved_at, "%Y-%m-%d %H:%M:%S") %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </section>
+</main>

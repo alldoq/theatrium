@@ -9,7 +9,8 @@ defmodule Atrium.Documents do
   # ---------------------------------------------------------------------------
 
   def create_document(prefix, attrs, actor_user) do
-    attrs_with_author = Map.put(attrs, :author_id, actor_user.id)
+    string_attrs = Map.new(attrs, fn {k, v} -> {to_string(k), v} end)
+    attrs_with_author = Map.put(string_attrs, "author_id", actor_user.id)
 
     Repo.transaction(fn ->
       with {:ok, doc} <- insert_document(prefix, attrs_with_author),

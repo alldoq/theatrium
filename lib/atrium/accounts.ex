@@ -52,6 +52,22 @@ defmodule Atrium.Accounts do
     end)
   end
 
+  # Activate a user directly with a password (bypasses token flow; intended for tests and admin use)
+  def activate_user_with_password(prefix, %User{} = user, attrs) do
+    changeset = User.activate_password_changeset(user, %{password: attrs[:password] || attrs["password"]})
+
+    Repo.transaction(fn ->
+      with {:ok, user} <- Repo.update(changeset, prefix: prefix),
+           {:ok, _} <- upsert_local_identity(prefix, user),
+           :ok <- AllStaff.ensure_member(prefix, user),
+           {:ok, _} <- Audit.log(prefix, "user.activated", %{actor: :system, resource: {"User", user.id}}) do
+        user
+      else
+        {:error, reason} -> Repo.rollback(reason)
+      end
+    end)
+  end
+
   # -- Authentication --------------------------------------------------------
 
   def authenticate_by_password(prefix, email, password) do

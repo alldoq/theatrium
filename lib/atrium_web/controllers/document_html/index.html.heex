@@ -1,0 +1,40 @@
+<main class="p-8">
+  <div class="flex items-center justify-between mb-6">
+    <h1 class="text-xl font-semibold">Documents — <%= @section_key %></h1>
+    <a href={~p"/sections/#{@section_key}/documents/new"} class="rounded bg-slate-900 text-white px-4 py-2 text-sm">
+      New document
+    </a>
+  </div>
+
+  <table class="w-full text-sm border">
+    <thead class="bg-slate-50">
+      <tr>
+        <th class="p-2 text-left">Title</th>
+        <th class="p-2 text-left">Status</th>
+        <th class="p-2 text-left">Version</th>
+        <th class="p-2 text-left">Updated</th>
+      </tr>
+    </thead>
+    <tbody>
+      <%= for doc <- @documents do %>
+        <tr class="border-t hover:bg-slate-50">
+          <td class="p-2">
+            <a href={~p"/sections/#{@section_key}/documents/#{doc.id}"} class="text-blue-600 hover:underline">
+              <%= doc.title %>
+            </a>
+          </td>
+          <td class="p-2">
+            <span class={"rounded px-2 py-0.5 text-xs font-medium #{status_badge_class(doc.status)}"}>
+              <%= doc.status %>
+            </span>
+          </td>
+          <td class="p-2">v<%= doc.current_version %></td>
+          <td class="p-2"><%= Calendar.strftime(doc.updated_at, "%Y-%m-%d %H:%M") %></td>
+        </tr>
+      <% end %>
+      <%= if @documents == [] do %>
+        <tr><td colspan="4" class="p-4 text-center text-slate-500">No documents yet.</td></tr>
+      <% end %>
+    </tbody>
+  </table>
+</main>
