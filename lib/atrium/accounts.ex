@@ -249,6 +249,17 @@ defmodule Atrium.Accounts do
     end
   end
 
+  def set_admin(prefix, %User{} = user, is_admin) when is_boolean(is_admin) do
+    with {:ok, updated} <- user |> User.admin_changeset(is_admin) |> Repo.update(prefix: prefix),
+         {:ok, _} <- Audit.log(prefix, "user.admin_changed", %{
+           actor: :system,
+           resource: {"User", updated.id},
+           changes: %{"is_admin" => [user.is_admin, is_admin]}
+         }) do
+      {:ok, updated}
+    end
+  end
+
   def get_user(prefix, id), do: Repo.get(User, id, prefix: prefix)
 
   def list_users(prefix), do: Repo.all(from(u in User, order_by: [asc: u.email]), prefix: prefix)

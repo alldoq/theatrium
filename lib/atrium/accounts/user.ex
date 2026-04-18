@@ -11,6 +11,7 @@ defmodule Atrium.Accounts.User do
     field :status, :string, default: "invited"
     field :hashed_password, :string
     field :last_login_at, :utc_datetime_usec
+    field :is_admin, :boolean, default: false
     field :password, :string, virtual: true, redact: true
     timestamps(type: :utc_datetime_usec)
   end
@@ -54,6 +55,10 @@ defmodule Atrium.Accounts.User do
   end
 
   def last_login_changeset(user, at), do: change(user, last_login_at: at)
+
+  def admin_changeset(user, is_admin) do
+    change(user, is_admin: is_admin)
+  end
 
   def statuses, do: @statuses
 
