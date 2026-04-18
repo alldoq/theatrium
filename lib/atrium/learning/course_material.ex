@@ -11,7 +11,7 @@ defmodule Atrium.Learning.CourseMaterial do
     field :title, :string
     field :document_id, :binary_id
     field :url, :string
-    field :course_id, :binary_id
+    belongs_to :course, Atrium.Learning.Course, type: :binary_id
 
     timestamps(type: :utc_datetime_usec)
   end

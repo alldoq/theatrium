@@ -6,7 +6,7 @@ defmodule Atrium.Learning.CourseCompletion do
   @foreign_key_type :binary_id
 
   schema "course_completions" do
-    field :course_id, :binary_id
+    belongs_to :course, Atrium.Learning.Course, type: :binary_id
     field :user_id, :binary_id
     field :completed_at, :utc_datetime_usec
 

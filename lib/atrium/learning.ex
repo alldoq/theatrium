@@ -18,9 +18,21 @@ defmodule Atrium.Learning do
   def create_course(prefix, attrs, actor_user) do
     attrs_with_creator = Map.put(stringify(attrs), "created_by_id", actor_user.id)
 
-    %Course{}
-    |> Course.changeset(attrs_with_creator)
-    |> Repo.insert(prefix: prefix)
+    Repo.transaction(fn ->
+      with {:ok, course} <-
+             %Course{}
+             |> Course.changeset(attrs_with_creator)
+             |> Repo.insert(prefix: prefix),
+           {:ok, _} <-
+             Atrium.Audit.log(prefix, "course.created", %{
+               actor: {:user, actor_user.id},
+               resource: {"Course", course.id}
+             }) do
+        course
+      else
+        {:error, reason} -> Repo.rollback(reason)
+      end
+    end)
   end
 
   def update_course(prefix, %Course{} = course, attrs) do
@@ -30,17 +42,37 @@ defmodule Atrium.Learning do
   end
 
   def publish_course(prefix, %Course{status: "draft"} = course) do
-    course
-    |> Course.changeset(%{status: "published"})
-    |> Repo.update(prefix: prefix)
+    Repo.transaction(fn ->
+      with {:ok, updated} <-
+             course |> Course.changeset(%{status: "published"}) |> Repo.update(prefix: prefix),
+           {:ok, _} <-
+             Atrium.Audit.log(prefix, "course.published", %{
+               actor: :system,
+               resource: {"Course", updated.id}
+             }) do
+        updated
+      else
+        {:error, reason} -> Repo.rollback(reason)
+      end
+    end)
   end
 
   def publish_course(_prefix, _course), do: {:error, :invalid_status}
 
   def archive_course(prefix, %Course{status: "published"} = course) do
-    course
-    |> Course.changeset(%{status: "archived"})
-    |> Repo.update(prefix: prefix)
+    Repo.transaction(fn ->
+      with {:ok, updated} <-
+             course |> Course.changeset(%{status: "archived"}) |> Repo.update(prefix: prefix),
+           {:ok, _} <-
+             Atrium.Audit.log(prefix, "course.archived", %{
+               actor: :system,
+               resource: {"Course", updated.id}
+             }) do
+        updated
+      else
+        {:error, reason} -> Repo.rollback(reason)
+      end
+    end)
   end
 
   def archive_course(_prefix, _course), do: {:error, :invalid_status}
@@ -79,8 +111,9 @@ defmodule Atrium.Learning do
     })
     |> Repo.insert(
       prefix: prefix,
-      on_conflict: :nothing,
-      conflict_target: [:course_id, :user_id]
+      on_conflict: {:replace, [:updated_at]},
+      conflict_target: [:course_id, :user_id],
+      returning: true
     )
   end
 
@@ -88,8 +121,10 @@ defmodule Atrium.Learning do
     case Repo.get_by(CourseCompletion, [course_id: course_id, user_id: user_id], prefix: prefix) do
       nil -> :ok
       completion ->
-        Repo.delete(completion, prefix: prefix)
-        :ok
+        case Repo.delete(completion, prefix: prefix) do
+          {:ok, _} -> :ok
+          {:error, _} = err -> err
+        end
     end
   end
 
@@ -106,6 +141,7 @@ defmodule Atrium.Learning do
     Repo.aggregate(
       from(c in CourseCompletion, where: c.course_id == ^course_id),
       :count,
+      :id,
       prefix: prefix
     )
   end
