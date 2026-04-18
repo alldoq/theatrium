@@ -62,7 +62,7 @@
                 type="button"
                 class="icon-option"
                 data-name={name}
-                onclick={"selectIcon('#{name}')"}
+
                 title={name}
                 style={"display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 4px;border-radius:var(--radius);border:1.5px solid #{if selected, do: "var(--blue-500)", else: "transparent"};background:#{if selected, do: "var(--blue-50,#eff6ff)", else: "transparent"};cursor:pointer;font-size:.625rem;color:var(--text-tertiary);word-break:break-all;text-align:center;line-height:1.2"}
               >
@@ -84,6 +84,11 @@
 </div>
 
 <script>
+  document.getElementById('icon-grid').addEventListener('click', function(e) {
+    var btn = e.target.closest('[data-name]');
+    if (btn) selectIcon(btn.dataset.name);
+  });
+
   function selectIcon(name) {
     document.getElementById('section_icon_name').value = name;
     document.querySelectorAll('.icon-option').forEach(function(btn) {

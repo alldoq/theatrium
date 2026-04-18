@@ -20,17 +20,24 @@ defmodule AtriumWeb.SuperAdmin.SectionController do
     display_name = normalize_empty(params["display_name"])
     icon_name = normalize_empty(params["icon_name"])
 
-    case Sections.upsert_customization(key, %{display_name: display_name, icon_name: icon_name}) do
-      {:ok, _} ->
-        conn
-        |> put_flash(:info, "Section updated.")
-        |> redirect(to: ~p"/super/sections")
+    if icon_name != nil && !AtriumWeb.Heroicons.valid_name?(icon_name) do
+      customization = %{display_name: display_name, icon_name: icon_name}
+      conn
+      |> put_flash(:error, "Invalid icon name.")
+      |> render(:edit, section: section, customization: customization)
+    else
+      case Sections.upsert_customization(key, %{display_name: display_name, icon_name: icon_name}) do
+        {:ok, _} ->
+          conn
+          |> put_flash(:info, "Section updated.")
+          |> redirect(to: ~p"/super/sections")
 
-      {:error, _changeset} ->
-        customization = Sections.get_customization(key)
-        conn
-        |> put_flash(:error, "Failed to save section.")
-        |> render(:edit, section: section, customization: customization)
+        {:error, _changeset} ->
+          customization = %{display_name: display_name, icon_name: icon_name}
+          conn
+          |> put_flash(:error, "Failed to save section.")
+          |> render(:edit, section: section, customization: customization)
+      end
     end
   end
 
