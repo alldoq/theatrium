@@ -139,6 +139,17 @@ defmodule Atrium.Learning do
     )
   end
 
+  def completed_course_ids(prefix, user_id, course_ids) do
+    Repo.all(
+      from(c in CourseCompletion,
+        where: c.course_id in ^course_ids and c.user_id == ^user_id,
+        select: c.course_id
+      ),
+      prefix: prefix
+    )
+    |> MapSet.new()
+  end
+
   def completion_count(prefix, course_id) do
     Repo.aggregate(
       from(c in CourseCompletion, where: c.course_id == ^course_id),

@@ -90,7 +90,7 @@
       </form>
     <% end %>
 
-    <%= if @can_edit && @completion_count != nil do %>
+    <%= if @can_edit do %>
       <span style="font-size:.8125rem;color:var(--text-tertiary)"><%= @completion_count %> staff completed</span>
     <% end %>
   </div>

@@ -21,11 +21,7 @@ defmodule AtriumWeb.LearningController do
     all_courses = if can_edit, do: Learning.list_courses(prefix, status: :all), else: []
     drafts_and_archived = Enum.reject(all_courses, &(&1.status == "published"))
 
-    completion_ids =
-      published
-      |> Enum.filter(&Learning.completed?(prefix, &1.id, user.id))
-      |> Enum.map(& &1.id)
-      |> MapSet.new()
+    completion_ids = Learning.completed_course_ids(prefix, user.id, Enum.map(published, & &1.id))
 
     render(conn, :index,
       courses: published,
@@ -166,7 +162,11 @@ defmodule AtriumWeb.LearningController do
 
   def delete_material(conn, %{"id" => id, "mid" => mid}) do
     prefix = conn.assigns.tenant_prefix
-    Learning.delete_material(prefix, id, mid)
-    conn |> put_flash(:info, "Material removed.") |> redirect(to: ~p"/learning/#{id}/edit")
+    case Learning.delete_material(prefix, id, mid) do
+      {:ok, _} ->
+        conn |> put_flash(:info, "Material removed.") |> redirect(to: ~p"/learning/#{id}/edit")
+      {:error, _} ->
+        conn |> put_flash(:error, "Could not remove material.") |> redirect(to: ~p"/learning/#{id}/edit")
+    end
   end
 end
