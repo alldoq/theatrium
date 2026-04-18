@@ -2,8 +2,6 @@ defmodule Atrium.Forms.FormSubmission do
   use Ecto.Schema
   import Ecto.Changeset
 
-  @statuses ~w(pending completed)
-
   @primary_key {:id, :binary_id, autogenerate: true}
   @foreign_key_type :binary_id
 

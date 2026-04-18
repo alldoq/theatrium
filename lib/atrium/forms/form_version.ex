@@ -13,6 +13,8 @@ defmodule Atrium.Forms.FormVersion do
     field :published_at, :utc_datetime_usec
   end
 
+  # form_versions has no mutable timestamps — published_at is the canonical stamp
+
   def changeset(fv, attrs) do
     fv
     |> cast(attrs, [:form_id, :version, :fields, :published_by_id, :published_at])

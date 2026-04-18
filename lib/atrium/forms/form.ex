@@ -44,8 +44,4 @@ defmodule Atrium.Forms.Form do
     current = get_field(cs, :current_version)
     change(cs, current_version: current + 1)
   end
-
-  def version_bump_changeset(%__MODULE__{} = form) do
-    change(form, current_version: form.current_version + 1)
-  end
 end

@@ -2,7 +2,6 @@ defmodule Atrium.Forms.FormSubmissionReview do
   use Ecto.Schema
   import Ecto.Changeset
 
-  @statuses ~w(pending completed)
   @reviewer_types ~w(user email)
 
   @primary_key {:id, :binary_id, autogenerate: true}
