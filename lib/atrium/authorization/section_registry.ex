@@ -136,4 +136,20 @@ defmodule Atrium.Authorization.SectionRegistry do
   rescue
     ArgumentError -> nil
   end
+
+  def all_with_overrides do
+    overrides = Atrium.Sections.list_customizations()
+
+    Enum.map(@sections, fn section ->
+      key_str = to_string(section.key)
+      case Map.get(overrides, key_str) do
+        nil ->
+          section
+        custom ->
+          section
+          |> Map.put(:name, custom.display_name || section.name)
+          |> Map.put(:icon, custom.icon_name || section.icon)
+      end
+    end)
+  end
 end

@@ -1,6 +1,8 @@
 defmodule Atrium.Authorization.SectionRegistryTest do
-  use ExUnit.Case, async: true
+  use Atrium.DataCase, async: true
+
   alias Atrium.Authorization.SectionRegistry
+  alias Atrium.Sections
 
   test "all/0 returns exactly 14 sections" do
     assert length(SectionRegistry.all()) == 14
@@ -29,5 +31,39 @@ defmodule Atrium.Authorization.SectionRegistryTest do
 
   test "capabilities/0 returns exactly [:view, :edit, :approve]" do
     assert SectionRegistry.capabilities() == [:view, :edit, :approve]
+  end
+
+  describe "all_with_overrides/0" do
+    test "returns all 14 sections with defaults when no customizations" do
+      result = SectionRegistry.all_with_overrides()
+      assert length(result) == 14
+      home = Enum.find(result, &(&1.key == :home))
+      assert home.name == "Home"
+      assert home.icon == "home"
+    end
+
+    test "applies display_name override" do
+      {:ok, _} = Sections.upsert_customization("home", %{display_name: "Dashboard", icon_name: nil})
+      result = SectionRegistry.all_with_overrides()
+      home = Enum.find(result, &(&1.key == :home))
+      assert home.name == "Dashboard"
+      assert home.icon == "home"
+    end
+
+    test "applies icon_name override" do
+      {:ok, _} = Sections.upsert_customization("news", %{display_name: nil, icon_name: "bell"})
+      result = SectionRegistry.all_with_overrides()
+      news = Enum.find(result, &(&1.key == :news))
+      assert news.name == "News & Announcements"
+      assert news.icon == "bell"
+    end
+
+    test "nil overrides fall back to defaults" do
+      {:ok, _} = Sections.upsert_customization("events", %{display_name: nil, icon_name: nil})
+      result = SectionRegistry.all_with_overrides()
+      events = Enum.find(result, &(&1.key == :events))
+      assert events.name == "Events & Calendar"
+      assert events.icon == "calendar"
+    end
   end
 end

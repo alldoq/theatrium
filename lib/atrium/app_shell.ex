@@ -13,7 +13,7 @@ defmodule Atrium.AppShell do
   def nav_for_user(tenant, user, prefix) do
     enabled = MapSet.new(tenant.enabled_sections)
 
-    SectionRegistry.all()
+    SectionRegistry.all_with_overrides()
     |> Enum.filter(fn s -> MapSet.member?(enabled, to_string(s.key)) end)
     |> Enum.filter(fn s -> Policy.can?(prefix, user, :view, {:section, s.key}) end)
     |> Enum.map(fn s ->
