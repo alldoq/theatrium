@@ -1,32 +1,96 @@
-<main class="p-8 max-w-3xl">
-  <div class="mb-4">
-    <a href={~p"/sections/#{@section_key}/documents/#{@document.id}"} class="text-sm text-slate-500 hover:underline">
-      ← Back to document
+<%# Full-height document editor — Word-like sheet layout %>
+<style>
+  .atrium-main { padding: 0 !important; }
+  .doc-editor-chrome {
+    display: flex; flex-direction: column; height: calc(100vh - 56px);
+    background: #e8ecf0;
+  }
+  .doc-editor-topbar {
+    display: flex; align-items: center; gap: 12px;
+    padding: 8px 20px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .doc-editor-title-input {
+    flex: 1; border: none; background: transparent;
+    font-size: .9375rem; font-weight: 600;
+    color: var(--text-primary); outline: none; min-width: 0;
+    font-family: inherit;
+  }
+  .doc-editor-title-input::placeholder { color: var(--text-tertiary); }
+  .doc-editor-scroll {
+    flex: 1; overflow-y: auto; padding: 40px 24px 80px;
+  }
+  .doc-sheet {
+    background: white;
+    width: 794px; max-width: 100%;
+    margin: 0 auto;
+    padding: 72px 90px;
+    box-shadow: 0 1px 4px rgba(0,0,0,.12), 0 0 0 1px rgba(0,0,0,.05);
+    border-radius: 2px;
+    min-height: 1000px;
+  }
+  .doc-sheet .ProseMirror {
+    outline: none;
+    min-height: 800px;
+    font-size: 1rem;
+    line-height: 1.8;
+    color: #1a1a1a;
+  }
+  .doc-sheet .ProseMirror h1 { font-size: 2rem; font-weight: 700; margin: 1.2em 0 .4em; }
+  .doc-sheet .ProseMirror h2 { font-size: 1.5rem; font-weight: 700; margin: 1.1em 0 .4em; }
+  .doc-sheet .ProseMirror h3 { font-size: 1.2rem; font-weight: 600; margin: 1em 0 .3em; }
+  .doc-sheet .ProseMirror p  { margin: 0 0 .8em; }
+  .doc-sheet .ProseMirror ul { list-style: disc;    padding-left: 1.6em; margin: .5em 0 .8em; }
+  .doc-sheet .ProseMirror ol { list-style: decimal; padding-left: 1.6em; margin: .5em 0 .8em; }
+  .doc-sheet .ProseMirror li { margin: .25em 0; }
+  .doc-sheet .ProseMirror blockquote { border-left: 3px solid #93c5fd; padding-left: 1em; color: #475569; margin: .8em 0; }
+  .doc-sheet .ProseMirror pre  { background: #f1f5f9; border-radius: 4px; padding: .75em 1em; font-family: 'IBM Plex Mono', monospace; font-size: .875rem; overflow-x: auto; margin: .8em 0; }
+  .doc-sheet .ProseMirror code { background: #f1f5f9; border-radius: 3px; padding: .1em .35em; font-family: 'IBM Plex Mono', monospace; font-size: .875rem; }
+  .doc-sheet .ProseMirror strong { font-weight: 700; }
+  .doc-sheet .ProseMirror em { font-style: italic; }
+  .doc-sheet .ProseMirror s  { text-decoration: line-through; }
+  .doc-sheet .ProseMirror p.is-editor-empty:first-child::before {
+    content: attr(data-placeholder);
+    color: #94a3b8; pointer-events: none; float: left; height: 0;
+  }
+</style>
+
+<div class="doc-editor-chrome">
+  <%# Top bar: back link, title, save/cancel %>
+  <div class="doc-editor-topbar">
+    <a href={~p"/sections/#{@section_key}/documents/#{@document.id}"}
+       style="font-size:.8125rem;color:var(--text-tertiary);white-space:nowrap;text-decoration:none">
+      ← Document
     </a>
+    <input type="text" id="doc-title-input" class="doc-editor-title-input"
+           value={Ecto.Changeset.get_field(@changeset, :title) || ""}
+           placeholder="Document title…" />
+    <button type="button" id="doc-save-btn" class="atrium-btn atrium-btn-primary" style="height:32px;font-size:.8125rem;flex-shrink:0">Save</button>
+    <a href={~p"/sections/#{@section_key}/documents/#{@document.id}"}
+       class="atrium-btn atrium-btn-ghost" style="height:32px;font-size:.8125rem;flex-shrink:0">Cancel</a>
   </div>
 
-  <h1 class="text-xl font-semibold mb-6">Edit: <%= @document.title %></h1>
-
-  <.form :let={f} for={@changeset} action={~p"/sections/#{@section_key}/documents/#{@document.id}"} method="post">
+  <%# Hidden form %>
+  <form id="doc-edit-form" method="post" action={~p"/sections/#{@section_key}/documents/#{@document.id}"} style="display:none">
+    <input type="hidden" name="_csrf_token" value={Plug.CSRFProtection.get_csrf_token()} />
     <input type="hidden" name="_method" value="put" />
+    <input type="hidden" id="document_title" name="document[title]" />
+    <input type="hidden" id="document_body_html" name="document[body_html]" value={Ecto.Changeset.get_field(@changeset, :body_html) || ""} />
+  </form>
 
-    <div class="mb-4">
-      <label class="block text-sm font-medium mb-1">Title</label>
-      <input type="text" name="document[title]" value={Phoenix.HTML.Form.input_value(f, :title) || ""} class="w-full border rounded p-2" />
-      <%= if msg = f[:title].errors |> Enum.map(fn {msg, _} -> msg end) |> List.first() do %>
-        <p class="text-red-600 text-sm mt-1"><%= msg %></p>
-      <% end %>
+  <%# Scrollable sheet area %>
+  <div class="doc-editor-scroll">
+    <div class="doc-sheet">
+      <div data-tiptap-editor data-input-id="document_body_html" data-section-key={@section_key}></div>
     </div>
+  </div>
+</div>
 
-    <div class="mb-4">
-      <label class="block text-sm font-medium mb-1">Body</label>
-      <input type="hidden" id="document_body_html" name="document[body_html]" value={Phoenix.HTML.Form.input_value(f, :body_html) || ""} />
-      <div data-tiptap-editor data-input-id="document_body_html" class="border rounded min-h-48 p-2 prose max-w-none"></div>
-    </div>
-
-    <div class="flex gap-2">
-      <button type="submit" class="rounded bg-slate-900 text-white px-4 py-2">Save changes</button>
-      <a href={~p"/sections/#{@section_key}/documents/#{@document.id}"} class="rounded border px-4 py-2">Cancel</a>
-    </div>
-  </.form>
-</main>
+<script>
+  document.getElementById("doc-save-btn").addEventListener("click", function() {
+    document.getElementById("document_title").value = document.getElementById("doc-title-input").value
+    document.getElementById("doc-edit-form").submit()
+  })
+</script>

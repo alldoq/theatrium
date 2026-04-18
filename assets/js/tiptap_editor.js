@@ -1,6 +1,7 @@
 import { Editor } from "@tiptap/core"
 import StarterKit from "@tiptap/starter-kit"
 import Link from "@tiptap/extension-link"
+import Image from "@tiptap/extension-image"
 
 const TOOLBAR = [
   { cmd: "toggleBold",        label: "B",    title: "Bold",         active: "bold",        style: "font-weight:700" },
@@ -88,6 +89,22 @@ function svgLink() {
   return s
 }
 
+function svgImage() {
+  const s = document.createElementNS("http://www.w3.org/2000/svg", "svg")
+  s.setAttribute("width", "14")
+  s.setAttribute("height", "14")
+  s.setAttribute("viewBox", "0 0 24 24")
+  s.setAttribute("fill", "none")
+  s.setAttribute("stroke", "currentColor")
+  s.setAttribute("stroke-width", "2")
+  s.setAttribute("stroke-linecap", "round")
+  s.setAttribute("stroke-linejoin", "round")
+  s.innerHTML = `<rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+    <circle cx="8.5" cy="8.5" r="1.5"/>
+    <polyline points="21 15 16 10 5 21"/>`
+  return s
+}
+
 function makeLinkBtn(editor) {
   const btn = document.createElement("button")
   btn.type = "button"
@@ -123,6 +140,68 @@ function makeLinkBtn(editor) {
   return btn
 }
 
+function makeImageBtn(editor, sectionKey) {
+  const btn = document.createElement("button")
+  btn.type = "button"
+  btn.title = "Image"
+  btn.appendChild(svgImage())
+  Object.assign(btn.style, {
+    border: "1px solid transparent",
+    background: "none",
+    cursor: "pointer",
+    padding: "3px 9px",
+    borderRadius: "4px",
+    fontSize: ".8125rem",
+    color: "var(--text-secondary)",
+    lineHeight: "1.5",
+    transition: "background .1s,border-color .1s,color .1s",
+    fontFamily: "inherit",
+    display: "inline-flex",
+    alignItems: "center",
+  })
+
+  const fileInput = document.createElement("input")
+  fileInput.type = "file"
+  fileInput.accept = "image/*"
+  fileInput.style.display = "none"
+  document.body.appendChild(fileInput)
+
+  fileInput.addEventListener("change", async () => {
+    const file = fileInput.files[0]
+    if (!file) return
+    fileInput.value = ""
+
+    const formData = new FormData()
+    formData.append("image", file)
+
+    const csrfMeta = document.querySelector("meta[name='csrf-token']")
+    const csrfToken = csrfMeta ? csrfMeta.getAttribute("content") : ""
+
+    try {
+      const resp = await fetch(`/sections/${sectionKey}/documents/upload_image`, {
+        method: "POST",
+        headers: { "x-csrf-token": csrfToken },
+        body: formData,
+      })
+      if (!resp.ok) {
+        console.error("Image upload failed", resp.status)
+        return
+      }
+      const { url } = await resp.json()
+      editor.chain().focus().setImage({ src: url }).run()
+    } catch (err) {
+      console.error("Image upload error", err)
+    }
+  })
+
+  btn.addEventListener("mousedown", e => {
+    e.preventDefault()
+    fileInput.click()
+  })
+
+  return btn
+}
+
 function refreshToolbar(bar, editor) {
   bar.querySelectorAll("button[data-active]").forEach(btn => {
     const isActive = editor.isActive(btn.dataset.active)
@@ -137,7 +216,7 @@ function refreshToolbar(bar, editor) {
   }
 }
 
-function buildToolbar(editor) {
+function buildToolbar(editor, sectionKey) {
   const bar = document.createElement("div")
   bar.style.cssText = [
     "display:flex", "align-items:center", "gap:2px", "flex-wrap:wrap",
@@ -160,6 +239,7 @@ function buildToolbar(editor) {
   bar.appendChild(makeHeadingSel(editor))
   bar.appendChild(makeSep())
   bar.appendChild(makeLinkBtn(editor))
+  bar.appendChild(makeImageBtn(editor, sectionKey))
 
   return bar
 }
@@ -167,6 +247,8 @@ function buildToolbar(editor) {
 function initEditor(container) {
   const input = document.getElementById(container.dataset.inputId)
   if (!input) return
+
+  const sectionKey = container.dataset.sectionKey || ""
 
   const wrapper = document.createElement("div")
   wrapper.style.cssText = "display:flex;flex-direction:column;height:100%"
@@ -181,6 +263,7 @@ function initEditor(container) {
     extensions: [
       StarterKit,
       Link.configure({ openOnClick: false }),
+      Image,
     ],
     content: input.value || "",
     editorProps: {
@@ -197,7 +280,7 @@ function initEditor(container) {
     },
   })
 
-  const toolbar = buildToolbar(editor)
+  const toolbar = buildToolbar(editor, sectionKey)
   wrapper.insertBefore(toolbar, editorEl)
 
   container.remove()
