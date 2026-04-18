@@ -40,9 +40,14 @@ defmodule AtriumWeb.ConnCase do
       Ecto.Adapters.SQL.Sandbox.mode(Atrium.Repo, :auto)
 
       on_exit(fn ->
-        # Clean up any tenant records written during the test (Triplex.drop in the
-        # test's own on_exit already dropped the schema; we just need the public row).
+        # Ensure :auto mode so cleanup queries can run regardless of what
+        # the test may have done to the sandbox mode.
+        Ecto.Adapters.SQL.Sandbox.mode(Atrium.Repo, :auto)
+        # Clean up any records written during the test (Triplex.drop in the
+        # test's own on_exit already dropped the schema; we just need the public rows).
         Atrium.Repo.delete_all(Atrium.Tenants.Tenant)
+        Atrium.Repo.delete_all(Atrium.SuperAdmins.SuperAdmin)
+        Atrium.Repo.delete_all(Atrium.Audit.GlobalEvent)
         Ecto.Adapters.SQL.Sandbox.mode(Atrium.Repo, :manual)
       end)
     else

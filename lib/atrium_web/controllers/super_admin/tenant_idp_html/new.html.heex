@@ -1,50 +1,66 @@
-<main class="p-8 max-w-lg">
-  <h1 class="text-xl font-semibold mb-4"><%= @tenant.name %> — New IdP</h1>
-  <.form :let={f} for={@changeset} as={:idp} action={~p"/super/tenants/#{@tenant.id}/idps"} method="post" class="space-y-4">
-    <div>
-      <label class="block text-sm">Name</label>
-      <input type="text" name="idp[name]" value={Phoenix.HTML.Form.input_value(f, :name)} class="mt-1 w-full border rounded p-2" required />
+<div class="atrium-anim" style="max-width:600px">
+  <div style="margin-bottom:20px">
+    <a href={~p"/super/tenants/#{@tenant.id}/idps"} style="font-size:.8125rem;color:var(--text-tertiary)">← Identity Providers</a>
+  </div>
+
+  <div style="margin-bottom:24px">
+    <div class="atrium-page-eyebrow"><%= @tenant.slug %></div>
+    <h1 class="atrium-page-title">New Identity Provider</h1>
+  </div>
+
+  <div class="atrium-card">
+    <div class="atrium-card-body">
+      <.form :let={f} for={@changeset} as={:idp} action={~p"/super/tenants/#{@tenant.id}/idps"} method="post">
+        <div style="margin-bottom:14px">
+          <label class="atrium-label">Name</label>
+          <input type="text" name="idp[name]" value={Phoenix.HTML.Form.input_value(f, :name)} class="atrium-input" required />
+        </div>
+        <div style="margin-bottom:14px">
+          <label class="atrium-label">Kind</label>
+          <select name="idp[kind]" class="atrium-input">
+            <option value="oidc">OIDC</option>
+            <option value="saml">SAML</option>
+          </select>
+        </div>
+        <div style="margin-bottom:14px">
+          <label class="atrium-label">Discovery URL (OIDC)</label>
+          <input type="text" name="idp[discovery_url]" value={Phoenix.HTML.Form.input_value(f, :discovery_url)} class="atrium-input" />
+        </div>
+        <div style="margin-bottom:14px">
+          <label class="atrium-label">Client ID (OIDC)</label>
+          <input type="text" name="idp[client_id]" value={Phoenix.HTML.Form.input_value(f, :client_id)} class="atrium-input" />
+        </div>
+        <div style="margin-bottom:14px">
+          <label class="atrium-label">Client Secret (OIDC)</label>
+          <input type="password" name="idp[client_secret]" class="atrium-input" />
+        </div>
+        <div style="margin-bottom:14px">
+          <label class="atrium-label">Metadata XML (SAML)</label>
+          <textarea name="idp[metadata_xml]" class="atrium-input" style="height:120px;font-family:'IBM Plex Mono',monospace;font-size:.8125rem"><%= Phoenix.HTML.Form.input_value(f, :metadata_xml) %></textarea>
+        </div>
+        <div style="margin-bottom:14px">
+          <label class="atrium-label">Provisioning mode</label>
+          <select name="idp[provisioning_mode]" class="atrium-input">
+            <option value="strict">Strict</option>
+            <option value="auto_create">Auto Create</option>
+            <option value="link_only">Link Only</option>
+          </select>
+        </div>
+        <div style="display:flex;gap:20px;margin-bottom:20px">
+          <label style="display:flex;align-items:center;gap:6px;font-size:.875rem;cursor:pointer">
+            <input type="checkbox" name="idp[enabled]" value="true" checked={Phoenix.HTML.Form.input_value(f, :enabled)} />
+            Enabled
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:.875rem;cursor:pointer">
+            <input type="checkbox" name="idp[is_default]" value="true" checked={Phoenix.HTML.Form.input_value(f, :is_default)} />
+            Default
+          </label>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button type="submit" class="atrium-btn atrium-btn-primary">Create</button>
+          <.link navigate={~p"/super/tenants/#{@tenant.id}/idps"} class="atrium-btn atrium-btn-ghost">Cancel</.link>
+        </div>
+      </.form>
     </div>
-    <div>
-      <label class="block text-sm">Kind</label>
-      <select name="idp[kind]" class="mt-1 w-full border rounded p-2">
-        <option value="oidc">OIDC</option>
-        <option value="saml">SAML</option>
-      </select>
-    </div>
-    <div>
-      <label class="block text-sm">Discovery URL (OIDC)</label>
-      <input type="text" name="idp[discovery_url]" value={Phoenix.HTML.Form.input_value(f, :discovery_url)} class="mt-1 w-full border rounded p-2" />
-    </div>
-    <div>
-      <label class="block text-sm">Client ID (OIDC)</label>
-      <input type="text" name="idp[client_id]" value={Phoenix.HTML.Form.input_value(f, :client_id)} class="mt-1 w-full border rounded p-2" />
-    </div>
-    <div>
-      <label class="block text-sm">Client Secret (OIDC)</label>
-      <input type="password" name="idp[client_secret]" class="mt-1 w-full border rounded p-2" />
-    </div>
-    <div>
-      <label class="block text-sm">Metadata XML (SAML)</label>
-      <textarea name="idp[metadata_xml]" class="mt-1 w-full border rounded p-2 font-mono text-xs" rows="6"><%= Phoenix.HTML.Form.input_value(f, :metadata_xml) %></textarea>
-    </div>
-    <div>
-      <label class="block text-sm">Provisioning Mode</label>
-      <select name="idp[provisioning_mode]" class="mt-1 w-full border rounded p-2">
-        <option value="strict">Strict</option>
-        <option value="auto_create">Auto Create</option>
-        <option value="link_only">Link Only</option>
-      </select>
-    </div>
-    <div class="flex gap-4">
-      <label class="flex items-center gap-2 text-sm">
-        <input type="checkbox" name="idp[enabled]" value="true" checked={Phoenix.HTML.Form.input_value(f, :enabled)} /> Enabled
-      </label>
-      <label class="flex items-center gap-2 text-sm">
-        <input type="checkbox" name="idp[is_default]" value="true" checked={Phoenix.HTML.Form.input_value(f, :is_default)} /> Default
-      </label>
-    </div>
-    <button type="submit" class="rounded bg-slate-900 text-white px-4 py-2">Create</button>
-    <.link navigate={~p"/super/tenants/#{@tenant.id}/idps"} class="ml-2 text-sm text-gray-600">Cancel</.link>
-  </.form>
-</main>
+  </div>
+</div>

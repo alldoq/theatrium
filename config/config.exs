@@ -37,17 +37,7 @@ config :atrium, Oban,
        {"0 2 * * *", Atrium.Audit.RetentionSweeper}
      ]}
   ],
-  queues: [default: 10, maintenance: 2, audit: 5]
-
-# Configure esbuild (the version is required)
-config :esbuild,
-  version: "0.17.11",
-  atrium: [
-    args:
-      ~w(js/app.js --bundle --target=es2022 --outdir=../priv/static/assets/js --external:/fonts/* --external:/images/*),
-    cd: Path.expand("../assets", __DIR__),
-    env: %{"NODE_PATH" => Enum.join([Path.expand("../assets/node_modules", __DIR__), Path.expand("../deps", __DIR__)], ":")}
-  ]
+  queues: [default: 10, maintenance: 2, audit: 5, notifications: 5]
 
 # Configure tailwind (the version is required)
 config :tailwind,

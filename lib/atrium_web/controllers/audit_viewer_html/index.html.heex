@@ -1,28 +1,66 @@
-<main class="p-8">
-  <h1 class="text-xl font-semibold mb-4">Audit log</h1>
-  <form method="get" class="flex gap-2 mb-4">
-    <input name="action" placeholder="action" value={@filters["action"]} class="border rounded p-1" />
-    <input name="actor_id" placeholder="actor_id" value={@filters["actor_id"]} class="border rounded p-1" />
-    <input name="resource_type" placeholder="resource_type" value={@filters["resource_type"]} class="border rounded p-1" />
-    <input name="resource_id" placeholder="resource_id" value={@filters["resource_id"]} class="border rounded p-1" />
-    <button type="submit" class="rounded bg-slate-900 text-white px-3">Filter</button>
-    <.link href={~p"/audit/export?#{@filters}"} class="rounded border px-3 py-1">CSV</.link>
-  </form>
+<div class="atrium-anim">
+  <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:24px">
+    <div>
+      <div class="atrium-page-eyebrow">Admin</div>
+      <h1 class="atrium-page-title">Audit log</h1>
+    </div>
+    <.link href={~p"/audit/export?#{@filters}"} class="atrium-btn atrium-btn-ghost">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M8 2v9M4 8l4 4 4-4M2 13h12"/>
+      </svg>
+      Export CSV
+    </.link>
+  </div>
 
-  <table class="w-full text-sm border">
-    <thead class="bg-slate-50">
-      <tr><th class="p-2 text-left">When</th><th class="p-2 text-left">Actor</th><th class="p-2 text-left">Action</th><th class="p-2 text-left">Resource</th><th class="p-2 text-left">Changes</th></tr>
-    </thead>
-    <tbody>
-      <%= for e <- @events do %>
-        <tr class="border-t">
-          <td class="p-2"><%= Calendar.strftime(e.occurred_at, "%Y-%m-%d %H:%M:%S") %></td>
-          <td class="p-2"><%= e.actor_type %> <%= e.actor_id %></td>
-          <td class="p-2 font-mono"><%= e.action %></td>
-          <td class="p-2"><%= e.resource_type %> <%= e.resource_id %></td>
-          <td class="p-2 font-mono text-xs"><%= Jason.encode!(e.changes) %></td>
+  <div class="atrium-card" style="margin-bottom:16px">
+    <div class="atrium-card-body">
+      <form method="get" style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end">
+        <div>
+          <label class="atrium-label">Action</label>
+          <input name="action" placeholder="e.g. form.created" value={@filters["action"]} class="atrium-input" style="width:180px" />
+        </div>
+        <div>
+          <label class="atrium-label">Actor ID</label>
+          <input name="actor_id" placeholder="UUID" value={@filters["actor_id"]} class="atrium-input" style="width:180px" />
+        </div>
+        <div>
+          <label class="atrium-label">Resource type</label>
+          <input name="resource_type" placeholder="e.g. Form" value={@filters["resource_type"]} class="atrium-input" style="width:140px" />
+        </div>
+        <div>
+          <label class="atrium-label">Resource ID</label>
+          <input name="resource_id" placeholder="UUID" value={@filters["resource_id"]} class="atrium-input" style="width:180px" />
+        </div>
+        <button type="submit" class="atrium-btn atrium-btn-primary">Filter</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="atrium-card">
+    <table class="atrium-table">
+      <thead>
+        <tr>
+          <th>When</th>
+          <th>Actor</th>
+          <th>Action</th>
+          <th>Resource</th>
+          <th>Changes</th>
         </tr>
-      <% end %>
-    </tbody>
-  </table>
-</main>
+      </thead>
+      <tbody>
+        <%= for e <- @events do %>
+          <tr>
+            <td class="atrium-doc-modified"><%= Calendar.strftime(e.occurred_at, "%Y-%m-%d %H:%M:%S") %></td>
+            <td style="font-size:.8125rem;color:var(--text-secondary)"><%= e.actor_type %> <span style="font-family:'IBM Plex Mono',monospace;font-size:.75rem"><%= e.actor_id %></span></td>
+            <td><span class="atrium-badge atrium-badge-draft" style="font-family:'IBM Plex Mono',monospace;text-transform:none;letter-spacing:0"><%= e.action %></span></td>
+            <td style="font-size:.8125rem;color:var(--text-secondary)"><%= e.resource_type %> <span style="font-family:'IBM Plex Mono',monospace;font-size:.75rem"><%= e.resource_id %></span></td>
+            <td style="font-family:'IBM Plex Mono',monospace;font-size:.6875rem;color:var(--text-tertiary);max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"><%= Jason.encode!(e.changes) %></td>
+          </tr>
+        <% end %>
+        <%= if @events == [] do %>
+          <tr><td colspan="5" style="padding:32px;text-align:center;color:var(--text-tertiary)">No events match the current filter.</td></tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+</div>

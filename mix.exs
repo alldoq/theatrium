@@ -42,7 +42,6 @@ defmodule Atrium.MixProject do
       {:phoenix_live_view, "~> 1.0.9"},
       {:floki, ">= 0.30.0", only: :test},
       {:phoenix_live_dashboard, "~> 0.8.3"},
-      {:esbuild, "~> 0.9", runtime: Mix.env() == :dev},
       {:tailwind, "~> 0.3", runtime: Mix.env() == :dev},
       {:heroicons,
        github: "tailwindlabs/heroicons",
@@ -67,7 +66,8 @@ defmodule Atrium.MixProject do
       {:jose, "~> 1.11"},
       {:plug_cowboy, "~> 2.7"},
       {:samly, "~> 1.4"},
-      {:html_sanitize_ex, "~> 1.4"}
+      {:html_sanitize_ex, "~> 1.4"},
+      {:chromic_pdf, "~> 1.17"}
     ]
   end
 
@@ -83,11 +83,11 @@ defmodule Atrium.MixProject do
       "ecto.setup": ["ecto.create", "ecto.migrate", "run priv/repo/seeds.exs"],
       "ecto.reset": ["ecto.drop", "ecto.setup"],
       test: ["ecto.create --quiet", "ecto.migrate --quiet", "test"],
-      "assets.setup": ["tailwind.install --if-missing", "esbuild.install --if-missing"],
-      "assets.build": ["tailwind atrium", "esbuild atrium"],
+      "assets.setup": ["tailwind.install --if-missing", "cmd --cd assets npm install"],
+      "assets.build": ["tailwind atrium", "cmd --cd assets npm run build"],
       "assets.deploy": [
         "tailwind atrium --minify",
-        "esbuild atrium --minify",
+        "cmd --cd assets npm run build",
         "phx.digest"
       ]
     ]

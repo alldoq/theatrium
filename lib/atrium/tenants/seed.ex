@@ -22,6 +22,22 @@ defmodule Atrium.Tenants.Seed do
     :ok
   end
 
+  # Idempotent re-seed: inserts any missing default ACLs and syncs all_staff membership.
+  def ensure_default_acls(prefix) do
+    seed_default_acls(prefix)
+    sync_all_staff(prefix)
+    :ok
+  end
+
+  defp sync_all_staff(prefix) do
+    case Authorization.get_group_by_slug(prefix, "all_staff") do
+      nil -> :ok
+      group ->
+        Atrium.Accounts.list_active_users(prefix)
+        |> Enum.each(&Authorization.add_member(prefix, &1, group))
+    end
+  end
+
   defp seed_groups(prefix) do
     Enum.each(@system_groups, fn attrs ->
       Authorization.create_group(prefix, Map.put(attrs, :kind, "system"))

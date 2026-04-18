@@ -1,40 +1,54 @@
-<main class="p-8">
-  <div class="flex items-center justify-between mb-6">
-    <h1 class="text-xl font-semibold">Documents — <%= @section_key %></h1>
-    <a href={~p"/sections/#{@section_key}/documents/new"} class="rounded bg-slate-900 text-white px-4 py-2 text-sm">
+<div class="atrium-anim">
+  <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:24px">
+    <div>
+      <div class="atrium-page-eyebrow"><%= @section_key %></div>
+      <h1 class="atrium-page-title">Documents</h1>
+    </div>
+    <a href={~p"/sections/#{@section_key}/documents/new"} class="atrium-btn atrium-btn-primary">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round">
+        <path d="M8 3v10M3 8h10"/>
+      </svg>
       New document
     </a>
   </div>
 
-  <table class="w-full text-sm border">
-    <thead class="bg-slate-50">
-      <tr>
-        <th class="p-2 text-left">Title</th>
-        <th class="p-2 text-left">Status</th>
-        <th class="p-2 text-left">Version</th>
-        <th class="p-2 text-left">Updated</th>
-      </tr>
-    </thead>
-    <tbody>
-      <%= for doc <- @documents do %>
-        <tr class="border-t hover:bg-slate-50">
-          <td class="p-2">
-            <a href={~p"/sections/#{@section_key}/documents/#{doc.id}"} class="text-blue-600 hover:underline">
-              <%= doc.title %>
-            </a>
-          </td>
-          <td class="p-2">
-            <span class={"rounded px-2 py-0.5 text-xs font-medium #{status_badge_class(doc.status)}"}>
-              <%= doc.status %>
-            </span>
-          </td>
-          <td class="p-2">v<%= doc.current_version %></td>
-          <td class="p-2"><%= Calendar.strftime(doc.updated_at, "%Y-%m-%d %H:%M") %></td>
+  <div class="atrium-card">
+    <table class="atrium-table">
+      <thead>
+        <tr>
+          <th>Title</th>
+          <th>Status</th>
+          <th>Version</th>
+          <th>Updated</th>
         </tr>
-      <% end %>
-      <%= if @documents == [] do %>
-        <tr><td colspan="4" class="p-4 text-center text-slate-500">No documents yet.</td></tr>
-      <% end %>
-    </tbody>
-  </table>
-</main>
+      </thead>
+      <tbody>
+        <%= for doc <- @documents do %>
+          <tr onclick={"window.location='#{~p"/sections/#{@section_key}/documents/#{doc.id}"}';"}>
+            <td>
+              <div class="atrium-doc-name">
+                <div class="atrium-doc-file-icon doc">
+                  <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M4 2h6l4 4v8a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z" stroke-linejoin="round"/>
+                    <path d="M10 2v4h4" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </div>
+                <a href={~p"/sections/#{@section_key}/documents/#{doc.id}"} style="color:var(--blue-600)"><%= doc.title %></a>
+              </div>
+            </td>
+            <td>
+              <span class={"atrium-badge atrium-badge-#{doc.status}"}>
+                <%= doc.status %>
+              </span>
+            </td>
+            <td class="atrium-doc-modified">v<%= doc.current_version %></td>
+            <td class="atrium-doc-modified"><%= Calendar.strftime(doc.updated_at, "%Y-%m-%d %H:%M") %></td>
+          </tr>
+        <% end %>
+        <%= if @documents == [] do %>
+          <tr><td colspan="4" style="padding:32px;text-align:center;color:var(--text-tertiary)">No documents yet.</td></tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+</div>

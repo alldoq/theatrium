@@ -11,67 +11,6 @@ defmodule AtriumWeb.Layouts do
 
   embed_templates "layouts/*"
 
-  @doc """
-  Renders the app layout
-
-  ## Examples
-
-      <Layouts.app flash={@flash}>
-        <h1>Content</h1>
-      </Layout.app>
-      
-  """
-  attr :flash, :map, required: true, doc: "the map of flash messages"
-
-  slot :inner_block, required: true
-
-  def app(assigns) do
-    ~H"""
-    <div class="flex min-h-screen">
-      <nav class="w-64 border-r bg-slate-50 p-4" style="background-color: var(--color-primary); color: white;">
-        <%= if assigns[:tenant] do %>
-          <div class="mb-6">
-            <%= if assigns[:tenant].theme["logo_url"] do %>
-              <img src={@tenant.theme["logo_url"]} alt={@tenant.name} class="h-8" />
-            <% else %>
-              <h1 class="text-lg font-semibold"><%= @tenant.name %></h1>
-            <% end %>
-          </div>
-        <% end %>
-
-        <%= if assigns[:nav] do %>
-          <ul class="space-y-1">
-            <%= for entry <- @nav do %>
-              <li>
-                <.link href={"/sections/#{entry.key}"} class="block rounded px-2 py-1 hover:bg-white/10">
-                  <%= entry.name %>
-                </.link>
-                <%= if entry.children != [] do %>
-                  <ul class="ml-4 mt-1 space-y-1">
-                    <%= for c <- entry.children do %>
-                      <li>
-                        <.link href={"/sections/#{entry.key}/#{c.slug}"} class="block rounded px-2 py-1 text-sm hover:bg-white/10">
-                          <%= c.name %>
-                        </.link>
-                      </li>
-                    <% end %>
-                  </ul>
-                <% end %>
-              </li>
-            <% end %>
-          </ul>
-        <% end %>
-      </nav>
-
-      <main class="flex-1 p-8">
-        {render_slot(@inner_block)}
-      </main>
-    </div>
-
-    <.flash_group flash={@flash} />
-    """
-  end
-
   def theme_style(%{tenant: %{theme: theme}}) when is_map(theme) do
     [
       {"--color-primary", Map.get(theme, "primary", "#0F172A")},

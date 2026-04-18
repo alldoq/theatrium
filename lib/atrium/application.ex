@@ -14,6 +14,7 @@ defmodule Atrium.Application do
       {Phoenix.PubSub, name: Atrium.PubSub},
       Atrium.Vault,
       {Oban, Application.fetch_env!(:atrium, Oban)},
+      ChromicPDF,
       AtriumWeb.Endpoint
     ]
 

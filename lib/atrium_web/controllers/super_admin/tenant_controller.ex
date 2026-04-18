@@ -33,11 +33,13 @@ defmodule AtriumWeb.SuperAdmin.TenantController do
 
   def edit(conn, %{"id" => id}) do
     tenant = Tenants.get_tenant!(id)
-    render(conn, :edit, tenant: tenant, changeset: Tenants.change_tenant(tenant))
+    sections = Atrium.Authorization.SectionRegistry.all()
+    render(conn, :edit, tenant: tenant, changeset: Tenants.change_tenant(tenant), sections: sections)
   end
 
   def update(conn, %{"id" => id, "tenant" => attrs}) do
     tenant = Tenants.get_tenant!(id)
+    attrs = Map.update(attrs, "enabled_sections", [], &Enum.reject(&1, fn v -> v == "" end))
 
     case Tenants.update_tenant(tenant, attrs) do
       {:ok, updated} ->
@@ -50,8 +52,18 @@ defmodule AtriumWeb.SuperAdmin.TenantController do
         redirect(conn, to: ~p"/super/tenants/#{updated.id}")
 
       {:error, cs} ->
-        render(conn, :edit, tenant: tenant, changeset: cs)
+        sections = Atrium.Authorization.SectionRegistry.all()
+        render(conn, :edit, tenant: tenant, changeset: cs, sections: sections)
     end
+  end
+
+  def reseed_acls(conn, %{"id" => id}) do
+    tenant = Tenants.get_tenant!(id)
+    Tenants.ensure_default_acls(tenant)
+
+    conn
+    |> put_flash(:info, "Default ACLs re-seeded for #{tenant.name}.")
+    |> redirect(to: ~p"/super/tenants/#{tenant.id}")
   end
 
   defp diff(old, new) do

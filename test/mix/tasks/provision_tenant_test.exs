@@ -3,7 +3,17 @@ defmodule Mix.Tasks.Atrium.ProvisionTenantTest do
   alias Atrium.Tenants
 
   setup do
-    on_exit(fn -> _ = Triplex.drop("task_test_mcl") end)
+    # Triplex provisions schemas via spawned :proc_lib processes that cannot use
+    # the SQL sandbox. Switch to :auto mode for the duration of the test.
+    Ecto.Adapters.SQL.Sandbox.mode(Atrium.Repo, :auto)
+
+    on_exit(fn ->
+      _ = Triplex.drop("task_test_mcl")
+      Atrium.Repo.delete_all(Atrium.Tenants.Tenant)
+      Atrium.Repo.delete_all(Atrium.Audit.GlobalEvent)
+      Ecto.Adapters.SQL.Sandbox.mode(Atrium.Repo, :manual)
+    end)
+
     :ok
   end
 

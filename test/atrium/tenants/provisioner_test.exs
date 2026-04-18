@@ -4,11 +4,20 @@ defmodule Atrium.Tenants.ProvisionerTest do
   alias Atrium.Tenants.Provisioner
 
   setup do
+    # Triplex provisions schemas via spawned :proc_lib processes that cannot use
+    # the SQL sandbox. Switch to :auto mode for the duration of the test so those
+    # processes can check out their own connections.
+    Ecto.Adapters.SQL.Sandbox.mode(Atrium.Repo, :auto)
+
     on_exit(fn ->
       # Clean up any tenant schemas created by tests
       for slug <- ~w(pr_test_mcl pr_test_fail) do
         _ = Triplex.drop(slug)
       end
+
+      Atrium.Repo.delete_all(Atrium.Tenants.Tenant)
+      Atrium.Repo.delete_all(Atrium.Audit.GlobalEvent)
+      Ecto.Adapters.SQL.Sandbox.mode(Atrium.Repo, :manual)
     end)
 
     :ok

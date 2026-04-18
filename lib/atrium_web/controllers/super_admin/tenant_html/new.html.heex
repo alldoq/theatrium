@@ -1,14 +1,29 @@
-<main class="max-w-lg p-8">
-  <h1 class="text-xl font-semibold mb-4">New tenant</h1>
-  <.form :let={f} for={@changeset} action={~p"/super/tenants"} class="space-y-4">
-    <div>
-      <label class="block text-sm">Slug</label>
-      <.input field={f[:slug]} class="mt-1 w-full border rounded p-2" />
+<div class="atrium-anim" style="max-width:520px">
+  <div style="margin-bottom:20px">
+    <a href={~p"/super/tenants"} style="font-size:.8125rem;color:var(--text-tertiary)">← Tenants</a>
+  </div>
+
+  <div style="margin-bottom:24px">
+    <div class="atrium-page-eyebrow">Platform</div>
+    <h1 class="atrium-page-title">New tenant</h1>
+  </div>
+
+  <div class="atrium-card">
+    <div class="atrium-card-body">
+      <.form :let={f} for={@changeset} action={~p"/super/tenants"}>
+        <div style="margin-bottom:16px">
+          <label class="atrium-label">Slug</label>
+          <.input field={f[:slug]} class="atrium-input" />
+        </div>
+        <div style="margin-bottom:20px">
+          <label class="atrium-label">Name</label>
+          <.input field={f[:name]} class="atrium-input" />
+        </div>
+        <div style="display:flex;gap:8px">
+          <button type="submit" class="atrium-btn atrium-btn-primary">Create tenant</button>
+          <a href={~p"/super/tenants"} class="atrium-btn atrium-btn-ghost">Cancel</a>
+        </div>
+      </.form>
     </div>
-    <div>
-      <label class="block text-sm">Name</label>
-      <.input field={f[:name]} class="mt-1 w-full border rounded p-2" />
-    </div>
-    <button type="submit" class="rounded bg-slate-900 text-white px-3 py-1">Create</button>
-  </.form>
-</main>
+  </div>
+</div>

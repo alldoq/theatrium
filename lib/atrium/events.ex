@@ -22,6 +22,35 @@ defmodule Atrium.Events do
     )
   end
 
+  @spec list_events_for_week(String.t(), Date.t()) :: [Event.t()]
+  def list_events_for_week(prefix, week_start) do
+    week_end = Date.add(week_start, 6)
+    range_start = DateTime.new!(week_start, ~T[00:00:00.000000], "Etc/UTC")
+    range_end = DateTime.new!(week_end, ~T[23:59:59.999999], "Etc/UTC")
+
+    Repo.all(
+      from(e in Event,
+        where: e.starts_at >= ^range_start and e.starts_at <= ^range_end,
+        order_by: [asc: e.starts_at]
+      ),
+      prefix: prefix
+    )
+  end
+
+  @spec list_events_for_day(String.t(), Date.t()) :: [Event.t()]
+  def list_events_for_day(prefix, day) do
+    range_start = DateTime.new!(day, ~T[00:00:00.000000], "Etc/UTC")
+    range_end = DateTime.new!(day, ~T[23:59:59.999999], "Etc/UTC")
+
+    Repo.all(
+      from(e in Event,
+        where: e.starts_at >= ^range_start and e.starts_at <= ^range_end,
+        order_by: [asc: e.starts_at]
+      ),
+      prefix: prefix
+    )
+  end
+
   @spec list_upcoming_events(String.t(), DateTime.t(), non_neg_integer()) :: [Event.t()]
   def list_upcoming_events(prefix, from_dt \\ nil, limit \\ 10) do
     cutoff = from_dt || DateTime.utc_now()

@@ -1,5 +1,4 @@
 defmodule Atrium.Sections do
-  import Ecto.Query
   alias Atrium.Repo
   alias Atrium.Sections.SectionCustomization
 
@@ -16,9 +15,11 @@ defmodule Atrium.Sections do
 
   @spec upsert_customization(String.t(), map()) :: {:ok, SectionCustomization.t()} | {:error, Ecto.Changeset.t()}
   def upsert_customization(section_key, attrs) do
-    existing = get_customization(section_key) || %SectionCustomization{}
-    existing
+    %SectionCustomization{}
     |> SectionCustomization.changeset(Map.put(attrs, :section_key, section_key))
-    |> Repo.insert_or_update()
+    |> Repo.insert(
+      on_conflict: {:replace, [:display_name, :icon_name, :updated_at]},
+      conflict_target: :section_key
+    )
   end
 end

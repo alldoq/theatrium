@@ -1,17 +1,34 @@
-<main class="p-8">
-  <h1 class="text-2xl font-semibold">Atrium — Platform</h1>
-  <p class="text-gray-600">Signed in as <%= @super_admin.email %></p>
+<div class="atrium-anim">
+  <div style="margin-bottom:24px">
+    <div class="atrium-page-eyebrow">Platform</div>
+    <h1 class="atrium-page-title">Atrium</h1>
+    <p class="atrium-page-subtitle">Signed in as <span style="font-family:'IBM Plex Mono',monospace;font-size:.8125rem"><%= @super_admin.email %></span></p>
+  </div>
 
-  <section class="mt-6">
-    <h2 class="text-lg font-medium mb-2">Tenants</h2>
-    <.link navigate={~p"/super/tenants/new"} class="inline-block mb-4 rounded bg-slate-900 text-white px-3 py-1">New tenant</.link>
-    <ul class="divide-y border rounded">
-      <%= for t <- @tenants do %>
-        <li class="p-3 flex justify-between">
-          <span><%= t.slug %> — <%= t.name %></span>
-          <span class="text-sm text-gray-500"><%= t.status %></span>
-        </li>
-      <% end %>
-    </ul>
-  </section>
-</main>
+  <div class="atrium-card">
+    <div class="atrium-card-header">
+      <span class="atrium-card-title">Tenants</span>
+      <.link navigate={~p"/super/tenants/new"} class="atrium-btn atrium-btn-primary" style="height:28px;font-size:.8125rem">
+        New tenant
+      </.link>
+    </div>
+    <table class="atrium-table">
+      <thead>
+        <tr>
+          <th>Slug</th>
+          <th>Name</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <%= for t <- @tenants do %>
+          <tr onclick={"window.location='#{~p"/super/tenants/#{t.id}"}';"}>
+            <td style="font-family:'IBM Plex Mono',monospace;font-size:.8125rem"><%= t.slug %></td>
+            <td><%= t.name %></td>
+            <td><span class={"atrium-badge atrium-badge-#{if t.status == "active", do: "published", else: "draft"}"}><%= t.status %></span></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+</div>

@@ -1,15 +1,25 @@
-<main class="max-w-sm mx-auto py-16">
-  <h1 class="text-2xl font-semibold mb-2"><%= @tenant.name %></h1>
-  <h2 class="text-lg text-gray-600 mb-6">Confirm your identity</h2>
-  <p class="text-sm text-gray-500 mb-4">Enter your existing password to link your SSO account.</p>
-  <%= if @error do %>
-    <div class="mb-4 rounded bg-red-50 text-red-700 p-3"><%= @error %></div>
-  <% end %>
-  <.form :let={_f} for={%{}} as={:confirm} action={~p"/auth/link/confirm"} method="post" class="space-y-4">
-    <div>
-      <label class="block text-sm">Password</label>
-      <input type="password" name="password" class="mt-1 w-full border rounded p-2" required />
+<div class="atrium-auth-page">
+  <div class="atrium-auth-card">
+    <div class="atrium-auth-brand">
+      <div class="atrium-auth-logo">
+        <svg width="22" height="22" viewBox="0 0 16 16" fill="white"><path d="M8 1L2 5v8h4v-4h4v4h4V5L8 1z"/></svg>
+      </div>
+      <div class="atrium-auth-tenant"><%= @tenant.name %></div>
+      <div class="atrium-auth-subtitle">Confirm your identity to link your SSO account</div>
     </div>
-    <button type="submit" class="w-full rounded bg-slate-900 text-white p-2">Confirm</button>
-  </.form>
-</main>
+
+    <div class="atrium-auth-box">
+      <%= if @error do %>
+        <div class="atrium-auth-error"><%= @error %></div>
+      <% end %>
+
+      <.form :let={_f} for={%{}} as={:confirm} action={~p"/auth/link/confirm"} method="post">
+        <div class="atrium-auth-field">
+          <label class="atrium-label">Password</label>
+          <input type="password" name="password" class="atrium-input" required />
+        </div>
+        <button type="submit" class="atrium-auth-submit">Confirm and link account</button>
+      </.form>
+    </div>
+  </div>
+</div>

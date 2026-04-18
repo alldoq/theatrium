@@ -7,7 +7,7 @@ defmodule AtriumWeb.SuperAdmin.TenantControllerTest do
   setup %{conn: conn} do
     {:ok, sa} =
       SuperAdmins.create_super_admin(%{
-        email: "ops@atrium.example",
+        email: "sa_tenant@atrium.example",
         name: "Ops",
         password: "correct-horse-battery-staple"
       })

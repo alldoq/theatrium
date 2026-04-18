@@ -1,80 +1,128 @@
-<main class="p-8 max-w-4xl">
-  <div class="mb-4">
-    <a href={~p"/sections/#{@section_key}/documents"} class="text-sm text-slate-500 hover:underline">
-      ← Back to documents
+<style>
+  .doc-show-chrome { background: #e8ecf0; margin: -20px; padding: 0; }
+  .doc-show-topbar {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 20px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+  }
+  .doc-show-scroll { padding: 40px 24px 80px; }
+  .doc-show-sheet {
+    background: white;
+    width: 794px; max-width: 100%;
+    margin: 0 auto;
+    box-shadow: 0 1px 4px rgba(0,0,0,.12), 0 0 0 1px rgba(0,0,0,.05);
+    border-radius: 2px;
+  }
+  .doc-show-sheet-header {
+    padding: 48px 90px 24px;
+    border-bottom: 1px solid #e2e8f0;
+  }
+  .doc-show-sheet-body {
+    padding: 36px 90px 72px;
+    font-size: 1rem;
+    line-height: 1.8;
+    color: #1a1a1a;
+  }
+  .doc-show-sheet-body h1 { font-size: 2rem; font-weight: 700; margin: 1.2em 0 .4em; }
+  .doc-show-sheet-body h2 { font-size: 1.5rem; font-weight: 700; margin: 1.1em 0 .4em; }
+  .doc-show-sheet-body h3 { font-size: 1.2rem; font-weight: 600; margin: 1em 0 .3em; }
+  .doc-show-sheet-body p  { margin: 0 0 .8em; }
+  .doc-show-sheet-body ul { list-style: disc;    padding-left: 1.6em; margin: .5em 0 .8em; }
+  .doc-show-sheet-body ol { list-style: decimal; padding-left: 1.6em; margin: .5em 0 .8em; }
+  .doc-show-sheet-body li { margin: .25em 0; }
+  .doc-show-sheet-body blockquote { border-left: 3px solid #93c5fd; padding-left: 1em; color: #475569; margin: .8em 0; }
+  .doc-show-sheet-body pre  { background: #f1f5f9; border-radius: 4px; padding: .75em 1em; font-family: 'IBM Plex Mono', monospace; font-size: .875rem; overflow-x: auto; margin: .8em 0; }
+  .doc-show-sheet-body code { background: #f1f5f9; border-radius: 3px; padding: .1em .35em; font-family: 'IBM Plex Mono', monospace; font-size: .875rem; }
+  .doc-show-sheet-body strong { font-weight: 700; }
+  .doc-show-sheet-body em { font-style: italic; }
+  .doc-meta-panel { width: 794px; max-width: 100%; margin: 20px auto 0; }
+</style>
+
+<div class="doc-show-chrome atrium-anim">
+  <%# Top bar %>
+  <div class="doc-show-topbar">
+    <a href={~p"/sections/#{@section_key}/documents"} style="font-size:.8125rem;color:var(--text-tertiary);text-decoration:none;white-space:nowrap">
+      ← Documents
     </a>
-  </div>
-
-  <div class="flex items-start justify-between mb-6">
-    <div>
-      <h1 class="text-2xl font-semibold"><%= @document.title %></h1>
-      <p class="text-sm text-slate-500 mt-1">
-        v<%= @document.current_version %> ·
-        <span class={"rounded px-2 py-0.5 text-xs font-medium #{status_badge_class(@document.status)}"}>
-          <%= @document.status %>
-        </span>
-      </p>
-    </div>
-
-    <div class="flex gap-2">
-      <%= if @document.status == "draft" do %>
-        <a href={~p"/sections/#{@section_key}/documents/#{@document.id}/edit"}
-           class="rounded border px-3 py-1 text-sm">Edit</a>
-        <form method="post" action={~p"/sections/#{@section_key}/documents/#{@document.id}/submit"}>
-          <input type="hidden" name="_csrf_token" value={Plug.CSRFProtection.get_csrf_token()} />
-          <button class="rounded bg-blue-600 text-white px-3 py-1 text-sm">Submit for review</button>
-        </form>
-      <% end %>
-      <%= if @document.status == "in_review" do %>
-        <form method="post" action={~p"/sections/#{@section_key}/documents/#{@document.id}/reject"}>
-          <input type="hidden" name="_csrf_token" value={Plug.CSRFProtection.get_csrf_token()} />
-          <button class="rounded border px-3 py-1 text-sm">Reject</button>
-        </form>
-        <form method="post" action={~p"/sections/#{@section_key}/documents/#{@document.id}/approve"}>
-          <input type="hidden" name="_csrf_token" value={Plug.CSRFProtection.get_csrf_token()} />
-          <button class="rounded bg-green-600 text-white px-3 py-1 text-sm">Approve</button>
-        </form>
-      <% end %>
-      <%= if @document.status == "approved" do %>
-        <form method="post" action={~p"/sections/#{@section_key}/documents/#{@document.id}/archive"}>
-          <input type="hidden" name="_csrf_token" value={Plug.CSRFProtection.get_csrf_token()} />
-          <button class="rounded border px-3 py-1 text-sm text-slate-600">Archive</button>
-        </form>
-      <% end %>
-    </div>
-  </div>
-
-  <div class="prose max-w-none mb-8 border rounded p-4 bg-white">
-    <%= if @document.body_html && @document.body_html != "" do %>
-      <%= Phoenix.HTML.raw(@document.body_html) %>
-    <% else %>
-      <p class="text-slate-400 italic">No content yet.</p>
+    <div style="flex:1"></div>
+    <a href={~p"/sections/#{@section_key}/documents/#{@document.id}/pdf"}
+       class="atrium-btn atrium-btn-ghost" style="height:32px;font-size:.8125rem">Download PDF</a>
+    <%= if @document.status == "draft" do %>
+      <a href={~p"/sections/#{@section_key}/documents/#{@document.id}/edit"} class="atrium-btn atrium-btn-ghost" style="height:32px;font-size:.8125rem">Edit</a>
+      <form method="post" action={~p"/sections/#{@section_key}/documents/#{@document.id}/submit"} style="display:inline">
+        <input type="hidden" name="_csrf_token" value={Plug.CSRFProtection.get_csrf_token()} />
+        <button class="atrium-btn atrium-btn-primary" style="height:32px;font-size:.8125rem">Submit for review</button>
+      </form>
+    <% end %>
+    <%= if @document.status == "in_review" do %>
+      <form method="post" action={~p"/sections/#{@section_key}/documents/#{@document.id}/reject"} style="display:inline">
+        <input type="hidden" name="_csrf_token" value={Plug.CSRFProtection.get_csrf_token()} />
+        <button class="atrium-btn atrium-btn-ghost" style="height:32px;font-size:.8125rem">Reject</button>
+      </form>
+      <form method="post" action={~p"/sections/#{@section_key}/documents/#{@document.id}/approve"} style="display:inline">
+        <input type="hidden" name="_csrf_token" value={Plug.CSRFProtection.get_csrf_token()} />
+        <button class="atrium-btn atrium-btn-primary" style="height:32px;font-size:.8125rem;background:#16a34a">Approve</button>
+      </form>
+    <% end %>
+    <%= if @document.status == "approved" do %>
+      <form method="post" action={~p"/sections/#{@section_key}/documents/#{@document.id}/archive"} style="display:inline">
+        <input type="hidden" name="_csrf_token" value={Plug.CSRFProtection.get_csrf_token()} />
+        <button class="atrium-btn atrium-btn-ghost" style="height:32px;font-size:.8125rem">Archive</button>
+      </form>
     <% end %>
   </div>
 
-  <section class="mt-8">
-    <h2 class="text-sm font-semibold text-slate-700 mb-2">Version history</h2>
-    <table class="w-full text-sm border">
-      <thead class="bg-slate-50">
-        <tr>
-          <th class="p-2 text-left">Version</th>
-          <th class="p-2 text-left">Title</th>
-          <th class="p-2 text-left">Saved at</th>
-        </tr>
-      </thead>
-      <tbody>
-        <%= for v <- @versions do %>
-          <tr class="border-t">
-            <td class="p-2">v<%= v.version %></td>
-            <td class="p-2"><%= v.title %></td>
-            <td class="p-2"><%= Calendar.strftime(v.saved_at, "%Y-%m-%d %H:%M:%S") %></td>
-          </tr>
+  <%# Scrollable area %>
+  <div class="doc-show-scroll">
+    <%# Page sheet %>
+    <div class="doc-show-sheet">
+      <div class="doc-show-sheet-header">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+          <span class={"atrium-badge atrium-badge-#{@document.status}"}><%= @document.status %></span>
+          <span style="font-size:.75rem;color:var(--text-tertiary);font-family:'IBM Plex Mono',monospace">v<%= @document.current_version %></span>
+          <span style="font-size:.75rem;color:var(--text-tertiary)"><%= @section_key %></span>
+        </div>
+        <h1 style="font-size:1.875rem;font-weight:700;color:#0f172a;line-height:1.25;margin:0"><%= @document.title %></h1>
+      </div>
+      <div class="doc-show-sheet-body">
+        <%= if @document.body_html && @document.body_html != "" do %>
+          <%= Phoenix.HTML.raw(@document.body_html) %>
+        <% else %>
+          <p style="color:#94a3b8;font-style:italic">No content yet.</p>
         <% end %>
-      </tbody>
-    </table>
-  </section>
+      </div>
+    </div>
 
-  <section class="mt-8">
-    <AtriumWeb.Components.HistoryView.history events={@history} title="Audit history" />
-  </section>
-</main>
+    <%# Metadata below the sheet %>
+    <div class="doc-meta-panel">
+      <div class="atrium-card" style="margin-bottom:12px">
+        <div class="atrium-card-header">
+          <span class="atrium-card-title">Version history</span>
+        </div>
+        <table class="atrium-table">
+          <thead>
+            <tr>
+              <th>Version</th>
+              <th>Title</th>
+              <th>Saved at</th>
+            </tr>
+          </thead>
+          <tbody>
+            <%= for v <- @versions do %>
+              <tr>
+                <td class="atrium-doc-modified">v<%= v.version %></td>
+                <td><%= v.title %></td>
+                <td class="atrium-doc-modified"><%= Calendar.strftime(v.saved_at, "%Y-%m-%d %H:%M:%S") %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="atrium-card">
+        <AtriumWeb.Components.HistoryView.history events={@history} title="Audit history" />
+      </div>
+    </div>
+  </div>
+</div>

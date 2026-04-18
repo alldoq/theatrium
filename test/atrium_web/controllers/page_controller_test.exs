@@ -10,8 +10,8 @@ defmodule AtriumWeb.PageControllerTest do
     {:ok, tenant: tenant}
   end
 
-  test "GET / renders tenant name", %{conn: conn, tenant: tenant} do
+  test "GET / redirects to /login when unauthenticated", %{conn: conn} do
     conn = conn |> Map.put(:host, "page_test.atrium.example") |> get("/")
-    assert html_response(conn, 200) =~ tenant.name
+    assert redirected_to(conn) == "/login"
   end
 end

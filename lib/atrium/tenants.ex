@@ -33,9 +33,18 @@ defmodule Atrium.Tenants do
 
   @spec update_tenant(Tenant.t(), map()) :: {:ok, Tenant.t()} | {:error, Ecto.Changeset.t()}
   def update_tenant(tenant, attrs) do
-    tenant
-    |> Tenant.update_changeset(attrs)
-    |> Repo.update()
+    case tenant |> Tenant.update_changeset(attrs) |> Repo.update() do
+      {:ok, updated} = ok ->
+        prefix = "tenant_#{updated.slug}"
+        if Triplex.exists?(prefix), do: Atrium.Tenants.Seed.ensure_default_acls(prefix)
+        ok
+      err -> err
+    end
+  end
+
+  @spec ensure_default_acls(Tenant.t()) :: :ok
+  def ensure_default_acls(%Tenant{slug: slug}) do
+    Atrium.Tenants.Seed.ensure_default_acls("tenant_#{slug}")
   end
 
   @spec update_status(Tenant.t(), String.t()) :: {:ok, Tenant.t()} | {:error, term()}

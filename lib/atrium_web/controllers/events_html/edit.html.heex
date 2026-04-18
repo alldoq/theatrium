@@ -27,9 +27,8 @@
             value={Ecto.Changeset.get_field(@changeset, :title) || ""}
             required
           />
-          <%= if msg = List.first(Keyword.get(@changeset.errors, :title, [])) do %>
-            <p style="font-size:.8125rem;color:var(--color-error,#ef4444);margin-top:4px"><%= elem(msg, 0) %></p>
-          <% end %>
+          <% title_err = @changeset.action && List.first(Keyword.get_values(@changeset.errors, :title)) %>
+          <%= if title_err do %><p style="font-size:.8125rem;color:var(--color-error,#ef4444);margin-top:4px"><%= elem(title_err, 0) %></p><% end %>
         </div>
 
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
@@ -43,9 +42,8 @@
               value={AtriumWeb.EventsHTML.format_input_datetime(Ecto.Changeset.get_field(@changeset, :starts_at))}
               required
             />
-            <%= if msg = List.first(Keyword.get(@changeset.errors, :starts_at, [])) do %>
-              <p style="font-size:.8125rem;color:var(--color-error,#ef4444);margin-top:4px"><%= elem(msg, 0) %></p>
-            <% end %>
+            <% starts_at_err = @changeset.action && List.first(Keyword.get_values(@changeset.errors, :starts_at)) %>
+            <%= if starts_at_err do %><p style="font-size:.8125rem;color:var(--color-error,#ef4444);margin-top:4px"><%= elem(starts_at_err, 0) %></p><% end %>
           </div>
 
           <div>
@@ -57,9 +55,8 @@
               class="atrium-input"
               value={AtriumWeb.EventsHTML.format_input_datetime(Ecto.Changeset.get_field(@changeset, :ends_at))}
             />
-            <%= if msg = List.first(Keyword.get(@changeset.errors, :ends_at, [])) do %>
-              <p style="font-size:.8125rem;color:var(--color-error,#ef4444);margin-top:4px"><%= elem(msg, 0) %></p>
-            <% end %>
+            <% ends_at_err = @changeset.action && List.first(Keyword.get_values(@changeset.errors, :ends_at)) %>
+            <%= if ends_at_err do %><p style="font-size:.8125rem;color:var(--color-error,#ef4444);margin-top:4px"><%= elem(ends_at_err, 0) %></p><% end %>
           </div>
         </div>
 

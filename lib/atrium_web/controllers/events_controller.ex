@@ -13,17 +13,32 @@ defmodule AtriumWeb.EventsController do
   def index(conn, params) do
     prefix = conn.assigns.tenant_prefix
     user = conn.assigns.current_user
+    today = Date.utc_today()
+
+    view = parse_view(params)
 
     {year, month} = parse_year_month(params)
+    week_start = parse_week_start(params, today)
+    day = parse_day(params, today)
 
-    events = Events.list_events_for_month(prefix, year, month)
+    events =
+      case view do
+        "month" -> Events.list_events_for_month(prefix, year, month)
+        "week" -> Events.list_events_for_week(prefix, week_start)
+        "day" -> Events.list_events_for_day(prefix, day)
+      end
+
     upcoming = Events.list_upcoming_events(prefix, DateTime.utc_now(), 10)
     can_edit = Atrium.Authorization.Policy.can?(prefix, user, :edit, {:section, "events"})
 
     render(conn, :index,
       events: events,
+      view: view,
       year: year,
       month: month,
+      week_start: week_start,
+      day: day,
+      today: today,
       upcoming: upcoming,
       can_edit: can_edit
     )
@@ -100,6 +115,9 @@ defmodule AtriumWeb.EventsController do
     end
   end
 
+  defp parse_view(%{"view" => v}) when v in ~w(month week day), do: v
+  defp parse_view(_), do: "month"
+
   defp parse_year_month(%{"year" => y, "month" => m}) do
     year = String.to_integer(y)
     month = String.to_integer(m)
@@ -113,6 +131,22 @@ defmodule AtriumWeb.EventsController do
     today = Date.utc_today()
     {today.year, today.month}
   end
+
+  defp parse_week_start(%{"week" => w}, _today) do
+    case Date.from_iso8601(w) do
+      {:ok, d} -> Date.beginning_of_week(d)
+      _ -> Date.beginning_of_week(Date.utc_today())
+    end
+  end
+  defp parse_week_start(_, today), do: Date.beginning_of_week(today)
+
+  defp parse_day(%{"day" => d}, _today) do
+    case Date.from_iso8601(d) do
+      {:ok, date} -> date
+      _ -> Date.utc_today()
+    end
+  end
+  defp parse_day(_, today), do: today
 
   defp changeset_for_new do
     Atrium.Events.Event.changeset(%Atrium.Events.Event{}, %{})

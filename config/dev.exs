@@ -25,7 +25,8 @@ config :atrium, AtriumWeb.Endpoint,
   debug_errors: true,
   secret_key_base: "+gD8zMpHIox3rDCN31KrSri7TuEGy4sM2WRFAOELsJsYatK2G+Q1oUKodSmXoqtK",
   watchers: [
-    esbuild: {Esbuild, :install_and_run, [:atrium, ~w(--sourcemap=inline --watch)]},
+    node: ["--max-old-space-size=4096", "node_modules/.bin/vite", "build", "--watch",
+           cd: Path.expand("../assets", __DIR__)],
     tailwind: {Tailwind, :install_and_run, [:atrium, ~w(--watch)]}
   ]
 

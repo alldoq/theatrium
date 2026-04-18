@@ -1,5 +1,23 @@
-<main class="p-8">
-  <h1 class="text-xl font-semibold"><%= @tenant.name %> (<%= @tenant.slug %>)</h1>
-  <p class="text-gray-600">Status: <%= @tenant.status %></p>
-  <.link navigate={~p"/super/tenants/#{@tenant.id}/edit"} class="inline-block mt-4 rounded bg-slate-900 text-white px-3 py-1">Edit</.link>
-</main>
+<div class="atrium-anim">
+  <div style="margin-bottom:20px">
+    <a href={~p"/super/tenants"} style="font-size:.8125rem;color:var(--text-tertiary)">← Tenants</a>
+  </div>
+
+  <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:24px">
+    <div>
+      <div class="atrium-page-eyebrow">Platform</div>
+      <h1 class="atrium-page-title"><%= @tenant.name %></h1>
+      <div style="display:flex;align-items:center;gap:10px;margin-top:6px">
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:.8125rem;color:var(--text-tertiary)"><%= @tenant.slug %></span>
+        <span class={"atrium-badge atrium-badge-#{if @tenant.status == "active", do: "published", else: "draft"}"}><%= @tenant.status %></span>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px">
+      <form method="post" action={~p"/super/tenants/#{@tenant.id}/reseed_acls"}>
+        <input type="hidden" name="_csrf_token" value={Plug.CSRFProtection.get_csrf_token()} />
+        <button class="atrium-btn atrium-btn-ghost" title="Re-seed default section ACLs for all groups">Reseed ACLs</button>
+      </form>
+      <.link navigate={~p"/super/tenants/#{@tenant.id}/edit"} class="atrium-btn atrium-btn-ghost">Edit</.link>
+    </div>
+  </div>
+</div>
