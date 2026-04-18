@@ -1,0 +1,80 @@
+<header class="atrium-topbar">
+  <div class="atrium-topbar-brand">
+    <div class="atrium-brand-icon">
+      <svg viewBox="0 0 16 16"><path d="M8 1L2 5v8h4v-4h4v4h4V5L8 1z"/></svg>
+    </div>
+    <span class="atrium-brand-name">Atrium Platform</span>
+  </div>
+  <div class="atrium-brand-sep"></div>
+  <div class="atrium-topbar-spacer"></div>
+  <div class="atrium-topbar-actions">
+    <.link href={~p"/super/logout"} method="delete" class="atrium-topbar-btn" title="Sign out">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75">
+        <path d="M6 3H3a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h3M10 11l3-3-3-3M13 8H6" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </.link>
+  </div>
+</header>
+
+<div class="atrium-layout">
+  <nav class="atrium-sidebar">
+    <div class="atrium-sidebar-section">
+      <a href={~p"/super"} class="atrium-sidebar-item">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75">
+          <rect x="2" y="2" width="5" height="5" rx=".75" stroke-linejoin="round"/>
+          <rect x="9" y="2" width="5" height="5" rx=".75" stroke-linejoin="round"/>
+          <rect x="2" y="9" width="5" height="5" rx=".75" stroke-linejoin="round"/>
+          <rect x="9" y="9" width="5" height="5" rx=".75" stroke-linejoin="round"/>
+        </svg>
+        Dashboard
+      </a>
+    </div>
+    <div class="atrium-sidebar-section">
+      <% sections_active = String.starts_with?(@conn.request_path, "/super/sections") %>
+      <a href={~p"/super/sections"} class={"atrium-sidebar-item#{if sections_active, do: " active", else: ""}"}>
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75">
+          <rect x="2" y="2" width="5" height="5" rx=".75" stroke-linejoin="round"/>
+          <rect x="9" y="2" width="5" height="5" rx=".75" stroke-linejoin="round"/>
+          <rect x="2" y="9" width="5" height="5" rx=".75" stroke-linejoin="round"/>
+          <rect x="9" y="9" width="5" height="5" rx=".75" stroke-linejoin="round"/>
+        </svg>
+        Sections
+      </a>
+    </div>
+    <div class="atrium-sidebar-section">
+      <div class="atrium-sidebar-label">Tenants</div>
+      <%= for tenant <- @all_tenants do %>
+        <% tenant_active = String.contains?(@conn.request_path, "/super/tenants/#{tenant.id}")
+           show_active = @conn.request_path == "/super/tenants/#{tenant.id}"
+           edit_active = @conn.request_path == "/super/tenants/#{tenant.id}/edit"
+        %>
+        <a href={~p"/super/tenants/#{tenant.id}"} class={"atrium-sidebar-item#{if tenant_active, do: " active", else: ""}"}>
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75">
+            <path d="M8 1L2 5v8h4v-4h4v4h4V5L8 1z" stroke-linejoin="round"/>
+          </svg>
+          <%= tenant.name %>
+        </a>
+        <%= if tenant_active do %>
+          <a href={~p"/super/tenants/#{tenant.id}"} class={"atrium-sidebar-item#{if show_active, do: " active", else: ""}"} style="padding-left:28px;font-size:.8125rem">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75">
+              <circle cx="8" cy="8" r="5.5"/>
+              <path d="M8 5v3.5l2 2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            Overview
+          </a>
+          <a href={~p"/super/tenants/#{tenant.id}/edit"} class={"atrium-sidebar-item#{if edit_active, do: " active", else: ""}"} style="padding-left:28px;font-size:.8125rem">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75">
+              <path d="M11 2.5a1.5 1.5 0 0 1 2.5 1.5L5 12.5 2 13.5l1-3L11 2.5z" stroke-linejoin="round" stroke-linecap="round"/>
+            </svg>
+            Edit
+          </a>
+        <% end %>
+      <% end %>
+    </div>
+  </nav>
+
+  <main class="atrium-main">
+    <.flash_group flash={@flash} />
+    {@inner_content}
+  </main>
+</div>
