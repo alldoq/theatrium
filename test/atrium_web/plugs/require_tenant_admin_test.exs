@@ -25,6 +25,21 @@ defmodule AtriumWeb.Plugs.RequireTenantAdminTest do
     assert conn.status == 403
   end
 
+  test "returns 403 when current_user is suspended admin" do
+    conn =
+      build_conn()
+      |> assign(:current_user, %Atrium.Accounts.User{
+          id: Ecto.UUID.generate(),
+          email: "u@test.com",
+          name: "U",
+          status: "suspended",
+          is_admin: true
+        })
+      |> RequireTenantAdmin.call([])
+    assert conn.halted
+    assert conn.status == 403
+  end
+
   test "returns 403 when current_user is nil" do
     conn = build_conn() |> assign(:current_user, nil) |> RequireTenantAdmin.call([])
     assert conn.halted

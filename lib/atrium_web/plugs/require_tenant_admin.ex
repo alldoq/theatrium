@@ -5,7 +5,7 @@ defmodule AtriumWeb.Plugs.RequireTenantAdmin do
 
   def call(conn, _opts) do
     case conn.assigns[:current_user] do
-      %{is_admin: true} ->
+      %{is_admin: true, status: "active"} ->
         conn
 
       _ ->
