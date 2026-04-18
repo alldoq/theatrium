@@ -113,6 +113,14 @@ defmodule AtriumWeb.Router do
 
       get "/helpdesk", HelpdeskController, :index
 
+      get  "/events",              EventsController, :index
+      get  "/events/new",          EventsController, :new
+      post "/events",              EventsController, :create
+      get  "/events/:id",          EventsController, :show
+      get  "/events/:id/edit",     EventsController, :edit
+      put  "/events/:id",          EventsController, :update
+      post "/events/:id/delete",   EventsController, :delete
+
       get  "/tools",                              ToolsController, :index
       post "/tools",                              ToolsController, :create_tool
       post "/tools/:id/delete",                   ToolsController, :delete_tool

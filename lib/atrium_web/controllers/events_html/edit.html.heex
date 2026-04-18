@@ -70,7 +70,7 @@
             id="event_all_day"
             value="true"
             style="accent-color:var(--blue-500);width:15px;height:15px"
-            <%= if Ecto.Changeset.get_field(@changeset, :all_day), do: "checked" %>
+            {if Ecto.Changeset.get_field(@changeset, :all_day), do: [checked: "checked"], else: []}
           />
           <label for="event_all_day" style="font-size:.875rem;color:var(--text-secondary);cursor:pointer">All-day event</label>
         </div>
