@@ -135,15 +135,21 @@ defmodule AtriumWeb.LearningController do
   def complete(conn, %{"id" => id}) do
     prefix = conn.assigns.tenant_prefix
     user = conn.assigns.current_user
-    Learning.complete_course(prefix, id, user.id)
-    conn |> redirect(to: ~p"/learning/#{id}")
+    case Learning.complete_course(prefix, id, user.id) do
+      {:ok, _} -> conn |> redirect(to: ~p"/learning/#{id}")
+      {:error, _} ->
+        conn |> put_flash(:error, "Could not mark as complete.") |> redirect(to: ~p"/learning/#{id}")
+    end
   end
 
   def uncomplete(conn, %{"id" => id}) do
     prefix = conn.assigns.tenant_prefix
     user = conn.assigns.current_user
-    Learning.uncomplete_course(prefix, id, user.id)
-    conn |> redirect(to: ~p"/learning/#{id}")
+    case Learning.uncomplete_course(prefix, id, user.id) do
+      :ok -> conn |> redirect(to: ~p"/learning/#{id}")
+      {:error, _} ->
+        conn |> put_flash(:error, "Could not remove completion.") |> redirect(to: ~p"/learning/#{id}")
+    end
   end
 
   def add_material(conn, %{"id" => id, "material" => params}) do
@@ -160,7 +166,7 @@ defmodule AtriumWeb.LearningController do
 
   def delete_material(conn, %{"id" => id, "mid" => mid}) do
     prefix = conn.assigns.tenant_prefix
-    Learning.delete_material(prefix, mid)
+    Learning.delete_material(prefix, id, mid)
     conn |> put_flash(:info, "Material removed.") |> redirect(to: ~p"/learning/#{id}/edit")
   end
 end

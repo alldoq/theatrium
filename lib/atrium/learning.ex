@@ -95,8 +95,10 @@ defmodule Atrium.Learning do
     |> Repo.insert(prefix: prefix)
   end
 
-  def delete_material(prefix, material_id) do
-    case Repo.get(CourseMaterial, material_id, prefix: prefix) do
+  def delete_material(prefix, course_id, material_id) do
+    query = from(m in CourseMaterial,
+      where: m.id == ^material_id and m.course_id == ^course_id)
+    case Repo.one(query, prefix: prefix) do
       nil -> {:error, :not_found}
       material -> Repo.delete(material, prefix: prefix)
     end
