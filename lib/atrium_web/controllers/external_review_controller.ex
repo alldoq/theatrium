@@ -24,7 +24,7 @@ defmodule AtriumWeb.ExternalReviewController do
     case Forms.get_review_by_token(token) do
       {:ok, review, prefix} ->
         if review.status == "completed" do
-          conn |> put_flash(:info, "This review has already been completed.") |> render(:show, review: review, token: token, already_done: true)
+          conn |> put_flash(:info, "This review has already been completed.") |> redirect(to: ~p"/forms/review/#{token}")
         else
           case Forms.complete_review(prefix, review, nil) do
             {:ok, _} -> conn |> put_flash(:info, "Review marked as complete. Thank you.") |> redirect(to: ~p"/forms/review/#{token}")

@@ -47,11 +47,11 @@ defmodule AtriumWeb.ExternalReviewControllerTest do
       assert conn.status == 400
     end
 
-    test "returns 400 for expired token", %{conn: conn, sub: sub} do
+    test "returns 400 for expired token", %{conn: conn, sub: sub, prefix: prefix} do
       expired_token = Phoenix.Token.sign(AtriumWeb.Endpoint, "form_review", %{
         "submission_id" => sub.id,
         "reviewer_email" => "reviewer@external.com",
-        "prefix" => "tenant_ext_review_test"
+        "prefix" => prefix
       }, signed_at: System.system_time(:second) - 31 * 24 * 3600)
       conn = get(conn, "/forms/review/#{expired_token}")
       assert conn.status == 400
@@ -66,10 +66,10 @@ defmodule AtriumWeb.ExternalReviewControllerTest do
       assert updated.status == "completed"
     end
 
-    test "already-completed review shows graceful message", %{conn: conn, token: token, prefix: prefix, review: review} do
+    test "already-completed review redirects with flash", %{conn: conn, token: token, prefix: prefix, review: review} do
       {:ok, _} = Forms.complete_review(prefix, review, nil)
       conn = post(conn, "/forms/review/#{token}/complete")
-      assert html_response(conn, 200) =~ "already been completed"
+      assert redirected_to(conn) =~ "/forms/review/#{token}"
     end
   end
 end

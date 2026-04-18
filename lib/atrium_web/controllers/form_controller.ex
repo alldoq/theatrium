@@ -95,18 +95,22 @@ defmodule AtriumWeb.FormController do
     end
   end
 
-  def publish(conn, %{"section_key" => section_key, "id" => id, "form" => %{"fields" => fields_json}}) do
+  def publish(conn, %{"section_key" => section_key, "id" => id} = params) do
     prefix = conn.assigns.tenant_prefix
     user = conn.assigns.current_user
     form = Forms.get_form!(prefix, id)
-    fields = Jason.decode!(fields_json)
+    fields_json = get_in(params, ["form", "fields"]) || "[]"
 
-    case Forms.publish_form(prefix, form, fields, user) do
-      {:ok, _} ->
-        conn |> put_flash(:info, "Form published.") |> redirect(to: ~p"/sections/#{section_key}/forms/#{id}")
-
+    case Jason.decode(fields_json) do
+      {:ok, fields} ->
+        case Forms.publish_form(prefix, form, fields, user) do
+          {:ok, _} ->
+            conn |> put_flash(:info, "Form published.") |> redirect(to: ~p"/sections/#{section_key}/forms/#{id}")
+          {:error, _} ->
+            conn |> put_flash(:error, "Could not publish form.") |> redirect(to: ~p"/sections/#{section_key}/forms/#{id}/edit")
+        end
       {:error, _} ->
-        conn |> put_flash(:error, "Could not publish form.") |> redirect(to: ~p"/sections/#{section_key}/forms/#{id}/edit")
+        conn |> put_flash(:error, "Invalid field data.") |> redirect(to: ~p"/sections/#{section_key}/forms/#{id}/edit")
     end
   end
 
