@@ -42,7 +42,12 @@ defmodule Atrium.Documents.Document do
     |> validate_inclusion(:status, @statuses)
   end
 
-  def version_bump_changeset(doc) do
+  def version_bump_changeset(%Ecto.Changeset{} = cs) do
+    current = cs.data.current_version
+    change(cs, current_version: current + 1)
+  end
+
+  def version_bump_changeset(%__MODULE__{} = doc) do
     change(doc, current_version: doc.current_version + 1)
   end
 end
