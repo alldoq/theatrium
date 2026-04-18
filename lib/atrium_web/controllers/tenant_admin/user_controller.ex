@@ -105,6 +105,24 @@ defmodule AtriumWeb.TenantAdmin.UserController do
     end
   end
 
+  def edit_profile(conn, %{"id" => id}) do
+    prefix = conn.assigns.tenant_prefix
+    user = Accounts.get_user!(prefix, id)
+    render(conn, :edit_profile, profile_user: user)
+  end
+
+  def update_profile(conn, %{"id" => id, "user" => params}) do
+    prefix = conn.assigns.tenant_prefix
+    user = Accounts.get_user!(prefix, id)
+
+    case Accounts.update_profile(prefix, user, params) do
+      {:ok, _} ->
+        conn |> put_flash(:info, "Profile updated.") |> redirect(to: ~p"/directory/#{id}")
+      {:error, _cs} ->
+        conn |> put_flash(:error, "Could not update profile.") |> render(:edit_profile, profile_user: user)
+    end
+  end
+
   def restore(conn, %{"id" => id}) do
     prefix = conn.assigns.tenant_prefix
     user = Accounts.get_user!(prefix, id)

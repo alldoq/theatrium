@@ -1,0 +1,49 @@
+<div class="atrium-anim" style="max-width:640px">
+  <div style="margin-bottom:20px">
+    <a href={~p"/directory"} style="font-size:.8125rem;color:var(--text-tertiary);text-decoration:none">← Directory</a>
+  </div>
+
+  <div class="atrium-card" style="margin-bottom:16px">
+    <div class="atrium-card-body" style="display:flex;align-items:center;gap:20px">
+      <div class="atrium-user-avatar" style="width:64px;height:64px;font-size:1.25rem;flex-shrink:0">
+        <%= @profile.name |> String.split() |> Enum.map(&String.first/1) |> Enum.take(2) |> Enum.join() %>
+      </div>
+      <div style="flex:1;min-width:0">
+        <h1 style="font-size:1.25rem;font-weight:700;color:var(--text-primary);margin-bottom:2px"><%= @profile.name %></h1>
+        <%= if @profile.role do %>
+          <div style="font-size:.9375rem;color:var(--text-secondary)"><%= @profile.role %></div>
+        <% end %>
+        <%= if @profile.department do %>
+          <div style="font-size:.875rem;color:var(--text-tertiary)"><%= @profile.department %></div>
+        <% end %>
+      </div>
+      <%= if @conn.assigns.current_user.is_admin do %>
+        <div style="flex-shrink:0">
+          <a href={~p"/admin/users/#{@profile.id}/profile"} class="atrium-btn atrium-btn-ghost" style="height:28px;font-size:.8125rem">Edit profile</a>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <div class="atrium-card">
+    <div class="atrium-card-header"><div class="atrium-card-title">Contact</div></div>
+    <div class="atrium-card-body" style="display:flex;flex-direction:column;gap:10px">
+      <div style="display:flex;gap:12px">
+        <span style="font-size:.8125rem;color:var(--text-tertiary);width:80px;flex-shrink:0">Email</span>
+        <a href={"mailto:#{@profile.email}"} style="font-size:.875rem;color:var(--blue-500)"><%= @profile.email %></a>
+      </div>
+      <%= if @profile.phone do %>
+        <div style="display:flex;gap:12px">
+          <span style="font-size:.8125rem;color:var(--text-tertiary);width:80px;flex-shrink:0">Phone</span>
+          <span style="font-size:.875rem;color:var(--text-primary)"><%= @profile.phone %></span>
+        </div>
+      <% end %>
+      <%= if @profile.bio do %>
+        <div style="display:flex;gap:12px">
+          <span style="font-size:.8125rem;color:var(--text-tertiary);width:80px;flex-shrink:0">Bio</span>
+          <span style="font-size:.875rem;color:var(--text-primary)"><%= @profile.bio %></span>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>

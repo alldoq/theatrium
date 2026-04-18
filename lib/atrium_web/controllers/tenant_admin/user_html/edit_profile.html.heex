@@ -1,0 +1,43 @@
+<div class="atrium-anim" style="max-width:560px">
+  <div style="margin-bottom:20px">
+    <a href={~p"/admin/users/#{@profile_user.id}"} style="font-size:.8125rem;color:var(--text-tertiary);text-decoration:none">← <%= @profile_user.name %></a>
+  </div>
+
+  <div style="margin-bottom:24px">
+    <div class="atrium-page-eyebrow">Admin</div>
+    <h1 class="atrium-page-title">Edit profile</h1>
+  </div>
+
+  <form method="post" action={~p"/admin/users/#{@profile_user.id}/profile"}>
+    <input type="hidden" name="_csrf_token" value={Plug.CSRFProtection.get_csrf_token()} />
+    <input type="hidden" name="_method" value="put" />
+    <div class="atrium-card">
+      <div class="atrium-card-body" style="display:flex;flex-direction:column;gap:16px">
+        <div>
+          <label class="atrium-label">Name</label>
+          <input type="text" name="user[name]" value={@profile_user.name} class="atrium-input" required />
+        </div>
+        <div>
+          <label class="atrium-label">Role</label>
+          <input type="text" name="user[role]" value={@profile_user.role} class="atrium-input" placeholder="e.g. Software Engineer" />
+        </div>
+        <div>
+          <label class="atrium-label">Department</label>
+          <input type="text" name="user[department]" value={@profile_user.department} class="atrium-input" placeholder="e.g. Engineering" />
+        </div>
+        <div>
+          <label class="atrium-label">Phone</label>
+          <input type="text" name="user[phone]" value={@profile_user.phone} class="atrium-input" placeholder="+1 555 000 0000" />
+        </div>
+        <div>
+          <label class="atrium-label">Bio</label>
+          <textarea name="user[bio]" class="atrium-input" rows="4" placeholder="Short bio…" style="resize:vertical"><%= @profile_user.bio %></textarea>
+        </div>
+      </div>
+      <div class="atrium-card-footer" style="display:flex;gap:8px;justify-content:flex-end">
+        <a href={~p"/admin/users/#{@profile_user.id}"} class="atrium-btn atrium-btn-ghost">Cancel</a>
+        <button type="submit" class="atrium-btn atrium-btn-primary">Save profile</button>
+      </div>
+    </div>
+  </form>
+</div>

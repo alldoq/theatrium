@@ -1,0 +1,47 @@
+<div class="atrium-anim">
+  <div style="margin-bottom:24px">
+    <div class="atrium-page-eyebrow">Directory</div>
+    <h1 class="atrium-page-title">Employee Directory</h1>
+  </div>
+
+  <form method="get" action={~p"/directory"} style="margin-bottom:20px">
+    <div style="position:relative;max-width:400px">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75" style="width:14px;height:14px;position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text-tertiary);pointer-events:none">
+        <circle cx="7" cy="7" r="4.5"/><path d="M11 11l2.5 2.5" stroke-linecap="round"/>
+      </svg>
+      <input type="text" name="q" value={@query} placeholder="Search by name, role, or department…"
+             class="atrium-input" style="padding-left:32px" />
+    </div>
+  </form>
+
+  <%= if @users == [] do %>
+    <div style="padding:40px;text-align:center;color:var(--text-tertiary)">
+      <%= if @query != "", do: "No results for \"#{@query}\".", else: "No users yet." %>
+    </div>
+  <% end %>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px">
+    <%= for user <- @users do %>
+      <a href={~p"/directory/#{user.id}"} style="text-decoration:none">
+        <div class="atrium-card" style="transition:border-color .15s"
+          onmouseover="this.style.borderColor='var(--blue-500)'"
+          onmouseout="this.style.borderColor='var(--border)'">
+          <div class="atrium-card-body" style="display:flex;align-items:center;gap:12px">
+            <div class="atrium-user-avatar" style="width:40px;height:40px;font-size:.875rem;flex-shrink:0">
+              <%= user.name |> String.split() |> Enum.map(&String.first/1) |> Enum.take(2) |> Enum.join() %>
+            </div>
+            <div style="min-width:0">
+              <div style="font-weight:600;font-size:.875rem;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis"><%= user.name %></div>
+              <%= if user.role do %>
+                <div style="font-size:.8125rem;color:var(--text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis"><%= user.role %></div>
+              <% end %>
+              <%= if user.department do %>
+                <div style="font-size:.75rem;color:var(--text-tertiary)"><%= user.department %></div>
+              <% end %>
+            </div>
+          </div>
+        </div>
+      </a>
+    <% end %>
+  </div>
+</div>
