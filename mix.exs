@@ -65,7 +65,8 @@ defmodule Atrium.MixProject do
       {:swoosh, "~> 1.16"},
       {:assent, "~> 0.2"},
       {:jose, "~> 1.11"},
-      {:plug_cowboy, "~> 2.7"}
+      {:plug_cowboy, "~> 2.7"},
+      {:samly, "~> 1.4"}
     ]
   end
 

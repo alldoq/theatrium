@@ -58,6 +58,12 @@ defmodule AtriumWeb.Router do
     get "/password-reset/:token", PasswordResetController, :edit
     post "/password-reset/:token", PasswordResetController, :update
 
+    get "/auth/oidc/callback", OidcController, :callback
+    get "/auth/oidc/:id/start", OidcController, :start
+
+    get "/auth/saml/:id/start", SamlController, :start
+    post "/auth/saml/callback", SamlController, :consume
+
     scope "/" do
       pipe_through [AtriumWeb.Plugs.RequireUser]
       get "/", PageController, :home
