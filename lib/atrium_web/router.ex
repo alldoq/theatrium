@@ -73,6 +73,17 @@ defmodule AtriumWeb.Router do
       get "/", PageController, :home
       get "/audit", AuditViewerController, :index
       get "/audit/export", AuditViewerController, :export
+
+      get  "/sections/:section_key/documents",             DocumentController, :index
+      get  "/sections/:section_key/documents/new",         DocumentController, :new
+      post "/sections/:section_key/documents",             DocumentController, :create
+      get  "/sections/:section_key/documents/:id",         DocumentController, :show
+      get  "/sections/:section_key/documents/:id/edit",    DocumentController, :edit
+      put  "/sections/:section_key/documents/:id",         DocumentController, :update
+      post "/sections/:section_key/documents/:id/submit",  DocumentController, :submit
+      post "/sections/:section_key/documents/:id/reject",  DocumentController, :reject
+      post "/sections/:section_key/documents/:id/approve", DocumentController, :approve
+      post "/sections/:section_key/documents/:id/archive", DocumentController, :archive
     end
   end
 
