@@ -69,7 +69,7 @@ defmodule AtriumWeb.Router do
     post "/auth/saml/callback", SamlController, :consume
 
     scope "/" do
-      pipe_through [AtriumWeb.Plugs.RequireUser]
+      pipe_through [AtriumWeb.Plugs.RequireUser, AtriumWeb.Plugs.AssignNav]
       get "/", PageController, :home
     end
   end

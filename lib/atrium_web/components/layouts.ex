@@ -23,50 +23,66 @@ defmodule AtriumWeb.Layouts do
   """
   attr :flash, :map, required: true, doc: "the map of flash messages"
 
-  attr :current_scope, :map,
-    default: nil,
-    doc: "the current [scope](https://hexdocs.pm/phoenix/scopes.html)"
-
   slot :inner_block, required: true
 
   def app(assigns) do
     ~H"""
-    <header class="navbar px-4 sm:px-6 lg:px-8">
-      <div class="flex-1">
-        <a href="/" class="flex-1 flex w-fit items-center gap-2">
-          <img src={~p"/images/logo.svg"} width="36" />
-          <span class="text-sm font-semibold">v{Application.spec(:phoenix, :vsn)}</span>
-        </a>
-      </div>
-      <div class="flex-none">
-        <ul class="flex flex-column px-1 space-x-4 items-center">
-          <li>
-            <a href="https://phoenixframework.org/" class="btn btn-ghost">Website</a>
-          </li>
-          <li>
-            <a href="https://github.com/phoenixframework/phoenix" class="btn btn-ghost">GitHub</a>
-          </li>
-          <li>
-            <.theme_toggle />
-          </li>
-          <li>
-            <a href="https://hexdocs.pm/phoenix/overview.html" class="btn btn-primary">
-              Get Started <span aria-hidden="true">&rarr;</span>
-            </a>
-          </li>
-        </ul>
-      </div>
-    </header>
+    <div class="flex min-h-screen">
+      <nav class="w-64 border-r bg-slate-50 p-4" style="background-color: var(--color-primary); color: white;">
+        <%= if assigns[:tenant] do %>
+          <div class="mb-6">
+            <%= if assigns[:tenant].theme["logo_url"] do %>
+              <img src={@tenant.theme["logo_url"]} alt={@tenant.name} class="h-8" />
+            <% else %>
+              <h1 class="text-lg font-semibold"><%= @tenant.name %></h1>
+            <% end %>
+          </div>
+        <% end %>
 
-    <main class="px-4 py-20 sm:px-6 lg:px-8">
-      <div class="mx-auto max-w-2xl space-y-4">
+        <%= if assigns[:nav] do %>
+          <ul class="space-y-1">
+            <%= for entry <- @nav do %>
+              <li>
+                <.link href={"/sections/#{entry.key}"} class="block rounded px-2 py-1 hover:bg-white/10">
+                  <%= entry.name %>
+                </.link>
+                <%= if entry.children != [] do %>
+                  <ul class="ml-4 mt-1 space-y-1">
+                    <%= for c <- entry.children do %>
+                      <li>
+                        <.link href={"/sections/#{entry.key}/#{c.slug}"} class="block rounded px-2 py-1 text-sm hover:bg-white/10">
+                          <%= c.name %>
+                        </.link>
+                      </li>
+                    <% end %>
+                  </ul>
+                <% end %>
+              </li>
+            <% end %>
+          </ul>
+        <% end %>
+      </nav>
+
+      <main class="flex-1 p-8">
         {render_slot(@inner_block)}
-      </div>
-    </main>
+      </main>
+    </div>
 
     <.flash_group flash={@flash} />
     """
   end
+
+  def theme_style(%{tenant: %{theme: theme}}) when is_map(theme) do
+    [
+      {"--color-primary", Map.get(theme, "primary", "#0F172A")},
+      {"--color-secondary", Map.get(theme, "secondary", "#64748B")},
+      {"--color-accent", Map.get(theme, "accent", "#2563EB")},
+      {"--font-sans", Map.get(theme, "font", "Inter, system-ui, sans-serif")}
+    ]
+    |> Enum.map_join("; ", fn {k, v} -> "#{k}: #{v}" end)
+  end
+
+  def theme_style(_), do: ""
 
   @doc """
   Shows the flash group with standard titles and content.
