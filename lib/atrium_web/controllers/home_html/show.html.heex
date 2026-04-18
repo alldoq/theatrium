@@ -1,0 +1,132 @@
+<div class="atrium-anim">
+  <div style="margin-bottom:28px">
+    <div class="atrium-page-eyebrow">Home</div>
+    <h1 class="atrium-page-title">Welcome to <%= @conn.assigns.tenant.name %></h1>
+  </div>
+
+  <div class="atrium-card" style="margin-bottom:20px">
+    <div class="atrium-card-header" style="display:flex;align-items:center;justify-content:space-between">
+      <div class="atrium-card-title">Quick links</div>
+      <%= if Atrium.Authorization.Policy.can?(@conn.assigns.tenant_prefix, @conn.assigns.current_user, :edit, {:section, :home}) do %>
+        <button onclick="document.getElementById('add-link-form').style.display = document.getElementById('add-link-form').style.display === 'none' ? 'block' : 'none'" class="atrium-btn atrium-btn-ghost" style="height:28px;font-size:.8125rem">+ Add link</button>
+      <% end %>
+    </div>
+    <div class="atrium-card-body">
+      <%= if @quick_links == [] do %>
+        <p style="color:var(--text-tertiary);font-size:.875rem">No quick links yet.</p>
+      <% end %>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-bottom:12px">
+        <%= for link <- @quick_links do %>
+          <div style="position:relative">
+            <a href={link.url} target="_blank" rel="noopener noreferrer"
+               style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:16px 12px;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);text-decoration:none;color:var(--text-primary);font-size:.875rem;font-weight:500;text-align:center;transition:border-color .15s,background .15s"
+               onmouseover="this.style.borderColor='var(--blue-500)';this.style.background='var(--blue-50)'"
+               onmouseout="this.style.borderColor='var(--border)';this.style.background='var(--surface)'">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75" style="width:20px;height:20px;color:var(--blue-500)">
+                <path d="M6.5 3.5H3a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1v-3.5M9.5 2H14v4.5M14 2l-7 7" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              <%= link.label %>
+            </a>
+            <%= if Atrium.Authorization.Policy.can?(@conn.assigns.tenant_prefix, @conn.assigns.current_user, :edit, {:section, :home}) do %>
+              <form method="post" action={~p"/home/quick_links/#{link.id}/delete"} style="position:absolute;top:4px;right:4px">
+                <input type="hidden" name="_csrf_token" value={Plug.CSRFProtection.get_csrf_token()} />
+                <button type="submit" style="border:none;background:none;cursor:pointer;padding:2px;color:var(--text-tertiary);line-height:1" onmouseover="this.style.color='var(--color-error,#ef4444)'" onmouseout="this.style.color='var(--text-tertiary)'" title="Remove">
+                  <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75" style="width:12px;height:12px">
+                    <path d="M2 2l12 12M14 2L2 14" stroke-linecap="round"/>
+                  </svg>
+                </button>
+              </form>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+      <%= if Atrium.Authorization.Policy.can?(@conn.assigns.tenant_prefix, @conn.assigns.current_user, :edit, {:section, :home}) do %>
+        <div id="add-link-form" style="display:none;border-top:1px solid var(--border);padding-top:14px;margin-top:4px">
+          <form method="post" action={~p"/home/quick_links"} style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end">
+            <input type="hidden" name="_csrf_token" value={Plug.CSRFProtection.get_csrf_token()} />
+            <div>
+              <label class="atrium-label">Label</label>
+              <input type="text" name="quick_link[label]" class="atrium-input" style="width:160px" placeholder="HR Portal" required />
+            </div>
+            <div>
+              <label class="atrium-label">URL</label>
+              <input type="url" name="quick_link[url]" class="atrium-input" style="width:220px" placeholder="https://..." required />
+            </div>
+            <button type="submit" class="atrium-btn atrium-btn-primary" style="margin-bottom:1px">Add</button>
+          </form>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+    <h2 style="font-size:1rem;font-weight:600;color:var(--text-primary)">Announcements</h2>
+    <%= if Atrium.Authorization.Policy.can?(@conn.assigns.tenant_prefix, @conn.assigns.current_user, :edit, {:section, :home}) do %>
+      <button onclick="document.getElementById('add-ann-form').style.display = document.getElementById('add-ann-form').style.display === 'none' ? 'block' : 'none'" class="atrium-btn atrium-btn-ghost" style="height:28px;font-size:.8125rem">+ New announcement</button>
+    <% end %>
+  </div>
+
+  <%= if Atrium.Authorization.Policy.can?(@conn.assigns.tenant_prefix, @conn.assigns.current_user, :edit, {:section, :home}) do %>
+    <div id="add-ann-form" style="display:none;margin-bottom:16px">
+      <div class="atrium-card">
+        <div class="atrium-card-body">
+          <form method="post" action={~p"/home/announcements"} style="display:flex;flex-direction:column;gap:12px">
+            <input type="hidden" name="_csrf_token" value={Plug.CSRFProtection.get_csrf_token()} />
+            <div>
+              <label class="atrium-label">Title</label>
+              <input type="text" name="announcement[title]" class="atrium-input" required />
+            </div>
+            <div>
+              <label class="atrium-label">Body (optional)</label>
+              <textarea name="announcement[body_html]" class="atrium-input" rows="3" style="resize:vertical"></textarea>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px">
+              <input type="checkbox" name="announcement[pinned]" value="true" id="ann-pinned" style="accent-color:var(--blue-500);width:14px;height:14px" />
+              <label for="ann-pinned" style="font-size:.875rem;color:var(--text-secondary)">Pin to top</label>
+            </div>
+            <div><button type="submit" class="atrium-btn atrium-btn-primary">Post</button></div>
+          </form>
+        </div>
+      </div>
+    </div>
+  <% end %>
+
+  <%= if @announcements == [] do %>
+    <div style="border:2px dashed var(--border);border-radius:var(--radius);padding:40px;text-align:center;color:var(--text-tertiary)">
+      <p style="font-size:.875rem">No announcements yet.</p>
+    </div>
+  <% end %>
+
+  <div style="display:flex;flex-direction:column;gap:12px">
+    <%= for ann <- @announcements do %>
+      <div class="atrium-card" style={"border-left:3px solid #{if ann.pinned, do: "var(--blue-500)", else: "var(--border)"}"}>
+        <div class="atrium-card-body">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px">
+            <div style="flex:1;min-width:0">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+                <%= if ann.pinned do %>
+                  <span style="font-size:.6875rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--blue-500)">Pinned</span>
+                <% end %>
+                <span style="font-size:.75rem;color:var(--text-tertiary)"><%= Calendar.strftime(ann.inserted_at, "%d %b %Y") %></span>
+              </div>
+              <div style="font-weight:600;font-size:.9375rem;color:var(--text-primary);margin-bottom:4px"><%= ann.title %></div>
+              <%= if ann.body_html && ann.body_html != "" do %>
+                <div style="font-size:.875rem;color:var(--text-secondary)"><%= Phoenix.HTML.raw(ann.body_html) %></div>
+              <% end %>
+            </div>
+            <%= if Atrium.Authorization.Policy.can?(@conn.assigns.tenant_prefix, @conn.assigns.current_user, :edit, {:section, :home}) do %>
+              <form method="post" action={~p"/home/announcements/#{ann.id}/delete"} style="flex-shrink:0">
+                <input type="hidden" name="_csrf_token" value={Plug.CSRFProtection.get_csrf_token()} />
+                <button type="submit" class="atrium-topbar-btn" title="Delete" style="color:var(--text-tertiary)" onmouseover="this.style.color='var(--color-error,#ef4444)'" onmouseout="this.style.color='var(--text-tertiary)'">
+                  <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75" style="width:14px;height:14px">
+                    <path d="M3 4h10M5 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1M6 7v5M10 7v5M4 4l.667 9a1 1 0 0 0 1 .917h4.666a1 1 0 0 0 1-.917L12 4" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </button>
+              </form>
+            <% end %>
+          </div>
+        </div>
+      </div>
+    <% end %>
+  </div>
+</div>

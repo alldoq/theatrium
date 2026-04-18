@@ -32,6 +32,11 @@ defmodule AtriumWeb.Router do
     plug AtriumWeb.Plugs.RequireTenantAdmin
   end
 
+  pipeline :super_admin_layout do
+    plug AtriumWeb.Plugs.AssignTenants
+    plug :put_layout, html: {AtriumWeb.Layouts, :super_admin}
+  end
+
   # Platform (super-admin) routes
   scope "/", AtriumWeb, host: "admin." do
     pipe_through [:browser]
@@ -40,7 +45,7 @@ defmodule AtriumWeb.Router do
     delete "/super/logout", SuperAdmin.SessionController, :delete
 
     scope "/super", as: :super_admin do
-      pipe_through [:super_admin_required]
+      pipe_through [:super_admin_required, :super_admin_layout]
       get "/", SuperAdmin.DashboardController, :index
       resources "/tenants", SuperAdmin.TenantController, except: [:delete]
       resources "/tenants/:tenant_id/idps", SuperAdmin.TenantIdpController, except: [:show]
@@ -86,6 +91,12 @@ defmodule AtriumWeb.Router do
       get "/", PageController, :home
       get "/audit", AuditViewerController, :index
       get "/audit/export", AuditViewerController, :export
+
+      get  "/home",                              HomeController, :show
+      post "/home/announcements",                HomeController, :create_announcement
+      post "/home/announcements/:id/delete",     HomeController, :delete_announcement
+      post "/home/quick_links",                  HomeController, :create_quick_link
+      post "/home/quick_links/:id/delete",       HomeController, :delete_quick_link
 
       scope "/admin", TenantAdmin, as: :tenant_admin do
         pipe_through [:require_tenant_admin]
