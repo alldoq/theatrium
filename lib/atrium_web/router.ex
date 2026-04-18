@@ -84,7 +84,7 @@ defmodule AtriumWeb.Router do
       get "/audit", AuditViewerController, :index
       get "/audit/export", AuditViewerController, :export
 
-      scope "/admin", AtriumWeb.TenantAdmin, as: :tenant_admin do
+      scope "/admin", TenantAdmin, as: :tenant_admin do
         pipe_through [:require_tenant_admin]
 
         get  "/users",                    UserController, :index

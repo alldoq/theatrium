@@ -1,0 +1,52 @@
+<div class="atrium-anim">
+  <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:24px">
+    <div>
+      <div class="atrium-page-eyebrow">Admin</div>
+      <h1 class="atrium-page-title">Users</h1>
+    </div>
+    <a href={~p"/admin/users/new"} class="atrium-btn atrium-btn-primary">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round">
+        <path d="M8 3v10M3 8h10"/>
+      </svg>
+      Invite user
+    </a>
+  </div>
+
+  <div class="atrium-card">
+    <table class="atrium-table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Status</th>
+          <th>Role</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <%= for user <- @users do %>
+          <tr>
+            <td style="font-weight:500"><%= user.name %></td>
+            <td style="font-family:'IBM Plex Mono',monospace;font-size:.8125rem;color:var(--text-secondary)"><%= user.email %></td>
+            <td>
+              <span class={"atrium-badge atrium-badge-#{user.status}"}>
+                <%= user.status %>
+              </span>
+            </td>
+            <td>
+              <%= if user.is_admin do %>
+                <span class="atrium-badge" style="background:var(--blue-50);color:var(--blue-600)">Admin</span>
+              <% end %>
+            </td>
+            <td style="text-align:right">
+              <a href={~p"/admin/users/#{user.id}"} class="atrium-btn atrium-btn-ghost" style="height:28px;font-size:.8125rem">Manage</a>
+            </td>
+          </tr>
+        <% end %>
+        <%= if @users == [] do %>
+          <tr><td colspan="5" style="padding:32px;text-align:center;color:var(--text-tertiary)">No users yet.</td></tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+</div>

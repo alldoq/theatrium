@@ -261,6 +261,7 @@ defmodule Atrium.Accounts do
   end
 
   def get_user(prefix, id), do: Repo.get(User, id, prefix: prefix)
+  def get_user!(prefix, id), do: Repo.get!(User, id, prefix: prefix)
 
   def list_users(prefix), do: Repo.all(from(u in User, order_by: [asc: u.email]), prefix: prefix)
 
