@@ -1,0 +1,91 @@
+<header class="atrium-topbar">
+  <div class="atrium-topbar-brand">
+    <div class="atrium-brand-icon">
+      <svg viewBox="0 0 16 16"><path d="M8 1L2 5v8h4v-4h4v4h4V5L8 1z"/></svg>
+    </div>
+    <span class="atrium-brand-name">
+      <%= if assigns[:tenant], do: @tenant.name, else: "Atrium" %>
+    </span>
+  </div>
+  <div class="atrium-brand-sep"></div>
+  <div class="atrium-topbar-search">
+    <svg class="atrium-topbar-search-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75">
+      <circle cx="7" cy="7" r="4.5"/><path d="M11 11l2.5 2.5" stroke-linecap="round"/>
+    </svg>
+    <input type="text" placeholder="Search…" />
+    <kbd class="atrium-topbar-kbd">⌘K</kbd>
+  </div>
+  <div class="atrium-topbar-spacer"></div>
+  <div class="atrium-topbar-actions">
+    <button class="atrium-topbar-btn" title="Notifications">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75">
+        <path d="M8 2a4.5 4.5 0 0 1 4.5 4.5c0 2.5.5 3.5 1.5 4.5H2c1-1 1.5-2 1.5-4.5A4.5 4.5 0 0 1 8 2zM6.5 13.5a1.5 1.5 0 0 0 3 0" stroke-linecap="round"/>
+      </svg>
+    </button>
+    <div class="atrium-topbar-divider"></div>
+    <%= if assigns[:current_user] do %>
+      <div class="atrium-topbar-user">
+        <div class="atrium-user-avatar">
+          <%= @current_user.name |> String.split() |> Enum.map(&String.first/1) |> Enum.take(2) |> Enum.join() %>
+        </div>
+        <div>
+          <div class="atrium-user-name"><%= @current_user.name %></div>
+        </div>
+      </div>
+    <% end %>
+    <div class="atrium-topbar-divider"></div>
+    <.link href={~p"/logout"} method="delete" class="atrium-topbar-btn" title="Sign out">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75">
+        <path d="M6 3H3a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h3M10 11l3-3-3-3M13 8H6" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </.link>
+  </div>
+</header>
+
+<div class="atrium-layout">
+  <nav class="atrium-sidebar">
+    <%= if assigns[:nav] && @nav != [] do %>
+      <div class="atrium-sidebar-section">
+        <div class="atrium-sidebar-label">Sections</div>
+        <%= for entry <- @nav do %>
+          <a href={"/sections/#{entry.key}/documents"} class={"atrium-sidebar-item#{if assigns[:section_key] == to_string(entry.key), do: " active", else: ""}"}>
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75">
+              <path d="M4 2h6l4 4v8a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z" stroke-linejoin="round"/>
+              <path d="M10 2v4h4" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <%= entry.name %>
+          </a>
+          <%= for c <- entry.children do %>
+            <a href={"/sections/#{entry.key}/#{c.slug}/documents"} class="atrium-sidebar-item" style="padding-left: 36px; font-size: .8125rem;">
+              <%= c.name %>
+            </a>
+          <% end %>
+        <% end %>
+      </div>
+    <% end %>
+    <div class="atrium-sidebar-section">
+      <a href={~p"/audit"} class="atrium-sidebar-item">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75">
+          <path d="M2 4h12M2 8h8M2 12h5" stroke-linecap="round"/>
+        </svg>
+        Audit Log
+      </a>
+    </div>
+    <%= if assigns[:current_user] && @current_user.is_admin do %>
+      <div class="atrium-sidebar-section">
+        <a href={~p"/admin/users"} class="atrium-sidebar-item">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75">
+            <circle cx="8" cy="5" r="2.5" stroke-linecap="round"/>
+            <path d="M2.5 13c0-3 2.5-4.5 5.5-4.5s5.5 1.5 5.5 4.5" stroke-linecap="round"/>
+          </svg>
+          Admin
+        </a>
+      </div>
+    <% end %>
+  </nav>
+
+  <main class="atrium-main">
+    <.flash_group flash={@flash} />
+    {@inner_content}
+  </main>
+</div>
