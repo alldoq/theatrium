@@ -16,16 +16,22 @@ defmodule AtriumWeb.SuperAdmin.SectionController do
   end
 
   def update(conn, %{"key" => key, "section" => params}) do
-    fetch_section!(key)
-
+    section = fetch_section!(key)
     display_name = normalize_empty(params["display_name"])
     icon_name = normalize_empty(params["icon_name"])
 
-    {:ok, _} = Sections.upsert_customization(key, %{display_name: display_name, icon_name: icon_name})
+    case Sections.upsert_customization(key, %{display_name: display_name, icon_name: icon_name}) do
+      {:ok, _} ->
+        conn
+        |> put_flash(:info, "Section updated.")
+        |> redirect(to: ~p"/super/sections")
 
-    conn
-    |> put_flash(:info, "Section updated.")
-    |> redirect(to: ~p"/super/sections")
+      {:error, _changeset} ->
+        customization = Sections.get_customization(key)
+        conn
+        |> put_flash(:error, "Failed to save section.")
+        |> render(:edit, section: section, customization: customization)
+    end
   end
 
   defp fetch_section!(key) do
