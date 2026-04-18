@@ -12,6 +12,11 @@ defmodule Atrium.Accounts.User do
     field :hashed_password, :string
     field :last_login_at, :utc_datetime_usec
     field :is_admin, :boolean, default: false
+    field :role, :string
+    field :department, :string
+    field :phone, :string
+    field :bio, :string
+    field :avatar_url, :string
     field :password, :string, virtual: true, redact: true
     timestamps(type: :utc_datetime_usec)
   end
@@ -58,6 +63,13 @@ defmodule Atrium.Accounts.User do
 
   def admin_changeset(user, is_admin) do
     change(user, is_admin: is_admin)
+  end
+
+  def profile_changeset(user, attrs) do
+    user
+    |> cast(attrs, [:name, :role, :department, :phone, :bio, :avatar_url])
+    |> validate_required([:name])
+    |> validate_length(:bio, max: 1000)
   end
 
   def statuses, do: @statuses

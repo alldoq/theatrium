@@ -260,6 +260,21 @@ defmodule Atrium.Accounts do
     end
   end
 
+  def update_profile(prefix, %User{} = user, attrs) do
+    with {:ok, updated} <- user |> User.profile_changeset(attrs) |> Repo.update(prefix: prefix),
+         {:ok, _} <- Audit.log(prefix, "user.profile_updated", %{
+           actor: :system,
+           resource: {"User", updated.id},
+           changes: Audit.changeset_diff(user, updated)
+         }) do
+      {:ok, updated}
+    end
+  end
+
+  def list_active_users(prefix) do
+    Repo.all(from(u in User, where: u.status == "active", order_by: [asc: u.name]), prefix: prefix)
+  end
+
   def get_user(prefix, id), do: Repo.get(User, id, prefix: prefix)
   def get_user!(prefix, id), do: Repo.get!(User, id, prefix: prefix)
 
