@@ -78,6 +78,9 @@ defmodule AtriumWeb.Router do
     get "/auth/saml/:id/start", SamlController, :start
     post "/auth/saml/callback", SamlController, :consume
 
+    get  "/forms/review/:token",          ExternalReviewController, :show
+    post "/forms/review/:token/complete", ExternalReviewController, :complete
+
     scope "/" do
       pipe_through [:authenticated]
       get "/", PageController, :home
@@ -107,6 +110,21 @@ defmodule AtriumWeb.Router do
       post "/sections/:section_key/documents/:id/reject",  DocumentController, :reject
       post "/sections/:section_key/documents/:id/approve", DocumentController, :approve
       post "/sections/:section_key/documents/:id/archive", DocumentController, :archive
+
+      get  "/sections/:section_key/forms",                                    FormController, :index
+      get  "/sections/:section_key/forms/new",                                FormController, :new
+      post "/sections/:section_key/forms",                                    FormController, :create
+      get  "/sections/:section_key/forms/:id",                                FormController, :show
+      get  "/sections/:section_key/forms/:id/edit",                           FormController, :edit
+      put  "/sections/:section_key/forms/:id",                                FormController, :update
+      post "/sections/:section_key/forms/:id/publish",                        FormController, :publish
+      post "/sections/:section_key/forms/:id/archive",                        FormController, :archive
+      post "/sections/:section_key/forms/:id/reopen",                         FormController, :reopen
+      get  "/sections/:section_key/forms/:id/submit",                         FormController, :submit_form
+      post "/sections/:section_key/forms/:id/submit",                         FormController, :create_submission
+      get  "/sections/:section_key/forms/:id/submissions",                    FormController, :submissions_index
+      get  "/sections/:section_key/forms/:id/submissions/:sid",               FormController, :show_submission
+      post "/sections/:section_key/forms/:id/submissions/:sid/complete",      FormController, :complete_review
     end
   end
 
