@@ -18,8 +18,18 @@ defmodule AtriumWeb.Router do
     plug AtriumWeb.Plugs.RequireSuperAdmin
   end
 
+  pipeline :authenticated do
+    plug AtriumWeb.Plugs.RequireUser
+    plug AtriumWeb.Plugs.AssignNav
+    plug :put_layout, html: {AtriumWeb.Layouts, :app}
+  end
+
   pipeline :api do
     plug :accepts, ["json"]
+  end
+
+  pipeline :require_tenant_admin do
+    plug AtriumWeb.Plugs.RequireTenantAdmin
   end
 
   # Platform (super-admin) routes
@@ -69,10 +79,23 @@ defmodule AtriumWeb.Router do
     post "/auth/saml/callback", SamlController, :consume
 
     scope "/" do
-      pipe_through [AtriumWeb.Plugs.RequireUser, AtriumWeb.Plugs.AssignNav]
+      pipe_through [:authenticated]
       get "/", PageController, :home
       get "/audit", AuditViewerController, :index
       get "/audit/export", AuditViewerController, :export
+
+      scope "/admin", AtriumWeb.TenantAdmin, as: :tenant_admin do
+        pipe_through [:require_tenant_admin]
+
+        get  "/users",                    UserController, :index
+        get  "/users/new",                UserController, :new
+        post "/users",                    UserController, :create
+        get  "/users/:id",                UserController, :show
+        post "/users/:id/permissions",    UserController, :update_permissions
+        post "/users/:id/toggle_admin",   UserController, :toggle_admin
+        post "/users/:id/suspend",        UserController, :suspend
+        post "/users/:id/restore",        UserController, :restore
+      end
 
       get  "/sections/:section_key/documents",             DocumentController, :index
       get  "/sections/:section_key/documents/new",         DocumentController, :new
