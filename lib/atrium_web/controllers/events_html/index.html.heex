@@ -1,1 +1,163 @@
-<div></div>
+<%
+  days = Date.days_in_month(Date.new!(@year, @month, 1))
+  first_weekday = Date.new!(@year, @month, 1) |> Date.day_of_week()
+  lead_blanks = first_weekday - 1
+
+  day_cells = Enum.map(1..days, fn d ->
+    day_events = Enum.filter(@events, fn e ->
+      dt_date = DateTime.to_date(e.starts_at)
+      dt_date.day == d and dt_date.month == @month and dt_date.year == @year
+    end)
+    {d, day_events}
+  end)
+
+  today = Date.utc_today()
+  is_current_month = today.year == @year and today.month == @month
+
+  prev_month = if @month == 1, do: {@year - 1, 12}, else: {@year, @month - 1}
+  next_month = if @month == 12, do: {@year + 1, 1}, else: {@year, @month + 1}
+  {prev_year, prev_m} = prev_month
+  {next_year, next_m} = next_month
+
+  month_label = Calendar.strftime(Date.new!(@year, @month, 1), "%B %Y")
+%>
+
+<div class="atrium-anim">
+  <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:28px">
+    <div>
+      <div class="atrium-page-eyebrow">Events</div>
+      <h1 class="atrium-page-title">Events &amp; Calendar</h1>
+    </div>
+    <%= if @can_edit do %>
+      <a href={~p"/events/new"} class="atrium-btn atrium-btn-primary">+ Add event</a>
+    <% end %>
+  </div>
+
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+    <a href={~p"/events?year=#{prev_year}&month=#{prev_m}"}
+       class="atrium-btn atrium-btn-ghost"
+       style="height:32px;padding:0 10px;font-size:.875rem">
+      &#8592;
+    </a>
+    <span style="font-size:1rem;font-weight:600;color:var(--text-primary);min-width:140px;text-align:center">
+      <%= month_label %>
+    </span>
+    <a href={~p"/events?year=#{next_year}&month=#{next_m}"}
+       class="atrium-btn atrium-btn-ghost"
+       style="height:32px;padding:0 10px;font-size:.875rem">
+      &#8594;
+    </a>
+    <%= if !is_current_month do %>
+      <a href={~p"/events"} style="font-size:.8125rem;color:var(--text-tertiary);text-decoration:none;margin-left:4px">
+        Today
+      </a>
+    <% end %>
+  </div>
+
+  <div class="atrium-card" style="margin-bottom:28px;overflow:hidden">
+    <div style="display:grid;grid-template-columns:repeat(7,1fr);border-bottom:1px solid var(--border)">
+      <%= for day_name <- ~w(Mon Tue Wed Thu Fri Sat Sun) do %>
+        <div style="padding:8px 0;text-align:center;font-size:.6875rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text-tertiary)">
+          <%= day_name %>
+        </div>
+      <% end %>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(7,1fr)">
+      <%= for _ <- 1..lead_blanks//1, lead_blanks > 0 do %>
+        <div style="min-height:90px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);background:var(--surface-muted, #fafafa)"></div>
+      <% end %>
+
+      <%= for {day, day_events} <- day_cells do %>
+        <%
+          is_today = is_current_month and day == today.day
+          col_pos  = rem(lead_blanks + day - 1, 7)
+          is_weekend = col_pos == 5 or col_pos == 6
+          bg = cond do
+            is_today   -> "var(--blue-50)"
+            is_weekend -> "var(--surface-muted, #fafafa)"
+            true       -> "var(--surface, #fff)"
+          end
+        %>
+        <div style={"min-height:90px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);background:#{bg};padding:6px 6px 8px;box-sizing:border-box"}>
+          <div style={"font-size:.8125rem;font-weight:#{if is_today, do: "700", else: "500"};color:#{if is_today, do: "var(--blue-500)", else: "var(--text-secondary)"};margin-bottom:4px;line-height:1"}>
+            <%= day %>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:2px">
+            <%= for event <- Enum.take(day_events, 3) do %>
+              <a href={~p"/events/#{event.id}"}
+                 style="display:block;padding:1px 5px;border-radius:3px;background:var(--blue-500);color:#fff;font-size:.6875rem;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-decoration:none;line-height:1.6"
+                 title={event.title}>
+                <%= event.title %>
+              </a>
+            <% end %>
+            <%= if length(day_events) > 3 do %>
+              <span style="font-size:.6875rem;color:var(--text-tertiary);padding-left:3px">
+                +<%= length(day_events) - 3 %> more
+              </span>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+
+      <%
+        total_cells = lead_blanks + days
+        trailing = rem(7 - rem(total_cells, 7), 7)
+      %>
+      <%= for _ <- 1..trailing//1, trailing > 0 do %>
+        <div style="min-height:90px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);background:var(--surface-muted, #fafafa)"></div>
+      <% end %>
+    </div>
+  </div>
+
+  <div>
+    <h2 style="font-size:1rem;font-weight:600;color:var(--text-primary);margin-bottom:12px">Upcoming events</h2>
+
+    <%= if @upcoming == [] do %>
+      <div style="border:2px dashed var(--border);border-radius:var(--radius);padding:40px;text-align:center;color:var(--text-tertiary)">
+        <p style="font-size:.875rem">No upcoming events.</p>
+      </div>
+    <% end %>
+
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <%= for event <- @upcoming do %>
+        <a href={~p"/events/#{event.id}"} style="text-decoration:none">
+          <div class="atrium-card"
+            style="transition:border-color .15s"
+            onmouseover="this.style.borderColor='var(--blue-500)'"
+            onmouseout="this.style.borderColor='var(--border)'">
+            <div class="atrium-card-body" style="display:flex;align-items:flex-start;gap:16px;padding:14px 16px">
+              <div style="flex-shrink:0;width:44px;text-align:center;border:1px solid var(--border);border-radius:var(--radius);padding:6px 4px;background:var(--surface)">
+                <div style="font-size:.625rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--blue-500)">
+                  <%= Calendar.strftime(event.starts_at, "%b") %>
+                </div>
+                <div style="font-size:1.25rem;font-weight:700;color:var(--text-primary);line-height:1.1">
+                  <%= Calendar.strftime(event.starts_at, "%d") %>
+                </div>
+              </div>
+              <div style="flex:1;min-width:0">
+                <div style="font-size:.9375rem;font-weight:600;color:var(--text-primary)"><%= event.title %></div>
+                <div style="font-size:.8125rem;color:var(--text-secondary);margin-top:2px">
+                  <%= if event.all_day do %>
+                    All day
+                  <% else %>
+                    <%= AtriumWeb.EventsHTML.format_datetime(event.starts_at) %>
+                    <%= if event.ends_at do %>
+                      &ndash; <%= AtriumWeb.EventsHTML.format_datetime(event.ends_at) %>
+                    <% end %>
+                  <% end %>
+                </div>
+                <%= if event.location && event.location != "" do %>
+                  <div style="font-size:.8125rem;color:var(--text-tertiary);margin-top:2px">
+                    <%= event.location %>
+                  </div>
+                <% end %>
+              </div>
+            </div>
+          </div>
+        </a>
+      <% end %>
+    </div>
+  </div>
+</div>
