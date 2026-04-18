@@ -56,6 +56,7 @@ defmodule AtriumWeb.LearningControllerTest do
     end
 
     test "does not show draft courses to regular staff", %{conn: conn, user: user, prefix: prefix} do
+      Authorization.revoke_section(prefix, "learning", {:user, user.id}, :edit)
       Learning.create_course(prefix, %{title: "Draft Course", category: "HR"}, user)
       conn = get(conn, "/learning")
       html = html_response(conn, 200)
