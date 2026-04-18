@@ -42,10 +42,15 @@ defmodule AtriumWeb.DocumentController do
         |> put_flash(:info, "Document created.")
         |> redirect(to: ~p"/sections/#{section_key}/documents/#{doc.id}")
 
-      {:error, changeset} ->
+      {:error, %Ecto.Changeset{} = changeset} ->
         conn
         |> put_status(422)
         |> render(:new, changeset: changeset, section_key: section_key)
+
+      {:error, _reason} ->
+        conn
+        |> put_flash(:error, "An unexpected error occurred.")
+        |> redirect(to: ~p"/sections/#{section_key}/documents")
     end
   end
 
@@ -60,8 +65,15 @@ defmodule AtriumWeb.DocumentController do
   def edit(conn, %{"section_key" => section_key, "id" => id}) do
     prefix = conn.assigns.tenant_prefix
     doc = Documents.get_document!(prefix, id)
-    changeset = Document.update_changeset(doc, %{})
-    render(conn, :edit, document: doc, changeset: changeset, section_key: section_key)
+
+    if doc.status != "draft" do
+      conn
+      |> put_flash(:error, "Only draft documents can be edited.")
+      |> redirect(to: ~p"/sections/#{section_key}/documents/#{id}")
+    else
+      changeset = Document.update_changeset(doc, %{})
+      render(conn, :edit, document: doc, changeset: changeset, section_key: section_key)
+    end
   end
 
   def update(conn, %{"section_key" => section_key, "id" => id, "document" => doc_params}) do
@@ -80,10 +92,15 @@ defmodule AtriumWeb.DocumentController do
         |> put_flash(:error, "Only draft documents can be edited.")
         |> redirect(to: ~p"/sections/#{section_key}/documents/#{id}")
 
-      {:error, changeset} ->
+      {:error, %Ecto.Changeset{} = changeset} ->
         conn
         |> put_status(422)
         |> render(:edit, document: doc, changeset: changeset, section_key: section_key)
+
+      {:error, _reason} ->
+        conn
+        |> put_flash(:error, "An unexpected error occurred.")
+        |> redirect(to: ~p"/sections/#{section_key}/documents/#{id}")
     end
   end
 

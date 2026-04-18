@@ -52,25 +52,23 @@ defmodule Atrium.Documents do
     Repo.all(query, prefix: prefix)
   end
 
-  def update_document(prefix, doc, attrs, actor_user) do
-    if doc.status != "draft" do
-      {:error, :not_draft}
-    else
-      Repo.transaction(fn ->
-        with {:ok, updated} <- apply_update(prefix, doc, attrs),
-             {:ok, _ver} <- insert_version(prefix, updated, actor_user),
-             {:ok, _} <- Audit.log(prefix, "document.updated", %{
-               actor: {:user, actor_user.id},
-               resource: {"Document", updated.id},
-               changes: Audit.changeset_diff(doc, updated)
-             }) do
-          updated
-        else
-          {:error, reason} -> Repo.rollback(reason)
-        end
-      end)
-    end
+  def update_document(prefix, %Document{status: "draft"} = doc, attrs, actor_user) do
+    Repo.transaction(fn ->
+      with {:ok, updated} <- apply_update(prefix, doc, attrs),
+           {:ok, _ver} <- insert_version(prefix, updated, actor_user),
+           {:ok, _} <- Audit.log(prefix, "document.updated", %{
+             actor: {:user, actor_user.id},
+             resource: {"Document", updated.id},
+             changes: Audit.changeset_diff(doc, updated)
+           }) do
+        updated
+      else
+        {:error, reason} -> Repo.rollback(reason)
+      end
+    end)
   end
+
+  def update_document(_prefix, _doc, _attrs, _actor_user), do: {:error, :not_draft}
 
   # ---------------------------------------------------------------------------
   # Versions

@@ -26,6 +26,7 @@ defmodule Atrium.Documents.Document do
     |> cast(attrs, [:title, :section_key, :subsection_slug, :body_html, :author_id])
     |> validate_required([:title, :section_key, :author_id])
     |> validate_length(:title, min: 1, max: 500)
+    |> sanitize_body_html()
   end
 
   def update_changeset(doc, attrs) do
@@ -33,6 +34,7 @@ defmodule Atrium.Documents.Document do
     |> cast(attrs, [:title, :body_html])
     |> validate_required([:title])
     |> validate_length(:title, min: 1, max: 500)
+    |> sanitize_body_html()
   end
 
   def status_changeset(doc, status, extra_attrs \\ %{}) do
@@ -43,11 +45,18 @@ defmodule Atrium.Documents.Document do
   end
 
   def version_bump_changeset(%Ecto.Changeset{} = cs) do
-    current = cs.data.current_version
+    current = get_field(cs, :current_version)
     change(cs, current_version: current + 1)
   end
 
   def version_bump_changeset(%__MODULE__{} = doc) do
     change(doc, current_version: doc.current_version + 1)
+  end
+
+  defp sanitize_body_html(changeset) do
+    case get_change(changeset, :body_html) do
+      nil -> changeset
+      html -> put_change(changeset, :body_html, HtmlSanitizeEx.basic_html(html))
+    end
   end
 end

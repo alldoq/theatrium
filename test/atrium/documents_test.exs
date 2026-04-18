@@ -76,7 +76,9 @@ defmodule Atrium.DocumentsTest do
 
     test "returns error for missing required fields", %{tenant_prefix: prefix} do
       user = build_user(prefix)
-      assert {:error, %Ecto.Changeset{}} = Documents.create_document(prefix, %{}, user)
+      assert {:error, cs} = Documents.create_document(prefix, %{}, user)
+      assert errors_on(cs)[:title]
+      assert errors_on(cs)[:section_key]
     end
   end
 
@@ -95,15 +97,17 @@ defmodule Atrium.DocumentsTest do
   end
 
   describe "list_documents/3" do
-    test "lists documents in a section", %{tenant_prefix: prefix} do
+    test "lists only documents in the given section", %{tenant_prefix: prefix} do
       user = build_user(prefix)
-      {:ok, _} = Documents.create_document(prefix, %{title: "A", section_key: "hr", body_html: ""}, user)
-      {:ok, _} = Documents.create_document(prefix, %{title: "B", section_key: "hr", body_html: ""}, user)
+      {:ok, _} = Documents.create_document(prefix, %{title: "A", section_key: "compliance", body_html: ""}, user)
+      {:ok, _} = Documents.create_document(prefix, %{title: "B", section_key: "compliance", body_html: ""}, user)
       {:ok, _} = Documents.create_document(prefix, %{title: "C", section_key: "docs", body_html: ""}, user)
 
-      hr_docs = Documents.list_documents(prefix, "hr")
-      assert Enum.all?(hr_docs, &(&1.section_key == "hr"))
-      assert length(hr_docs) >= 2
+      compliance_docs = Documents.list_documents(prefix, "compliance")
+      titles = Enum.map(compliance_docs, & &1.title)
+      assert "A" in titles
+      assert "B" in titles
+      refute "C" in titles
     end
   end
 
