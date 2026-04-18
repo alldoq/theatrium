@@ -1,1 +1,108 @@
-<div></div>
+<div class="atrium-anim" style="max-width:560px">
+  <div style="margin-bottom:20px">
+    <a href={~p"/events/#{@event.id}"} style="font-size:.8125rem;color:var(--text-tertiary);text-decoration:none">
+      ← Back to event
+    </a>
+  </div>
+
+  <div style="margin-bottom:24px">
+    <div class="atrium-page-eyebrow">Events</div>
+    <h1 class="atrium-page-title">Edit Event</h1>
+  </div>
+
+  <form method="post" action={~p"/events/#{@event.id}"}>
+    <input type="hidden" name="_method" value="put" />
+    <input type="hidden" name="_csrf_token" value={Plug.CSRFProtection.get_csrf_token()} />
+
+    <div class="atrium-card" style="margin-bottom:20px">
+      <div class="atrium-card-body" style="display:flex;flex-direction:column;gap:16px">
+
+        <div>
+          <label class="atrium-label" for="event_title">Title <span style="color:var(--color-error,#ef4444)">*</span></label>
+          <input
+            id="event_title"
+            type="text"
+            name="event[title]"
+            class="atrium-input"
+            value={Ecto.Changeset.get_field(@changeset, :title) || ""}
+            required
+          />
+          <%= if msg = List.first(Keyword.get(@changeset.errors, :title, [])) do %>
+            <p style="font-size:.8125rem;color:var(--color-error,#ef4444);margin-top:4px"><%= elem(msg, 0) %></p>
+          <% end %>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div>
+            <label class="atrium-label" for="event_starts_at">Starts at <span style="color:var(--color-error,#ef4444)">*</span></label>
+            <input
+              id="event_starts_at"
+              type="datetime-local"
+              name="event[starts_at]"
+              class="atrium-input"
+              value={AtriumWeb.EventsHTML.format_input_datetime(Ecto.Changeset.get_field(@changeset, :starts_at))}
+              required
+            />
+            <%= if msg = List.first(Keyword.get(@changeset.errors, :starts_at, [])) do %>
+              <p style="font-size:.8125rem;color:var(--color-error,#ef4444);margin-top:4px"><%= elem(msg, 0) %></p>
+            <% end %>
+          </div>
+
+          <div>
+            <label class="atrium-label" for="event_ends_at">Ends at</label>
+            <input
+              id="event_ends_at"
+              type="datetime-local"
+              name="event[ends_at]"
+              class="atrium-input"
+              value={AtriumWeb.EventsHTML.format_input_datetime(Ecto.Changeset.get_field(@changeset, :ends_at))}
+            />
+            <%= if msg = List.first(Keyword.get(@changeset.errors, :ends_at, [])) do %>
+              <p style="font-size:.8125rem;color:var(--color-error,#ef4444);margin-top:4px"><%= elem(msg, 0) %></p>
+            <% end %>
+          </div>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:8px">
+          <input
+            type="checkbox"
+            name="event[all_day]"
+            id="event_all_day"
+            value="true"
+            style="accent-color:var(--blue-500);width:15px;height:15px"
+            <%= if Ecto.Changeset.get_field(@changeset, :all_day), do: "checked" %>
+          />
+          <label for="event_all_day" style="font-size:.875rem;color:var(--text-secondary);cursor:pointer">All-day event</label>
+        </div>
+
+        <div>
+          <label class="atrium-label" for="event_location">Location</label>
+          <input
+            id="event_location"
+            type="text"
+            name="event[location]"
+            class="atrium-input"
+            value={Ecto.Changeset.get_field(@changeset, :location) || ""}
+          />
+        </div>
+
+        <div>
+          <label class="atrium-label" for="event_description">Description</label>
+          <textarea
+            id="event_description"
+            name="event[description]"
+            class="atrium-input"
+            rows="4"
+            style="resize:vertical"
+          ><%= Ecto.Changeset.get_field(@changeset, :description) || "" %></textarea>
+        </div>
+
+      </div>
+    </div>
+
+    <div style="display:flex;gap:8px">
+      <button type="submit" class="atrium-btn atrium-btn-primary">Save changes</button>
+      <a href={~p"/events/#{@event.id}"} class="atrium-btn atrium-btn-ghost">Cancel</a>
+    </div>
+  </form>
+</div>

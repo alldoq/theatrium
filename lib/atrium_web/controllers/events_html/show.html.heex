@@ -1,1 +1,62 @@
-<div></div>
+<div class="atrium-anim" style="max-width:720px">
+  <div style="margin-bottom:20px">
+    <a href={~p"/events"} style="font-size:.8125rem;color:var(--text-tertiary);text-decoration:none">
+      ← Events &amp; Calendar
+    </a>
+  </div>
+
+  <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:24px;gap:12px">
+    <div>
+      <div class="atrium-page-eyebrow">Event</div>
+      <h1 class="atrium-page-title"><%= @event.title %></h1>
+    </div>
+    <%= if @can_edit do %>
+      <div style="display:flex;gap:8px;flex-shrink:0;margin-top:8px">
+        <a href={~p"/events/#{@event.id}/edit"} class="atrium-btn atrium-btn-ghost">Edit</a>
+        <form method="post" action={~p"/events/#{@event.id}/delete"} style="display:inline"
+          onsubmit="return confirm('Delete this event?')">
+          <input type="hidden" name="_csrf_token" value={Plug.CSRFProtection.get_csrf_token()} />
+          <button type="submit" class="atrium-btn atrium-btn-ghost"
+            style="color:var(--color-error, #ef4444)"
+            onmouseover="this.style.borderColor='var(--color-error,#ef4444)'"
+            onmouseout="this.style.borderColor='var(--border)'">
+            Delete
+          </button>
+        </form>
+      </div>
+    <% end %>
+  </div>
+
+  <div class="atrium-card">
+    <div class="atrium-card-body" style="display:flex;flex-direction:column;gap:16px">
+      <div>
+        <div style="font-size:.6875rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text-tertiary);margin-bottom:4px">When</div>
+        <div style="font-size:.9375rem;color:var(--text-primary)">
+          <%= if @event.all_day do %>
+            <%= AtriumWeb.EventsHTML.format_date(@event.starts_at) %>
+            &mdash; All day
+          <% else %>
+            <%= AtriumWeb.EventsHTML.format_datetime(@event.starts_at) %>
+            <%= if @event.ends_at do %>
+              &ndash; <%= AtriumWeb.EventsHTML.format_datetime(@event.ends_at) %>
+            <% end %>
+          <% end %>
+        </div>
+      </div>
+
+      <%= if @event.location && @event.location != "" do %>
+        <div>
+          <div style="font-size:.6875rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text-tertiary);margin-bottom:4px">Location</div>
+          <div style="font-size:.9375rem;color:var(--text-primary)"><%= @event.location %></div>
+        </div>
+      <% end %>
+
+      <%= if @event.description && @event.description != "" do %>
+        <div>
+          <div style="font-size:.6875rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text-tertiary);margin-bottom:4px">Description</div>
+          <div style="font-size:.9375rem;color:var(--text-primary);line-height:1.6;white-space:pre-wrap"><%= @event.description %></div>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>
