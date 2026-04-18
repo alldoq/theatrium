@@ -1,7 +1,7 @@
 defmodule Atrium.Accounts do
   import Ecto.Query
   alias Atrium.Repo
-  alias Atrium.Accounts.{User, UserIdentity, Session, InvitationToken, PasswordResetToken}
+  alias Atrium.Accounts.{User, UserIdentity, Session, InvitationToken, PasswordResetToken, AllStaff}
 
   @invitation_ttl_hours 72
   @password_reset_ttl_minutes 60
@@ -33,6 +33,7 @@ defmodule Atrium.Accounts do
           with {:ok, user} <- Repo.update(changeset, prefix: prefix),
                {:ok, _} <- mark_token_used(prefix, token),
                {:ok, _} <- upsert_local_identity(prefix, user) do
+            :ok = AllStaff.ensure_member(prefix, user)
             user
           else
             {:error, reason} -> Repo.rollback(reason)
@@ -184,7 +185,22 @@ defmodule Atrium.Accounts do
   def suspend_user(prefix, user) do
     with {:ok, u} <- user |> User.status_changeset("suspended") |> Repo.update(prefix: prefix),
          {:ok, _} <- revoke_all_sessions_for_user(prefix, u) do
+      :ok = AllStaff.ensure_not_member(prefix, u)
       {:ok, u}
+    end
+  end
+
+  def restore_user(prefix, %User{} = user) do
+    user
+    |> User.status_changeset("active")
+    |> Repo.update(prefix: prefix)
+    |> case do
+      {:ok, u} ->
+        :ok = AllStaff.ensure_member(prefix, u)
+        {:ok, u}
+
+      err ->
+        err
     end
   end
 
