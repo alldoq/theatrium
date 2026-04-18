@@ -29,7 +29,7 @@ defmodule AtriumWeb.SuperAdmin.SectionControllerTest do
     test "shows customized display name when override exists", %{conn: conn} do
       {:ok, _} = Sections.upsert_customization("home", %{display_name: "Dashboard", icon_name: nil})
       conn = get(conn, "/super/sections")
-      assert html_response(conn, 200)
+      assert html_response(conn, 200) =~ "Dashboard"
     end
   end
 
@@ -40,9 +40,8 @@ defmodule AtriumWeb.SuperAdmin.SectionControllerTest do
     end
 
     test "returns 404 for unknown section key", %{conn: conn} do
-      assert_raise Ecto.NoResultsError, fn ->
-        get(conn, "/super/sections/nonexistent/edit")
-      end
+      conn = get(conn, "/super/sections/nonexistent/edit")
+      assert html_response(conn, 404)
     end
   end
 
@@ -60,9 +59,13 @@ defmodule AtriumWeb.SuperAdmin.SectionControllerTest do
     end
 
     test "returns 404 for unknown section key", %{conn: conn} do
-      assert_raise Ecto.NoResultsError, fn ->
-        put(conn, "/super/sections/nonexistent", %{"section" => %{"display_name" => "x", "icon_name" => "home"}})
-      end
+      conn = put(conn, "/super/sections/nonexistent", %{"section" => %{"display_name" => "x", "icon_name" => "home"}})
+      assert html_response(conn, 404)
+    end
+
+    test "rejects invalid icon name", %{conn: conn} do
+      conn = put(conn, "/super/sections/home", %{"section" => %{"display_name" => "Home", "icon_name" => "not-a-real-icon"}})
+      assert html_response(conn, 200) =~ "Invalid icon name"
     end
   end
 end

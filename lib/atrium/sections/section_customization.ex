@@ -14,6 +14,15 @@ defmodule Atrium.Sections.SectionCustomization do
     struct
     |> cast(attrs, [:section_key, :display_name, :icon_name])
     |> validate_required([:section_key])
+    |> validate_length(:display_name, max: 80)
+    |> validate_icon_name()
     |> unique_constraint(:section_key)
+  end
+
+  defp validate_icon_name(changeset) do
+    case Ecto.Changeset.get_change(changeset, :icon_name) do
+      nil -> changeset
+      _name -> validate_inclusion(changeset, :icon_name, AtriumWeb.Heroicons.names())
+    end
   end
 end
