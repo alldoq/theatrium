@@ -12,9 +12,11 @@ defmodule AtriumWeb.HomeController do
 
   def show(conn, _params) do
     prefix = conn.assigns.tenant_prefix
+    user = conn.assigns.current_user
     announcements = Home.list_announcements(prefix)
     quick_links = Home.list_quick_links(prefix)
-    render(conn, :show, announcements: announcements, quick_links: quick_links)
+    can_edit = Atrium.Authorization.Policy.can?(prefix, user, :edit, {:section, "home"})
+    render(conn, :show, announcements: announcements, quick_links: quick_links, can_edit: can_edit)
   end
 
   def create_announcement(conn, %{"announcement" => params}) do
@@ -30,8 +32,10 @@ defmodule AtriumWeb.HomeController do
     prefix = conn.assigns.tenant_prefix
     user = conn.assigns.current_user
     ann = Home.get_announcement!(prefix, id)
-    {:ok, _} = Home.delete_announcement(prefix, ann, user)
-    conn |> put_flash(:info, "Announcement removed.") |> redirect(to: ~p"/home")
+    case Home.delete_announcement(prefix, ann, user) do
+      {:ok, _} -> conn |> put_flash(:info, "Announcement removed.") |> redirect(to: ~p"/home")
+      {:error, _} -> conn |> put_flash(:error, "Could not remove announcement.") |> redirect(to: ~p"/home")
+    end
   end
 
   def create_quick_link(conn, %{"quick_link" => params}) do
@@ -47,7 +51,9 @@ defmodule AtriumWeb.HomeController do
     prefix = conn.assigns.tenant_prefix
     user = conn.assigns.current_user
     link = Home.get_quick_link!(prefix, id)
-    {:ok, _} = Home.delete_quick_link(prefix, link, user)
-    conn |> put_flash(:info, "Link removed.") |> redirect(to: ~p"/home")
+    case Home.delete_quick_link(prefix, link, user) do
+      {:ok, _} -> conn |> put_flash(:info, "Link removed.") |> redirect(to: ~p"/home")
+      {:error, _} -> conn |> put_flash(:error, "Could not remove link.") |> redirect(to: ~p"/home")
+    end
   end
 end

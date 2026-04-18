@@ -1,13 +1,13 @@
 <div class="atrium-anim">
   <div style="margin-bottom:28px">
     <div class="atrium-page-eyebrow">Home</div>
-    <h1 class="atrium-page-title">Welcome to <%= @conn.assigns.tenant.name %></h1>
+    <h1 class="atrium-page-title">Welcome to <%= @tenant.name %></h1>
   </div>
 
   <div class="atrium-card" style="margin-bottom:20px">
     <div class="atrium-card-header" style="display:flex;align-items:center;justify-content:space-between">
       <div class="atrium-card-title">Quick links</div>
-      <%= if Atrium.Authorization.Policy.can?(@conn.assigns.tenant_prefix, @conn.assigns.current_user, :edit, {:section, :home}) do %>
+      <%= if @can_edit do %>
         <button onclick="document.getElementById('add-link-form').style.display = document.getElementById('add-link-form').style.display === 'none' ? 'block' : 'none'" class="atrium-btn atrium-btn-ghost" style="height:28px;font-size:.8125rem">+ Add link</button>
       <% end %>
     </div>
@@ -27,7 +27,7 @@
               </svg>
               <%= link.label %>
             </a>
-            <%= if Atrium.Authorization.Policy.can?(@conn.assigns.tenant_prefix, @conn.assigns.current_user, :edit, {:section, :home}) do %>
+            <%= if @can_edit do %>
               <form method="post" action={~p"/home/quick_links/#{link.id}/delete"} style="position:absolute;top:4px;right:4px">
                 <input type="hidden" name="_csrf_token" value={Plug.CSRFProtection.get_csrf_token()} />
                 <button type="submit" style="border:none;background:none;cursor:pointer;padding:2px;color:var(--text-tertiary);line-height:1" onmouseover="this.style.color='var(--color-error,#ef4444)'" onmouseout="this.style.color='var(--text-tertiary)'" title="Remove">
@@ -40,7 +40,7 @@
           </div>
         <% end %>
       </div>
-      <%= if Atrium.Authorization.Policy.can?(@conn.assigns.tenant_prefix, @conn.assigns.current_user, :edit, {:section, :home}) do %>
+      <%= if @can_edit do %>
         <div id="add-link-form" style="display:none;border-top:1px solid var(--border);padding-top:14px;margin-top:4px">
           <form method="post" action={~p"/home/quick_links"} style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end">
             <input type="hidden" name="_csrf_token" value={Plug.CSRFProtection.get_csrf_token()} />
@@ -61,12 +61,12 @@
 
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
     <h2 style="font-size:1rem;font-weight:600;color:var(--text-primary)">Announcements</h2>
-    <%= if Atrium.Authorization.Policy.can?(@conn.assigns.tenant_prefix, @conn.assigns.current_user, :edit, {:section, :home}) do %>
+    <%= if @can_edit do %>
       <button onclick="document.getElementById('add-ann-form').style.display = document.getElementById('add-ann-form').style.display === 'none' ? 'block' : 'none'" class="atrium-btn atrium-btn-ghost" style="height:28px;font-size:.8125rem">+ New announcement</button>
     <% end %>
   </div>
 
-  <%= if Atrium.Authorization.Policy.can?(@conn.assigns.tenant_prefix, @conn.assigns.current_user, :edit, {:section, :home}) do %>
+  <%= if @can_edit do %>
     <div id="add-ann-form" style="display:none;margin-bottom:16px">
       <div class="atrium-card">
         <div class="atrium-card-body">
@@ -114,7 +114,7 @@
                 <div style="font-size:.875rem;color:var(--text-secondary)"><%= Phoenix.HTML.raw(ann.body_html) %></div>
               <% end %>
             </div>
-            <%= if Atrium.Authorization.Policy.can?(@conn.assigns.tenant_prefix, @conn.assigns.current_user, :edit, {:section, :home}) do %>
+            <%= if @can_edit do %>
               <form method="post" action={~p"/home/announcements/#{ann.id}/delete"} style="flex-shrink:0">
                 <input type="hidden" name="_csrf_token" value={Plug.CSRFProtection.get_csrf_token()} />
                 <button type="submit" class="atrium-topbar-btn" title="Delete" style="color:var(--text-tertiary)" onmouseover="this.style.color='var(--color-error,#ef4444)'" onmouseout="this.style.color='var(--text-tertiary)'">

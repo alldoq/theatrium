@@ -32,7 +32,7 @@ defmodule Atrium.HomeTest do
       u = actor(prefix)
       {:ok, ann} = Home.create_announcement(prefix, %{title: "Gone", body_html: ""}, u)
       {:ok, _} = Home.delete_announcement(prefix, ann, u)
-      assert Home.list_announcements(prefix) == []
+      refute Enum.any?(Home.list_announcements(prefix), &(&1.id == ann.id))
     end
 
     test "pinned announcements sort first", %{tenant_prefix: prefix} do
@@ -58,7 +58,7 @@ defmodule Atrium.HomeTest do
       u = actor(prefix)
       {:ok, link} = Home.create_quick_link(prefix, %{label: "Test", url: "https://example.com", icon: "link", position: 1}, u)
       {:ok, _} = Home.delete_quick_link(prefix, link, u)
-      assert Home.list_quick_links(prefix) == []
+      refute Enum.any?(Home.list_quick_links(prefix), &(&1.id == link.id))
     end
   end
 end

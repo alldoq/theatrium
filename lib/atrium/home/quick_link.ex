@@ -22,11 +22,4 @@ defmodule Atrium.Home.QuickLink do
     |> validate_format(:url, ~r/^https?:\/\//, message: "must start with http:// or https://")
   end
 
-  def update_changeset(link, attrs) do
-    link
-    |> cast(attrs, [:label, :url, :icon, :position])
-    |> validate_required([:label, :url])
-    |> validate_length(:label, min: 1, max: 100)
-    |> validate_format(:url, ~r/^https?:\/\//, message: "must start with http:// or https://")
-  end
 end
