@@ -22,7 +22,7 @@ defmodule AtriumWeb.TenantAdmin.UserController do
     case Accounts.invite_user(prefix, %{name: params["name"], email: params["email"]}) do
       {:ok, %{user: user}} ->
         if params["is_admin"] == "true" do
-          Accounts.set_admin(prefix, user, true)
+          {:ok, _} = Accounts.set_admin(prefix, user, true)
         end
 
         desired = decode_section_params(params["sections"] || %{})
@@ -70,33 +70,50 @@ defmodule AtriumWeb.TenantAdmin.UserController do
   end
 
   def toggle_admin(conn, %{"id" => id}) do
-    prefix = conn.assigns.tenant_prefix
-    user = Accounts.get_user!(prefix, id)
-    {:ok, _} = Accounts.set_admin(prefix, user, !user.is_admin)
-
-    conn
-    |> put_flash(:info, "Admin status updated")
-    |> redirect(to: ~p"/admin/users/#{user.id}")
+    actor = conn.assigns.current_user
+    if to_string(actor.id) == id do
+      conn
+      |> put_flash(:error, "You cannot change your own admin status")
+      |> redirect(to: ~p"/admin/users/#{id}")
+    else
+      prefix = conn.assigns.tenant_prefix
+      user = Accounts.get_user!(prefix, id)
+      case Accounts.set_admin(prefix, user, !user.is_admin) do
+        {:ok, _} ->
+          conn |> put_flash(:info, "Admin status updated") |> redirect(to: ~p"/admin/users/#{user.id}")
+        {:error, _} ->
+          conn |> put_flash(:error, "Could not update admin status") |> redirect(to: ~p"/admin/users/#{user.id}")
+      end
+    end
   end
 
   def suspend(conn, %{"id" => id}) do
-    prefix = conn.assigns.tenant_prefix
-    user = Accounts.get_user!(prefix, id)
-    {:ok, _} = Accounts.suspend_user(prefix, user)
-
-    conn
-    |> put_flash(:info, "User suspended")
-    |> redirect(to: ~p"/admin/users/#{user.id}")
+    actor = conn.assigns.current_user
+    if to_string(actor.id) == id do
+      conn
+      |> put_flash(:error, "You cannot suspend yourself")
+      |> redirect(to: ~p"/admin/users/#{id}")
+    else
+      prefix = conn.assigns.tenant_prefix
+      user = Accounts.get_user!(prefix, id)
+      case Accounts.suspend_user(prefix, user) do
+        {:ok, _} ->
+          conn |> put_flash(:info, "User suspended") |> redirect(to: ~p"/admin/users/#{user.id}")
+        {:error, _} ->
+          conn |> put_flash(:error, "Could not suspend user") |> redirect(to: ~p"/admin/users/#{user.id}")
+      end
+    end
   end
 
   def restore(conn, %{"id" => id}) do
     prefix = conn.assigns.tenant_prefix
     user = Accounts.get_user!(prefix, id)
-    {:ok, _} = Accounts.restore_user(prefix, user)
-
-    conn
-    |> put_flash(:info, "User restored")
-    |> redirect(to: ~p"/admin/users/#{user.id}")
+    case Accounts.restore_user(prefix, user) do
+      {:ok, _} ->
+        conn |> put_flash(:info, "User restored") |> redirect(to: ~p"/admin/users/#{user.id}")
+      {:error, _} ->
+        conn |> put_flash(:error, "Could not restore user") |> redirect(to: ~p"/admin/users/#{user.id}")
+    end
   end
 
   # ---------------------------------------------------------------------------
