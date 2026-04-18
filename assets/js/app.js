@@ -85,6 +85,12 @@ import { VueIslands, registerVueIsland } from "./islands/registry.js"
 
 export { registerVueIsland }
 
+// Import all islands before mounting so they register themselves first
+import "./islands/hello.js"
+import "./tiptap_editor.js"
+import FormBuilderIsland from "./islands/FormBuilderIsland.vue"
+registerVueIsland("FormBuilderIsland", FormBuilderIsland)
+
 function mountIslands() {
   document.querySelectorAll("[data-vue]").forEach((el) => {
     const name = el.dataset.vue
@@ -101,7 +107,42 @@ if (document.readyState === "loading") {
   mountIslands()
 }
 
-import "./islands/hello.js"
-import "./tiptap_editor.js"
-import "./islands/FormBuilderIsland.vue"
+// ── Topbar search: Enter navigates, ⌘K (or Ctrl+K) focuses ──────────────────
+;(function () {
+  function getInput() {
+    return document.getElementById("topbar-search")
+  }
+
+  document.addEventListener("keydown", function (e) {
+    const input = getInput()
+    if (!input) return
+
+    if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+      e.preventDefault()
+      input.focus()
+      input.select()
+      return
+    }
+
+    if (e.key === "Escape" && document.activeElement === input) {
+      input.blur()
+    }
+  })
+
+  document.addEventListener("DOMContentLoaded", function () {
+    const input = getInput()
+    if (!input) return
+
+    input.addEventListener("keydown", function (e) {
+      if (e.key === "Enter") {
+        e.preventDefault()
+        const q = input.value.trim()
+        if (q.length >= 2) {
+          window.location.href = "/search?q=" + encodeURIComponent(q)
+        }
+      }
+    })
+  })
+})()
+
 

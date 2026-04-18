@@ -48,6 +48,7 @@ defmodule AtriumWeb.Router do
       pipe_through [:super_admin_required, :super_admin_layout]
       get "/", SuperAdmin.DashboardController, :index
       resources "/tenants", SuperAdmin.TenantController, except: [:delete]
+      post "/tenants/:id/reseed_acls", SuperAdmin.TenantController, :reseed_acls
       resources "/tenants/:tenant_id/idps", SuperAdmin.TenantIdpController, except: [:show]
     end
   end
@@ -91,12 +92,35 @@ defmodule AtriumWeb.Router do
       get "/", PageController, :home
       get "/audit", AuditViewerController, :index
       get "/audit/export", AuditViewerController, :export
+      get "/search", SearchController, :index
 
       get  "/home",                              HomeController, :show
       post "/home/announcements",                HomeController, :create_announcement
       post "/home/announcements/:id/delete",     HomeController, :delete_announcement
       post "/home/quick_links",                  HomeController, :create_quick_link
       post "/home/quick_links/:id/delete",       HomeController, :delete_quick_link
+
+      get "/news",      NewsController, :index
+      get "/news/:id",  NewsController, :show
+
+      get "/directory",      DirectoryController, :index
+      get "/directory/:id",  DirectoryController, :show
+
+      get "/compliance", ComplianceController, :index
+
+      get "/helpdesk", HelpdeskController, :index
+
+      get  "/tools",                              ToolsController, :index
+      post "/tools",                              ToolsController, :create_tool
+      post "/tools/:id/delete",                   ToolsController, :delete_tool
+      post "/tools/:id/change_kind",              ToolsController, :change_kind
+      post "/tools/:id/upload",                   ToolsController, :upload_file
+      get  "/tools/:id/download",                 ToolsController, :download
+      get  "/tools/:id/request",                  ToolsController, :request_form
+      post "/tools/:id/request",                  ToolsController, :submit_request
+      get  "/tools/:id/requests",                 ToolsController, :list_requests
+      post "/tools/:id/requests/:rid/approve",    ToolsController, :approve_request
+      post "/tools/:id/requests/:rid/reject",     ToolsController, :reject_request
 
       scope "/admin", TenantAdmin, as: :tenant_admin do
         pipe_through [:require_tenant_admin]
@@ -109,6 +133,13 @@ defmodule AtriumWeb.Router do
         post "/users/:id/toggle_admin",   UserController, :toggle_admin
         post "/users/:id/suspend",        UserController, :suspend
         post "/users/:id/restore",        UserController, :restore
+        get  "/users/:id/profile",        UserController, :edit_profile
+        put  "/users/:id/profile",        UserController, :update_profile
+
+        get  "/sections/:section_key/subsections",            SubsectionController, :index
+        get  "/sections/:section_key/subsections/new",        SubsectionController, :new
+        post "/sections/:section_key/subsections",            SubsectionController, :create
+        post "/sections/:section_key/subsections/:id/delete", SubsectionController, :delete
       end
 
       get  "/sections/:section_key/documents",             DocumentController, :index
@@ -121,6 +152,7 @@ defmodule AtriumWeb.Router do
       post "/sections/:section_key/documents/:id/reject",  DocumentController, :reject
       post "/sections/:section_key/documents/:id/approve", DocumentController, :approve
       post "/sections/:section_key/documents/:id/archive", DocumentController, :archive
+      get  "/sections/:section_key/documents/:id/pdf",     DocumentController, :download_pdf
 
       get  "/sections/:section_key/forms",                                    FormController, :index
       get  "/sections/:section_key/forms/new",                                FormController, :new

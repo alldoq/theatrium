@@ -12,7 +12,13 @@
     <svg class="atrium-topbar-search-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75">
       <circle cx="7" cy="7" r="4.5"/><path d="M11 11l2.5 2.5" stroke-linecap="round"/>
     </svg>
-    <input type="text" placeholder="Search…" />
+    <input
+      type="text"
+      id="topbar-search"
+      data-search-input
+      placeholder="Search…"
+      autocomplete="off"
+    />
     <kbd class="atrium-topbar-kbd">⌘K</kbd>
   </div>
   <div class="atrium-topbar-spacer"></div>
@@ -47,17 +53,38 @@
     <%= if assigns[:nav] && @nav != [] do %>
       <div class="atrium-sidebar-section">
         <div class="atrium-sidebar-label">Sections</div>
+        <% dedicated = ~w(home news directory tools compliance helpdesk) %>
         <%= for entry <- @nav do %>
-          <a href={"/sections/#{entry.key}/documents"} class={"atrium-sidebar-item#{if assigns[:section_key] == to_string(entry.key), do: " active", else: ""}"}>
+          <% key = to_string(entry.key)
+             path = @conn.request_path
+             is_dedicated = key in dedicated
+             section_href = if is_dedicated, do: "/#{key}", else: "/sections/#{key}/documents"
+             section_active = if is_dedicated,
+               do: path == "/#{key}" or String.starts_with?(path, "/#{key}/"),
+               else: String.contains?(path, "/sections/#{key}/")
+             docs_active = !is_dedicated and section_active and String.contains?(path, "/documents")
+             forms_active = !is_dedicated and section_active and String.contains?(path, "/forms")
+          %>
+          <a href={section_href} class={"atrium-sidebar-item#{if section_active, do: " active", else: ""}"}>
             <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75">
-              <path d="M4 2h6l4 4v8a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z" stroke-linejoin="round"/>
-              <path d="M10 2v4h4" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M9 2H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V6L9 2z" stroke-linejoin="round"/>
+              <path d="M9 2v4h4" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
             <%= entry.name %>
           </a>
-          <%= for c <- entry.children do %>
-            <a href={"/sections/#{entry.key}/#{c.slug}/documents"} class="atrium-sidebar-item" style="padding-left: 36px; font-size: .8125rem;">
-              <%= c.name %>
+          <%= if section_active and not is_dedicated do %>
+            <a href={"/sections/#{key}/documents"} class={"atrium-sidebar-item#{if docs_active, do: " active", else: ""}"} style="padding-left:28px;font-size:.8125rem">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75">
+                <path d="M2 4h12M2 8h8M2 12h5" stroke-linecap="round"/>
+              </svg>
+              Documents
+            </a>
+            <a href={"/sections/#{key}/forms"} class={"atrium-sidebar-item#{if forms_active, do: " active", else: ""}"} style="padding-left:28px;font-size:.8125rem">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75">
+                <rect x="2" y="2" width="12" height="12" rx="1.5" stroke-linejoin="round"/>
+                <path d="M5 5.5h6M5 8h6M5 10.5h3" stroke-linecap="round"/>
+              </svg>
+              Forms
             </a>
           <% end %>
         <% end %>
@@ -73,12 +100,14 @@
     </div>
     <%= if assigns[:current_user] && @current_user.is_admin do %>
       <div class="atrium-sidebar-section">
-        <a href={~p"/admin/users"} class="atrium-sidebar-item">
+        <div class="atrium-sidebar-label">Admin</div>
+        <% admin_active = String.starts_with?(@conn.request_path, "/admin") %>
+        <a href={~p"/admin/users"} class={"atrium-sidebar-item#{if admin_active, do: " active", else: ""}"}>
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75">
             <circle cx="8" cy="5" r="2.5" stroke-linecap="round"/>
             <path d="M2.5 13c0-3 2.5-4.5 5.5-4.5s5.5 1.5 5.5 4.5" stroke-linecap="round"/>
           </svg>
-          Admin
+          Users
         </a>
       </div>
     <% end %>
