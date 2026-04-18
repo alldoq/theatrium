@@ -94,6 +94,9 @@ defmodule AtriumWeb.Router do
       get "/audit/export", AuditViewerController, :export
       get "/search", SearchController, :index
 
+      get  "/notifications",          NotificationsController, :index
+      post "/notifications/:id/read", NotificationsController, :mark_read
+
       get  "/home",                              HomeController, :show
       post "/home/announcements",                HomeController, :create_announcement
       post "/home/announcements/:id/delete",     HomeController, :delete_announcement
