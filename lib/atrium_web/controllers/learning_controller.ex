@@ -131,20 +131,34 @@ defmodule AtriumWeb.LearningController do
   def complete(conn, %{"id" => id}) do
     prefix = conn.assigns.tenant_prefix
     user = conn.assigns.current_user
-    case Learning.complete_course(prefix, id, user.id) do
-      {:ok, _} -> conn |> redirect(to: ~p"/learning/#{id}")
-      {:error, _} ->
-        conn |> put_flash(:error, "Could not mark as complete.") |> redirect(to: ~p"/learning/#{id}")
+    course = Learning.get_course!(prefix, id)
+    can_edit = Atrium.Authorization.Policy.can?(prefix, user, :edit, {:section, "learning"})
+
+    if course.status != "published" && !can_edit do
+      conn |> put_status(:not_found) |> put_view(AtriumWeb.ErrorHTML) |> render(:"404") |> halt()
+    else
+      case Learning.complete_course(prefix, id, user.id) do
+        {:ok, _} -> conn |> redirect(to: ~p"/learning/#{id}")
+        {:error, _} ->
+          conn |> put_flash(:error, "Could not mark as complete.") |> redirect(to: ~p"/learning/#{id}")
+      end
     end
   end
 
   def uncomplete(conn, %{"id" => id}) do
     prefix = conn.assigns.tenant_prefix
     user = conn.assigns.current_user
-    case Learning.uncomplete_course(prefix, id, user.id) do
-      :ok -> conn |> redirect(to: ~p"/learning/#{id}")
-      {:error, _} ->
-        conn |> put_flash(:error, "Could not remove completion.") |> redirect(to: ~p"/learning/#{id}")
+    course = Learning.get_course!(prefix, id)
+    can_edit = Atrium.Authorization.Policy.can?(prefix, user, :edit, {:section, "learning"})
+
+    if course.status != "published" && !can_edit do
+      conn |> put_status(:not_found) |> put_view(AtriumWeb.ErrorHTML) |> render(:"404") |> halt()
+    else
+      case Learning.uncomplete_course(prefix, id, user.id) do
+        :ok -> conn |> redirect(to: ~p"/learning/#{id}")
+        {:error, _} ->
+          conn |> put_flash(:error, "Could not remove completion.") |> redirect(to: ~p"/learning/#{id}")
+      end
     end
   end
 
