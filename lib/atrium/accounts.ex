@@ -1,6 +1,7 @@
 defmodule Atrium.Accounts do
   import Ecto.Query
   alias Atrium.Repo
+  alias Atrium.Audit
   alias Atrium.Accounts.{User, UserIdentity, Session, InvitationToken, PasswordResetToken, AllStaff}
 
   @invitation_ttl_hours 72
@@ -13,7 +14,12 @@ defmodule Atrium.Accounts do
     Repo.transaction(fn ->
       with {:ok, user} <- insert_invited_user(prefix, attrs),
            {raw, hash} = token_pair(),
-           {:ok, _} <- insert_invitation_token(prefix, user, hash) do
+           {:ok, _} <- insert_invitation_token(prefix, user, hash),
+           {:ok, _} <- Audit.log(prefix, "user.invited", %{
+             actor: :system,
+             resource: {"User", user.id},
+             changes: %{"email" => [nil, user.email], "name" => [nil, user.name]}
+           }) do
         %{user: user, token: raw}
       else
         {:error, reason} -> Repo.rollback(reason)
@@ -32,8 +38,9 @@ defmodule Atrium.Accounts do
 
           with {:ok, user} <- Repo.update(changeset, prefix: prefix),
                {:ok, _} <- mark_token_used(prefix, token),
-               {:ok, _} <- upsert_local_identity(prefix, user) do
-            :ok = AllStaff.ensure_member(prefix, user)
+               {:ok, _} <- upsert_local_identity(prefix, user),
+               :ok <- AllStaff.ensure_member(prefix, user),
+               {:ok, _} <- Audit.log(prefix, "user.activated", %{actor: :system, resource: {"User", user.id}}) do
             user
           else
             {:error, reason} -> Repo.rollback(reason)
@@ -53,19 +60,32 @@ defmodule Atrium.Accounts do
     cond do
       is_nil(user) ->
         Argon2.no_user_verify()
+        {:ok, _} = Audit.log(prefix, "user.login_failed", %{
+          actor: :system,
+          context: %{"email" => email, "reason" => "invalid_credentials"}
+        })
         {:error, :invalid_credentials}
 
       is_nil(user.hashed_password) ->
         Argon2.no_user_verify()
+        {:ok, _} = Audit.log(prefix, "user.login_failed", %{
+          actor: :system,
+          context: %{"email" => email, "reason" => "invalid_credentials"}
+        })
         {:error, :invalid_credentials}
 
       not Argon2.verify_pass(password, user.hashed_password) ->
+        {:ok, _} = Audit.log(prefix, "user.login_failed", %{
+          actor: :system,
+          context: %{"email" => email, "reason" => "invalid_credentials"}
+        })
         {:error, :invalid_credentials}
 
       user.status != "active" ->
         {:error, :suspended}
 
       true ->
+        {:ok, _} = Audit.log(prefix, "user.login", %{actor: {:user, user.id}, resource: {"User", user.id}})
         {:ok, record_login!(prefix, user)}
     end
   end
@@ -87,7 +107,8 @@ defmodule Atrium.Accounts do
       user_agent: Map.get(metadata, :user_agent)
     }
 
-    with {:ok, session} <- Session.new_changeset(attrs) |> Repo.insert(prefix: prefix) do
+    with {:ok, session} <- Session.new_changeset(attrs) |> Repo.insert(prefix: prefix),
+         {:ok, _} <- Audit.log(prefix, "session.created", %{actor: {:user, user.id}, resource: {"User", user.id}}) do
       {:ok, %{session: session, token: raw}}
     end
   end
@@ -119,14 +140,18 @@ defmodule Atrium.Accounts do
 
       session ->
         case Repo.delete(session, prefix: prefix) do
-          {:ok, _} -> :ok
+          {:ok, _} ->
+            {:ok, _} = Audit.log(prefix, "session.revoked", %{actor: :system, resource: {"User", session.user_id}})
+            :ok
           {:error, _} -> :not_found
         end
     end
   end
 
-  def revoke_all_sessions_for_user(prefix, %User{id: id}) do
+  def revoke_all_sessions_for_user(prefix, %User{id: id} = user) do
     {count, _} = Repo.delete_all(from(s in Session, where: s.user_id == ^id), prefix: prefix)
+    {:ok, _} = Audit.log(prefix, "session.revoked", %{actor: :system, resource: {"User", user.id}})
+    {:ok, _} = Audit.log(prefix, "session.revoked_all", %{actor: :system, resource: {"User", user.id}})
     {:ok, count}
   end
 
@@ -148,6 +173,7 @@ defmodule Atrium.Accounts do
           })
           |> Repo.insert(prefix: prefix)
 
+        {:ok, _} = Audit.log(prefix, "password.reset_requested", %{actor: :system, resource: {"User", user.id}})
         {:ok, %{token: raw, user: user}}
 
       _ ->
@@ -168,7 +194,8 @@ defmodule Atrium.Accounts do
                  |> User.change_password_changeset(%{password: new_password})
                  |> Repo.update(prefix: prefix),
                {:ok, _} <- mark_token_used(prefix, token),
-               {:ok, _} <- revoke_all_sessions_for_user(prefix, user) do
+               {:ok, _} <- revoke_all_sessions_for_user(prefix, user),
+               {:ok, _} <- Audit.log(prefix, "password.reset_completed", %{actor: :system, resource: {"User", user.id}}) do
             user
           else
             {:error, reason} -> Repo.rollback(reason)
@@ -184,8 +211,9 @@ defmodule Atrium.Accounts do
 
   def suspend_user(prefix, user) do
     with {:ok, u} <- user |> User.status_changeset("suspended") |> Repo.update(prefix: prefix),
-         {:ok, _} <- revoke_all_sessions_for_user(prefix, u) do
-      :ok = AllStaff.ensure_not_member(prefix, u)
+         {:ok, _} <- revoke_all_sessions_for_user(prefix, u),
+         :ok <- AllStaff.ensure_not_member(prefix, u),
+         {:ok, _} <- Audit.log(prefix, "user.deactivated", %{actor: :system, resource: {"User", u.id}}) do
       {:ok, u}
     end
   end
@@ -197,6 +225,7 @@ defmodule Atrium.Accounts do
     |> case do
       {:ok, u} ->
         :ok = AllStaff.ensure_member(prefix, u)
+        {:ok, _} = Audit.log(prefix, "user.activated", %{actor: :system, resource: {"User", u.id}})
         {:ok, u}
 
       err ->
