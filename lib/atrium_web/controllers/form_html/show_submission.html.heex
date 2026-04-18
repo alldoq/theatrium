@@ -1,0 +1,70 @@
+<div class="atrium-anim" style="max-width:720px">
+  <div style="margin-bottom:20px">
+    <a href={~p"/sections/#{@section_key}/forms/#{@form.id}/submissions"} style="font-size:.8125rem;color:var(--text-tertiary)">← Submissions</a>
+  </div>
+
+  <div style="margin-bottom:24px">
+    <div class="atrium-page-eyebrow"><%= @section_key %></div>
+    <h1 class="atrium-page-title"><%= @form.title %> — Submission</h1>
+    <div style="display:flex;gap:8px;align-items:center;margin-top:6px">
+      <span class="atrium-badge"><%= @submission.status %></span>
+      <span style="font-size:.8125rem;color:var(--text-tertiary)">Submitted <%= Calendar.strftime(@submission.submitted_at, "%Y-%m-%d %H:%M") %></span>
+    </div>
+  </div>
+
+  <div class="atrium-card" style="margin-bottom:16px">
+    <div class="atrium-card-header"><div class="atrium-card-title">Responses</div></div>
+    <div class="atrium-card-body">
+      <%= if @version do %>
+        <dl style="display:flex;flex-direction:column;gap:12px">
+          <%= for field <- @version.fields do %>
+            <div>
+              <dt style="font-size:.75rem;color:var(--text-tertiary);margin-bottom:2px"><%= field["label"] %></dt>
+              <dd style="font-size:.875rem;color:var(--text-primary)"><%= Map.get(@submission.field_values, field["id"], "—") %></dd>
+            </div>
+          <% end %>
+        </dl>
+      <% else %>
+        <p style="color:var(--text-tertiary);font-size:.875rem">Version details unavailable.</p>
+      <% end %>
+    </div>
+  </div>
+
+  <div class="atrium-card">
+    <div class="atrium-card-header"><div class="atrium-card-title">Reviews</div></div>
+    <table class="atrium-table">
+      <thead>
+        <tr>
+          <th>Reviewer</th>
+          <th>Status</th>
+          <th>Completed</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <%= for r <- @reviews do %>
+          <tr>
+            <td style="font-size:.8125rem"><%= r.reviewer_email || r.reviewer_id %></td>
+            <td>
+              <span class="atrium-badge"><%= r.status %></span>
+            </td>
+            <td style="font-size:.8125rem;color:var(--text-secondary)">
+              <%= if r.completed_at, do: Calendar.strftime(r.completed_at, "%Y-%m-%d %H:%M"), else: "—" %>
+            </td>
+            <td style="text-align:right">
+              <%= if r.status == "pending" && r.reviewer_type == "user" do %>
+                <form method="post" action={~p"/sections/#{@section_key}/forms/#{@form.id}/submissions/#{@submission.id}/complete"} style="display:inline">
+                  <input type="hidden" name="_csrf_token" value={Plug.CSRFProtection.get_csrf_token()} />
+                  <button class="atrium-btn atrium-btn-ghost" style="height:28px;font-size:.8125rem">Mark complete</button>
+                </form>
+              <% end %>
+            </td>
+          </tr>
+        <% end %>
+        <%= if @reviews == [] do %>
+          <tr><td colspan="4" style="padding:20px;text-align:center;color:var(--text-tertiary)">No reviews.</td></tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+</div>

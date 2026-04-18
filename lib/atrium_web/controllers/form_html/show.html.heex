@@ -1,0 +1,82 @@
+<div class="atrium-anim" style="max-width:720px">
+  <div style="margin-bottom:20px">
+    <a href={~p"/sections/#{@section_key}/forms"} style="font-size:.8125rem;color:var(--text-tertiary)">← Forms</a>
+  </div>
+
+  <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:24px">
+    <div>
+      <div class="atrium-page-eyebrow"><%= @section_key %></div>
+      <h1 class="atrium-page-title"><%= @form.title %></h1>
+      <div style="display:flex;gap:8px;align-items:center;margin-top:6px">
+        <span class={"atrium-badge #{status_badge_class(@form.status)}"}>
+          <%= @form.status %>
+        </span>
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:.75rem;color:var(--text-tertiary)">v<%= @form.current_version %></span>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
+      <%= if @form.status == "draft" do %>
+        <a href={~p"/sections/#{@section_key}/forms/#{@form.id}/edit"} class="atrium-btn atrium-btn-primary">Edit</a>
+      <% end %>
+      <%= if @form.status == "published" do %>
+        <a href={~p"/sections/#{@section_key}/forms/#{@form.id}/submit"} class="atrium-btn atrium-btn-primary">Fill in form</a>
+        <a href={~p"/sections/#{@section_key}/forms/#{@form.id}/submissions"} class="atrium-btn atrium-btn-ghost">Submissions</a>
+        <form method="post" action={~p"/sections/#{@section_key}/forms/#{@form.id}/reopen"} style="display:inline">
+          <input type="hidden" name="_csrf_token" value={Plug.CSRFProtection.get_csrf_token()} />
+          <button class="atrium-btn atrium-btn-ghost">Reopen</button>
+        </form>
+        <form method="post" action={~p"/sections/#{@section_key}/forms/#{@form.id}/archive"} style="display:inline">
+          <input type="hidden" name="_csrf_token" value={Plug.CSRFProtection.get_csrf_token()} />
+          <button class="atrium-btn atrium-btn-ghost" style="color:var(--color-error)">Archive</button>
+        </form>
+      <% end %>
+      <%= if @form.status == "archived" do %>
+        <form method="post" action={~p"/sections/#{@section_key}/forms/#{@form.id}/reopen"} style="display:inline">
+          <input type="hidden" name="_csrf_token" value={Plug.CSRFProtection.get_csrf_token()} />
+          <button class="atrium-btn atrium-btn-ghost">Reopen</button>
+        </form>
+      <% end %>
+    </div>
+  </div>
+
+  <div class="atrium-card" style="margin-bottom:16px">
+    <div class="atrium-card-header"><div class="atrium-card-title">Version history</div></div>
+    <table class="atrium-table">
+      <thead>
+        <tr>
+          <th>Version</th>
+          <th>Fields</th>
+          <th>Published at</th>
+        </tr>
+      </thead>
+      <tbody>
+        <%= for v <- @versions do %>
+          <tr>
+            <td style="font-family:'IBM Plex Mono',monospace;font-size:.8125rem">v<%= v.version %></td>
+            <td style="font-size:.8125rem"><%= length(v.fields) %> field(s)</td>
+            <td style="font-size:.8125rem;color:var(--text-secondary)"><%= Calendar.strftime(v.published_at, "%Y-%m-%d %H:%M") %></td>
+          </tr>
+        <% end %>
+        <%= if @versions == [] do %>
+          <tr><td colspan="3" style="padding:20px;text-align:center;color:var(--text-tertiary)">No versions yet.</td></tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+
+  <%= if assigns[:history] && @history != [] do %>
+    <div class="atrium-card">
+      <div class="atrium-card-header"><div class="atrium-card-title">Audit history</div></div>
+      <div class="atrium-card-body">
+        <%= for event <- @history do %>
+          <div style="display:flex;gap:12px;align-items:baseline;padding:8px 0;border-bottom:1px solid var(--border-subtle)">
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:.7rem;color:var(--text-tertiary);white-space:nowrap">
+              <%= Calendar.strftime(event.occurred_at, "%Y-%m-%d %H:%M") %>
+            </span>
+            <span style="font-size:.875rem;color:var(--text-primary)"><%= event.action %></span>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+</div>

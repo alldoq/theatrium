@@ -1,0 +1,88 @@
+<div class="atrium-anim" style="max-width:640px">
+  <div style="margin-bottom:20px">
+    <a href={~p"/sections/#{@section_key}/forms/#{@form.id}"} style="font-size:.8125rem;color:var(--text-tertiary)">← Back</a>
+  </div>
+
+  <div style="margin-bottom:24px">
+    <div class="atrium-page-eyebrow"><%= @section_key %></div>
+    <h1 class="atrium-page-title"><%= @form.title %></h1>
+  </div>
+
+  <form method="post" action={~p"/sections/#{@section_key}/forms/#{@form.id}/submit"}>
+    <input type="hidden" name="_csrf_token" value={Plug.CSRFProtection.get_csrf_token()} />
+
+    <%= for field <- @version.fields do %>
+      <div class="atrium-card" style="margin-bottom:12px;padding:16px" id={"field-#{field["id"]}"} data-conditions={Jason.encode!(field["conditions"] || [])}>
+        <label class="atrium-label">
+          <%= field["label"] %>
+          <%= if field["required"] do %><span style="color:var(--color-error)"> *</span><% end %>
+        </label>
+        <%= case field["type"] do %>
+          <% "textarea" -> %>
+            <textarea name={"submission[#{field["id"]}]"} rows="4" class="atrium-input" style="height:auto;padding:8px"></textarea>
+          <% "number" -> %>
+            <input type="number" name={"submission[#{field["id"]}]"} class="atrium-input" />
+          <% "date" -> %>
+            <input type="date" name={"submission[#{field["id"]}]"} class="atrium-input" />
+          <% "radio" -> %>
+            <div style="display:flex;flex-direction:column;gap:6px;margin-top:4px">
+              <%= for opt <- field["options"] || [] do %>
+                <label style="display:flex;align-items:center;gap:8px;font-size:.875rem;cursor:pointer">
+                  <input type="radio" name={"submission[#{field["id"]}]"} value={opt} style="accent-color:var(--blue-500)" />
+                  <%= opt %>
+                </label>
+              <% end %>
+            </div>
+          <% "select" -> %>
+            <select name={"submission[#{field["id"]}]"} class="atrium-input">
+              <option value="">— select —</option>
+              <%= for opt <- field["options"] || [] do %>
+                <option value={opt}><%= opt %></option>
+              <% end %>
+            </select>
+          <% "checkbox_group" -> %>
+            <div style="display:flex;flex-direction:column;gap:6px;margin-top:4px">
+              <%= for opt <- field["options"] || [] do %>
+                <label style="display:flex;align-items:center;gap:8px;font-size:.875rem;cursor:pointer">
+                  <input type="checkbox" name={"submission[#{field["id"]}][]"} value={opt} style="accent-color:var(--blue-500)" />
+                  <%= opt %>
+                </label>
+              <% end %>
+            </div>
+          <% "file" -> %>
+            <input type="file" name={"submission[#{field["id"]}]"} class="atrium-input" disabled />
+            <p style="font-size:.75rem;color:var(--text-tertiary);margin-top:4px">File uploads coming in Phase 1c.</p>
+          <% _ -> %>
+            <input type="text" name={"submission[#{field["id"]}]"} class="atrium-input" />
+        <% end %>
+      </div>
+    <% end %>
+
+    <button type="submit" class="atrium-btn atrium-btn-primary">Submit</button>
+  </form>
+
+  <script>
+    (function() {
+      function evalConditions(field) {
+        var conditions = JSON.parse(field.dataset.conditions || "[]");
+        if (conditions.length === 0) return true;
+        return conditions.every(function(c) {
+          var target = document.querySelector("[name='submission[" + c.field_id + "]']");
+          if (!target) return false;
+          var val = target.value;
+          if (c.operator === "eq") return val === c.value;
+          if (c.operator === "neq") return val !== c.value;
+          if (c.operator === "contains") return val.includes(c.value);
+          return true;
+        });
+      }
+      function refresh() {
+        document.querySelectorAll("[data-conditions]").forEach(function(el) {
+          el.style.display = evalConditions(el) ? "" : "none";
+        });
+      }
+      document.addEventListener("change", refresh);
+      refresh();
+    })();
+  </script>
+</div>

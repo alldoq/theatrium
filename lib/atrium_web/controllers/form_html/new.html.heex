@@ -1,0 +1,29 @@
+<div class="atrium-anim" style="max-width:560px">
+  <div style="margin-bottom:20px">
+    <a href={~p"/sections/#{@section_key}/forms"} style="font-size:.8125rem;color:var(--text-tertiary)">← Forms</a>
+  </div>
+
+  <div style="margin-bottom:24px">
+    <div class="atrium-page-eyebrow"><%= @section_key %></div>
+    <h1 class="atrium-page-title">New form</h1>
+  </div>
+
+  <.form :let={f} for={@changeset} action={~p"/sections/#{@section_key}/forms"} method="post">
+    <div class="atrium-card" style="margin-bottom:16px">
+      <div class="atrium-card-header"><div class="atrium-card-title">Details</div></div>
+      <div class="atrium-card-body">
+        <div>
+          <label class="atrium-label">Title</label>
+          <input type="text" name={f[:title].name} id={f[:title].id} value={f[:title].value || ""} class="atrium-input" required />
+          <%= if msg = f[:title].errors |> Enum.map(fn {m, _} -> m end) |> List.first() do %>
+            <p style="color:var(--color-error);font-size:.8125rem;margin-top:4px"><%= msg %></p>
+          <% end %>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button type="submit" class="atrium-btn atrium-btn-primary">Create and open builder</button>
+      <a href={~p"/sections/#{@section_key}/forms"} class="atrium-btn atrium-btn-ghost">Cancel</a>
+    </div>
+  </.form>
+</div>
