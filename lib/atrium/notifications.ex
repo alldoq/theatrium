@@ -29,7 +29,7 @@ defmodule Atrium.Notifications do
       where: n.user_id == ^user_id and is_nil(n.read_at),
       select: count()
     )
-    |> Repo.one(prefix: prefix)
+    |> Repo.one(prefix: prefix) || 0
   end
 
   @spec mark_read(String.t(), binary(), binary()) ::
