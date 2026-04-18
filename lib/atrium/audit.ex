@@ -142,6 +142,8 @@ defmodule Atrium.Audit do
   defp decode_resource(nil), do: {nil, nil}
   defp decode_resource({type, id}) when is_binary(type), do: {type, to_string(id)}
 
+  defp stringify_keys(%_{} = struct), do: struct  # Handle Ecto schemas and other structs
+
   defp stringify_keys(map) when is_map(map) do
     for {k, v} <- map, into: %{}, do: {to_string(k), stringify_keys(v)}
   end
