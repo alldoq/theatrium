@@ -6,7 +6,8 @@ defmodule AtriumWeb.SessionController do
   @cookie_opts [http_only: true, secure: true, same_site: "Lax"]
 
   def new(conn, _params) do
-    render(conn, :new, email: "", error: nil, tenant: conn.assigns.tenant)
+    idps = Atrium.Accounts.Idp.list_enabled(conn.assigns.tenant_prefix)
+    render(conn, :new, email: "", error: nil, tenant: conn.assigns.tenant, idps: idps)
   end
 
   def create(conn, %{"email" => email, "password" => password}) do
@@ -26,7 +27,8 @@ defmodule AtriumWeb.SessionController do
         |> redirect(to: "/")
 
       {:error, _reason} ->
-        conn |> put_status(:ok) |> render(:new, email: email, error: "Invalid credentials", tenant: conn.assigns.tenant)
+        idps = Atrium.Accounts.Idp.list_enabled(prefix)
+        conn |> put_status(:ok) |> render(:new, email: email, error: "Invalid credentials", tenant: conn.assigns.tenant, idps: idps)
     end
   end
 
