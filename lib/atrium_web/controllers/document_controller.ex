@@ -5,11 +5,11 @@ defmodule AtriumWeb.DocumentController do
 
   plug AtriumWeb.Plugs.Authorize,
        [capability: :view, target: &__MODULE__.section_target/1]
-       when action in [:index, :show]
+       when action in [:index, :show, :download_pdf]
 
   plug AtriumWeb.Plugs.Authorize,
        [capability: :edit, target: &__MODULE__.section_target/1]
-       when action in [:new, :create, :edit, :update, :submit]
+       when action in [:new, :create, :edit, :update, :submit, :upload_image]
 
   plug AtriumWeb.Plugs.Authorize,
        [capability: :approve, target: &__MODULE__.section_target/1]
@@ -118,6 +118,87 @@ defmodule AtriumWeb.DocumentController do
 
   def archive(conn, %{"section_key" => section_key, "id" => id}) do
     run_transition(conn, section_key, id, &Documents.archive_document/3, "Document archived.")
+  end
+
+  def download_pdf(conn, %{"section_key" => section_key, "id" => id}) do
+    prefix = conn.assigns.tenant_prefix
+    doc = Documents.get_document!(prefix, id)
+    html = build_pdf_html(doc)
+
+    tmp = System.tmp_dir!() |> Path.join("atrium_doc_#{System.unique_integer([:positive])}.pdf")
+    :ok = ChromicPDF.print_to_pdf({:html, html}, output: tmp)
+    pdf_binary = File.read!(tmp)
+    File.rm(tmp)
+
+    filename = "#{slugify(doc.title)}.pdf"
+
+    conn
+    |> put_resp_content_type("application/pdf")
+    |> put_resp_header("content-disposition", ~s(attachment; filename="#{filename}"))
+    |> send_resp(200, pdf_binary)
+  end
+
+  def upload_image(conn, %{"section_key" => section_key, "image" => %Plug.Upload{} = upload}) do
+    prefix = conn.assigns.tenant_prefix
+    dir = Path.join(["priv/uploads/documents", prefix, "images"])
+    File.mkdir_p!(dir)
+    ext = Path.extname(upload.filename)
+    filename = "#{System.unique_integer([:positive])}#{ext}"
+    dest = Path.join(dir, filename)
+    File.cp!(upload.path, dest)
+    url = "/uploads/documents/#{prefix}/images/#{filename}"
+    json(conn, %{url: url})
+  end
+
+  def upload_image(conn, %{"section_key" => _section_key}) do
+    conn
+    |> put_status(400)
+    |> json(%{error: "No image file provided"})
+  end
+
+  defp build_pdf_html(doc) do
+    body = doc.body_html || ""
+
+    """
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8" />
+      <style>
+        body { font-family: Georgia, serif; font-size: 12pt; line-height: 1.8; color: #1a1a1a; margin: 72px 90px; }
+        h1 { font-size: 24pt; font-weight: 700; margin: 1.2em 0 .4em; }
+        h2 { font-size: 18pt; font-weight: 700; margin: 1.1em 0 .4em; }
+        h3 { font-size: 14pt; font-weight: 600; margin: 1em 0 .3em; }
+        p  { margin: 0 0 .8em; }
+        ul { list-style: disc;    padding-left: 1.6em; margin: .5em 0 .8em; }
+        ol { list-style: decimal; padding-left: 1.6em; margin: .5em 0 .8em; }
+        li { margin: .25em 0; }
+        blockquote { border-left: 3px solid #93c5fd; padding-left: 1em; color: #475569; margin: .8em 0; }
+        pre  { background: #f1f5f9; border-radius: 4px; padding: .75em 1em; font-family: monospace; font-size: 10pt; overflow-wrap: break-word; margin: .8em 0; }
+        code { background: #f1f5f9; border-radius: 3px; padding: .1em .35em; font-family: monospace; font-size: 10pt; }
+        strong { font-weight: 700; }
+        em { font-style: italic; }
+        .doc-header { border-bottom: 1px solid #e2e8f0; padding-bottom: 16px; margin-bottom: 24px; }
+        .doc-header h1 { font-size: 22pt; margin: 0 0 6px; }
+        .doc-meta { font-size: 9pt; color: #64748b; }
+      </style>
+    </head>
+    <body>
+      <div class="doc-header">
+        <h1>#{doc.title}</h1>
+        <div class="doc-meta">Version #{doc.current_version} &nbsp;·&nbsp; #{doc.status}</div>
+      </div>
+      #{body}
+    </body>
+    </html>
+    """
+  end
+
+  defp slugify(title) do
+    title
+    |> String.downcase()
+    |> String.replace(~r/[^a-z0-9]+/, "-")
+    |> String.trim("-")
   end
 
   defp run_transition(conn, section_key, id, transition_fn, success_msg) do

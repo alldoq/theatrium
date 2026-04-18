@@ -164,6 +164,7 @@ defmodule AtriumWeb.Router do
       post "/sections/:section_key/documents/:id/approve", DocumentController, :approve
       post "/sections/:section_key/documents/:id/archive", DocumentController, :archive
       get  "/sections/:section_key/documents/:id/pdf",     DocumentController, :download_pdf
+      post "/sections/:section_key/documents/upload_image", DocumentController, :upload_image
 
       get  "/sections/:section_key/forms",                                    FormController, :index
       get  "/sections/:section_key/forms/new",                                FormController, :new
