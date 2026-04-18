@@ -33,6 +33,7 @@ defmodule AtriumWeb.Router do
       pipe_through [:super_admin_required]
       get "/", SuperAdmin.DashboardController, :index
       resources "/tenants", SuperAdmin.TenantController, except: [:delete]
+      resources "/tenants/:tenant_id/idps", SuperAdmin.TenantIdpController, except: [:show]
     end
   end
 

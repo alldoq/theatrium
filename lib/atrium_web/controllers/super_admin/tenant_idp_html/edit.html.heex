@@ -1,0 +1,51 @@
+<main class="p-8 max-w-lg">
+  <h1 class="text-xl font-semibold mb-4">Edit IdP — <%= @idp.name %></h1>
+  <.form :let={f} for={@changeset} as={:idp} action={~p"/super/tenants/#{@tenant.id}/idps/#{@idp.id}"} method="post" class="space-y-4">
+    <input type="hidden" name="_method" value="put" />
+    <div>
+      <label class="block text-sm">Name</label>
+      <input type="text" name="idp[name]" value={Phoenix.HTML.Form.input_value(f, :name)} class="mt-1 w-full border rounded p-2" required />
+    </div>
+    <div>
+      <label class="block text-sm">Kind</label>
+      <select name="idp[kind]" class="mt-1 w-full border rounded p-2">
+        <option value="oidc" selected={Phoenix.HTML.Form.input_value(f, :kind) == "oidc"}>OIDC</option>
+        <option value="saml" selected={Phoenix.HTML.Form.input_value(f, :kind) == "saml"}>SAML</option>
+      </select>
+    </div>
+    <div>
+      <label class="block text-sm">Discovery URL (OIDC)</label>
+      <input type="text" name="idp[discovery_url]" value={Phoenix.HTML.Form.input_value(f, :discovery_url)} class="mt-1 w-full border rounded p-2" />
+    </div>
+    <div>
+      <label class="block text-sm">Client ID (OIDC)</label>
+      <input type="text" name="idp[client_id]" value={Phoenix.HTML.Form.input_value(f, :client_id)} class="mt-1 w-full border rounded p-2" />
+    </div>
+    <div>
+      <label class="block text-sm">Client Secret (OIDC)</label>
+      <input type="password" name="idp[client_secret]" class="mt-1 w-full border rounded p-2" />
+    </div>
+    <div>
+      <label class="block text-sm">Metadata XML (SAML)</label>
+      <textarea name="idp[metadata_xml]" class="mt-1 w-full border rounded p-2 font-mono text-xs" rows="6"><%= Phoenix.HTML.Form.input_value(f, :metadata_xml) %></textarea>
+    </div>
+    <div>
+      <label class="block text-sm">Provisioning Mode</label>
+      <select name="idp[provisioning_mode]" class="mt-1 w-full border rounded p-2">
+        <option value="strict" selected={Phoenix.HTML.Form.input_value(f, :provisioning_mode) == "strict"}>Strict</option>
+        <option value="auto_create" selected={Phoenix.HTML.Form.input_value(f, :provisioning_mode) == "auto_create"}>Auto Create</option>
+        <option value="link_only" selected={Phoenix.HTML.Form.input_value(f, :provisioning_mode) == "link_only"}>Link Only</option>
+      </select>
+    </div>
+    <div class="flex gap-4">
+      <label class="flex items-center gap-2 text-sm">
+        <input type="checkbox" name="idp[enabled]" value="true" checked={Phoenix.HTML.Form.input_value(f, :enabled)} /> Enabled
+      </label>
+      <label class="flex items-center gap-2 text-sm">
+        <input type="checkbox" name="idp[is_default]" value="true" checked={Phoenix.HTML.Form.input_value(f, :is_default)} /> Default
+      </label>
+    </div>
+    <button type="submit" class="rounded bg-slate-900 text-white px-4 py-2">Save</button>
+    <.link navigate={~p"/super/tenants/#{@tenant.id}/idps"} class="ml-2 text-sm text-gray-600">Cancel</.link>
+  </.form>
+</main>

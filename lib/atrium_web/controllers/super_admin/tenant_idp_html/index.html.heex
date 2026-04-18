@@ -1,0 +1,28 @@
+<main class="p-8">
+  <h1 class="text-xl font-semibold mb-4"><%= @tenant.name %> — IdPs</h1>
+  <.link navigate={~p"/super/tenants/#{@tenant.id}/idps/new"} class="inline-block mb-4 rounded bg-slate-900 text-white px-3 py-1">New IdP</.link>
+  <table class="w-full border">
+    <thead>
+      <tr>
+        <th class="p-2 text-left">Name</th>
+        <th class="p-2 text-left">Kind</th>
+        <th class="p-2 text-left">Mode</th>
+        <th class="p-2 text-left">Enabled</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      <%= for i <- @idps do %>
+        <tr class="border-t">
+          <td class="p-2"><%= i.name %><%= if i.is_default, do: " ★" %></td>
+          <td class="p-2"><%= i.kind %></td>
+          <td class="p-2"><%= i.provisioning_mode %></td>
+          <td class="p-2"><%= i.enabled %></td>
+          <td class="p-2">
+            <.link navigate={~p"/super/tenants/#{@tenant.id}/idps/#{i.id}/edit"}>edit</.link>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</main>
