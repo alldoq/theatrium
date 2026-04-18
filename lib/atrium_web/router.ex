@@ -59,6 +59,9 @@ defmodule AtriumWeb.Router do
     get "/password-reset/:token", PasswordResetController, :edit
     post "/password-reset/:token", PasswordResetController, :update
 
+    get "/auth/link/confirm", LinkConfirmController, :new
+    post "/auth/link/confirm", LinkConfirmController, :create
+
     get "/auth/oidc/callback", OidcController, :callback
     get "/auth/oidc/:id/start", OidcController, :start
 

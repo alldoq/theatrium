@@ -43,38 +43,53 @@ defmodule AtriumWeb.OidcController do
 
               {:error, :user_not_found} ->
                 conn
+                |> clear_oidc_session()
                 |> put_flash(:error, "Your account is not provisioned in this tenant.")
                 |> redirect(to: "/login")
 
               {:needs_password_confirmation, ticket} ->
-                conn |> put_session(:link_ticket, ticket) |> redirect(to: "/auth/link/confirm")
+                conn
+                |> clear_oidc_session()
+                |> put_session(:link_ticket, ticket)
+                |> redirect(to: "/auth/link/confirm")
             end
 
           {:error, reason} ->
-            conn |> put_flash(:error, "Sign-in failed: #{inspect(reason)}") |> redirect(to: "/login")
+            conn
+            |> clear_oidc_session()
+            |> put_flash(:error, "Sign-in failed: #{inspect(reason)}")
+            |> redirect(to: "/login")
         end
     end
   end
 
   defp finalise_login(conn, user, prefix) do
-    {:ok, %{token: token}} =
-      Accounts.create_session(prefix, user, %{
-        ip: conn.remote_ip |> :inet.ntoa() |> to_string(),
-        user_agent: get_req_header(conn, "user-agent") |> List.first() || ""
-      })
+    with {:ok, %{token: token}} <-
+           Accounts.create_session(prefix, user, %{
+             ip: conn.remote_ip |> :inet.ntoa() |> to_string(),
+             user_agent: get_req_header(conn, "user-agent") |> List.first() || ""
+           }) do
+      conn
+      |> clear_oidc_session()
+      |> put_resp_cookie("_atrium_session", token,
+           http_only: true, secure: true, same_site: "Lax",
+           max_age: conn.assigns.tenant.session_idle_timeout_minutes * 60)
+      |> redirect(to: "/")
+    else
+      _ ->
+        conn
+        |> clear_oidc_session()
+        |> put_flash(:error, "Login failed. Please try again.")
+        |> redirect(to: "/login")
+    end
+  end
 
+  defp clear_oidc_session(conn) do
     conn
     |> delete_session(:oidc_state)
     |> delete_session(:oidc_nonce)
     |> delete_session(:oidc_idp_id)
     |> delete_session(:oidc_session_params)
-    |> put_resp_cookie("_atrium_session", token,
-      http_only: true,
-      secure: true,
-      same_site: "Lax",
-      max_age: conn.assigns.tenant.session_idle_timeout_minutes * 60
-    )
-    |> redirect(to: "/")
   end
 
   defp assent_config(idp, conn) do

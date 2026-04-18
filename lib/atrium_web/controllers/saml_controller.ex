@@ -44,14 +44,17 @@ defmodule AtriumWeb.SamlController do
   end
 
   defp finalise_login(conn, user, prefix) do
-    {:ok, %{token: token}} = Accounts.create_session(prefix, user, %{})
-    conn
-    |> delete_session(:saml_idp_id)
-    |> delete_session(:saml_relay_state)
-    |> put_resp_cookie("_atrium_session", token,
-         http_only: true, secure: true, same_site: "Lax",
-         max_age: conn.assigns.tenant.session_idle_timeout_minutes * 60)
-    |> redirect(to: "/")
+    with {:ok, %{token: token}} <- Accounts.create_session(prefix, user, %{}) do
+      conn
+      |> delete_session(:saml_idp_id)
+      |> delete_session(:saml_relay_state)
+      |> put_resp_cookie("_atrium_session", token,
+           http_only: true, secure: true, same_site: "Lax",
+           max_age: conn.assigns.tenant.session_idle_timeout_minutes * 60)
+      |> redirect(to: "/")
+    else
+      _ -> conn |> put_flash(:error, "Login failed. Please try again.") |> redirect(to: "/login")
+    end
   end
 
   # Stubs — full SAML implementation is a future task (requires :esaml NIF work)

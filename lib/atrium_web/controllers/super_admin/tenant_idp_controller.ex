@@ -48,7 +48,15 @@ defmodule AtriumWeb.SuperAdmin.TenantIdpController do
     tenant = Tenants.get_tenant!(tid)
     prefix = Triplex.to_prefix(tenant.slug)
     idp = Idp.get_idp!(prefix, id)
-    {:ok, _} = Idp.delete_idp(prefix, idp)
-    redirect(conn, to: ~p"/super/tenants/#{tid}/idps")
+
+    case Idp.delete_idp(prefix, idp) do
+      {:ok, _} ->
+        redirect(conn, to: ~p"/super/tenants/#{tid}/idps")
+
+      {:error, _reason} ->
+        conn
+        |> put_flash(:error, "Could not delete IdP. It may be in use.")
+        |> redirect(to: ~p"/super/tenants/#{tid}/idps")
+    end
   end
 end

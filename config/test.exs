@@ -34,6 +34,7 @@ config :atrium, Oban, testing: :manual
 
 config :atrium, Atrium.Mailer, adapter: Swoosh.Adapters.Test
 
+# Dev/test-only throwaway key — never use in production
 config :atrium, Atrium.Vault,
   ciphers: [
     default:

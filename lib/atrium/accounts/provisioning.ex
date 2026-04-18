@@ -56,8 +56,11 @@ defmodule Atrium.Accounts.Provisioning do
     case find_user_by_email(prefix, email) do
       nil -> {:error, :user_not_found}
       user ->
-        {:ok, _} = insert_identity(prefix, user.id, provider, subject)
-        {:ok, user}
+        with {:ok, _} <- insert_identity(prefix, user.id, provider, subject) do
+          {:ok, user}
+        else
+          {:error, reason} -> {:error, reason}
+        end
     end
   end
 
@@ -65,14 +68,23 @@ defmodule Atrium.Accounts.Provisioning do
     Repo.transaction(fn ->
       case find_user_by_email(prefix, email) do
         nil ->
-          {:ok, user} = Repo.insert(%User{email: email, name: name, status: "active"}, prefix: prefix)
-          {:ok, _} = insert_identity(prefix, user.id, provider, subject)
-          assign_default_groups(prefix, user, gids)
-          user
+          with {:ok, user} <-
+                 %Atrium.Accounts.User{}
+                 |> Atrium.Accounts.User.invite_changeset(%{email: email, name: name})
+                 |> Ecto.Changeset.put_change(:status, "active")
+                 |> Repo.insert(prefix: prefix),
+               {:ok, _} <- insert_identity(prefix, user.id, provider, subject) do
+            assign_default_groups(prefix, user, gids)
+            user
+          else
+            {:error, reason} -> Repo.rollback(reason)
+          end
 
         user ->
-          {:ok, _} = insert_identity(prefix, user.id, provider, subject)
-          user
+          case insert_identity(prefix, user.id, provider, subject) do
+            {:ok, _} -> user
+            {:error, reason} -> Repo.rollback(reason)
+          end
       end
     end)
   end

@@ -83,6 +83,7 @@ config :phoenix_live_view,
   # Enable helpful, but potentially expensive runtime checks
   enable_expensive_runtime_checks: true
 
+# Dev/test-only throwaway key — never use in production
 config :atrium, Atrium.Vault,
   ciphers: [
     default:

@@ -1,0 +1,15 @@
+<main class="max-w-sm mx-auto py-16">
+  <h1 class="text-2xl font-semibold mb-2"><%= @tenant.name %></h1>
+  <h2 class="text-lg text-gray-600 mb-6">Confirm your identity</h2>
+  <p class="text-sm text-gray-500 mb-4">Enter your existing password to link your SSO account.</p>
+  <%= if @error do %>
+    <div class="mb-4 rounded bg-red-50 text-red-700 p-3"><%= @error %></div>
+  <% end %>
+  <.form :let={_f} for={%{}} as={:confirm} action={~p"/auth/link/confirm"} method="post" class="space-y-4">
+    <div>
+      <label class="block text-sm">Password</label>
+      <input type="password" name="password" class="mt-1 w-full border rounded p-2" required />
+    </div>
+    <button type="submit" class="w-full rounded bg-slate-900 text-white p-2">Confirm</button>
+  </.form>
+</main>
