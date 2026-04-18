@@ -1,6 +1,6 @@
 defmodule AtriumWeb.DocumentControllerTest do
   use AtriumWeb.ConnCase, async: false
-  alias Atrium.{Tenants, Accounts}
+  alias Atrium.{Tenants, Accounts, Authorization}
   alias Atrium.Tenants.Provisioner
   alias Atrium.Documents
 
@@ -15,6 +15,10 @@ defmodule AtriumWeb.DocumentControllerTest do
       password: "Correct-horse-battery1",
       password_confirmation: "Correct-horse-battery1"
     })
+
+    # Grant user edit + approve on docs section so all controller actions pass authorization
+    Authorization.grant_section(prefix, "docs", {:user, user.id}, :edit)
+    Authorization.grant_section(prefix, "docs", {:user, user.id}, :approve)
 
     conn =
       build_conn()
@@ -117,6 +121,49 @@ defmodule AtriumWeb.DocumentControllerTest do
       conn = post(conn, "/sections/docs/documents/#{doc.id}/archive")
       assert redirected_to(conn) =~ "/sections/docs/documents/#{doc.id}"
       assert Documents.get_document!(prefix, doc.id).status == "archived"
+    end
+  end
+
+  describe "authorization" do
+    test "POST /sections/:section_key/documents returns 403 for user without :edit", %{prefix: prefix} do
+      # Build a separate user with only :view (no :edit grant)
+      {:ok, %{user: viewer}} = Accounts.invite_user(prefix, %{email: "viewer@example.com", name: "Viewer"})
+      {:ok, viewer} = Accounts.activate_user_with_password(prefix, viewer, %{
+        password: "Correct-horse-battery1",
+        password_confirmation: "Correct-horse-battery1"
+      })
+
+      conn =
+        build_conn()
+        |> Map.put(:host, "doc_ctrl_test.atrium.example")
+        |> post("/login", %{email: "viewer@example.com", password: "Correct-horse-battery1"})
+        |> recycle()
+        |> Map.put(:host, "doc_ctrl_test.atrium.example")
+
+      conn = post(conn, "/sections/docs/documents", %{document: %{title: "Nope", body_html: ""}})
+      assert conn.status == 403
+    end
+
+    test "POST /sections/:section_key/documents/:id/approve returns 403 for user without :approve", %{conn: conn, prefix: prefix, user: user} do
+      {:ok, doc} = Documents.create_document(prefix, %{title: "Gated", section_key: "docs", body_html: ""}, user)
+      {:ok, doc} = Documents.submit_for_review(prefix, doc, user)
+
+      # Build a viewer-only user
+      {:ok, %{user: viewer}} = Accounts.invite_user(prefix, %{email: "viewer2@example.com", name: "Viewer2"})
+      {:ok, _viewer} = Accounts.activate_user_with_password(prefix, viewer, %{
+        password: "Correct-horse-battery1",
+        password_confirmation: "Correct-horse-battery1"
+      })
+
+      viewer_conn =
+        build_conn()
+        |> Map.put(:host, "doc_ctrl_test.atrium.example")
+        |> post("/login", %{email: "viewer2@example.com", password: "Correct-horse-battery1"})
+        |> recycle()
+        |> Map.put(:host, "doc_ctrl_test.atrium.example")
+
+      viewer_conn = post(viewer_conn, "/sections/docs/documents/#{doc.id}/approve")
+      assert viewer_conn.status == 403
     end
   end
 end

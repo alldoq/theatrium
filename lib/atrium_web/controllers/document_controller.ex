@@ -53,7 +53,8 @@ defmodule AtriumWeb.DocumentController do
     prefix = conn.assigns.tenant_prefix
     doc = Documents.get_document!(prefix, id)
     versions = Documents.list_versions(prefix, doc.id)
-    render(conn, :show, document: doc, versions: versions, section_key: section_key)
+    history = Atrium.Audit.history_for(prefix, "Document", doc.id)
+    render(conn, :show, document: doc, versions: versions, history: history, section_key: section_key)
   end
 
   def edit(conn, %{"section_key" => section_key, "id" => id}) do

@@ -222,5 +222,14 @@ defmodule Atrium.DocumentsTest do
       assert "document.approved" in actions
       assert "document.archived" in actions
     end
+
+    test "reject_document emits document.rejected", %{tenant_prefix: prefix} do
+      user = build_user(prefix)
+      {:ok, doc} = Documents.create_document(prefix, %{title: "R", section_key: "hr", body_html: ""}, user)
+      {:ok, doc} = Documents.submit_for_review(prefix, doc, user)
+      {:ok, _} = Documents.reject_document(prefix, doc, user)
+      history = Atrium.Audit.history_for(prefix, "Document", doc.id)
+      assert Enum.any?(history, &(&1.action == "document.rejected"))
+    end
   end
 end
