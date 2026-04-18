@@ -174,3 +174,131 @@ defmodule Atrium.Forms.FormSchemaTest do
     end
   end
 end
+
+defmodule Atrium.Forms.SubmissionTest do
+  use Atrium.TenantCase
+  alias Atrium.Forms
+  alias Atrium.Accounts
+
+  defp build_user(prefix) do
+    {:ok, %{user: user}} = Accounts.invite_user(prefix, %{
+      email: "sub_user_#{System.unique_integer([:positive])}@example.com",
+      name: "Sub User"
+    })
+    user
+  end
+
+  defp published_form(prefix, user) do
+    {:ok, form} = Forms.create_form(prefix, %{title: "Test Form", section_key: "hr"}, user)
+    {:ok, form} = Forms.publish_form(prefix, form, [], user)
+    form
+  end
+
+  describe "create_submission/4" do
+    test "creates a submission with field values", %{tenant_prefix: prefix} do
+      user = build_user(prefix)
+      form = published_form(prefix, user)
+      {:ok, sub} = Forms.create_submission(prefix, form, %{"name" => "Alice"}, user)
+      assert sub.form_id == form.id
+      assert sub.status == "pending"
+      assert sub.field_values == %{"name" => "Alice"}
+    end
+
+    test "creates reviews for each notification recipient", %{tenant_prefix: prefix} do
+      user = build_user(prefix)
+      {:ok, form} = Forms.create_form(prefix, %{
+        title: "T",
+        section_key: "hr",
+        notification_recipients: [
+          %{"type" => "email", "email" => "reviewer@external.com"},
+          %{"type" => "user", "id" => user.id}
+        ]
+      }, user)
+      {:ok, form} = Forms.publish_form(prefix, form, [], user)
+      {:ok, sub} = Forms.create_submission(prefix, form, %{}, user)
+      reviews = Forms.list_reviews(prefix, sub.id)
+      assert length(reviews) == 2
+    end
+
+    test "submission stays pending when no recipients", %{tenant_prefix: prefix} do
+      user = build_user(prefix)
+      form = published_form(prefix, user)
+      {:ok, sub} = Forms.create_submission(prefix, form, %{}, user)
+      assert sub.status == "pending"
+    end
+  end
+
+  describe "complete_review/3" do
+    test "marks review completed", %{tenant_prefix: prefix} do
+      user = build_user(prefix)
+      {:ok, form} = Forms.create_form(prefix, %{
+        title: "T",
+        section_key: "hr",
+        notification_recipients: [%{"type" => "user", "id" => user.id}]
+      }, user)
+      {:ok, form} = Forms.publish_form(prefix, form, [], user)
+      {:ok, sub} = Forms.create_submission(prefix, form, %{}, user)
+      [review] = Forms.list_reviews(prefix, sub.id)
+      {:ok, done} = Forms.complete_review(prefix, review, user)
+      assert done.status == "completed"
+      assert done.completed_by_id == user.id
+    end
+
+    test "submission completes when last review is completed", %{tenant_prefix: prefix} do
+      user = build_user(prefix)
+      {:ok, form} = Forms.create_form(prefix, %{
+        title: "T",
+        section_key: "hr",
+        notification_recipients: [%{"type" => "user", "id" => user.id}]
+      }, user)
+      {:ok, form} = Forms.publish_form(prefix, form, [], user)
+      {:ok, sub} = Forms.create_submission(prefix, form, %{}, user)
+      [review] = Forms.list_reviews(prefix, sub.id)
+      {:ok, _} = Forms.complete_review(prefix, review, user)
+      completed_sub = Forms.get_submission!(prefix, sub.id)
+      assert completed_sub.status == "completed"
+    end
+  end
+
+  describe "audit events" do
+    test "create_form emits form.created", %{tenant_prefix: prefix} do
+      user = build_user(prefix)
+      {:ok, form} = Forms.create_form(prefix, %{title: "T", section_key: "hr"}, user)
+      history = Atrium.Audit.history_for(prefix, "Form", form.id)
+      assert Enum.any?(history, &(&1.action == "form.created"))
+    end
+
+    test "publish_form emits form.published", %{tenant_prefix: prefix} do
+      user = build_user(prefix)
+      {:ok, form} = Forms.create_form(prefix, %{title: "T", section_key: "hr"}, user)
+      {:ok, _} = Forms.publish_form(prefix, form, [], user)
+      history = Atrium.Audit.history_for(prefix, "Form", form.id)
+      assert Enum.any?(history, &(&1.action == "form.published"))
+    end
+
+    test "create_submission emits form.submission_created", %{tenant_prefix: prefix} do
+      user = build_user(prefix)
+      form = published_form(prefix, user)
+      {:ok, sub} = Forms.create_submission(prefix, form, %{}, user)
+      history = Atrium.Audit.history_for(prefix, "FormSubmission", sub.id)
+      assert Enum.any?(history, &(&1.action == "form.submission_created"))
+    end
+
+    test "complete_review emits form.review_completed and form.submission_completed when last", %{tenant_prefix: prefix} do
+      user = build_user(prefix)
+      {:ok, form} = Forms.create_form(prefix, %{
+        title: "T",
+        section_key: "hr",
+        notification_recipients: [%{"type" => "user", "id" => user.id}]
+      }, user)
+      {:ok, form} = Forms.publish_form(prefix, form, [], user)
+      {:ok, sub} = Forms.create_submission(prefix, form, %{}, user)
+      [review] = Forms.list_reviews(prefix, sub.id)
+      {:ok, _} = Forms.complete_review(prefix, review, user)
+      review_history = Atrium.Audit.history_for(prefix, "FormSubmissionReview", review.id)
+      sub_history = Atrium.Audit.history_for(prefix, "FormSubmission", sub.id)
+      assert Enum.any?(review_history, &(&1.action == "form.review_completed"))
+      assert Enum.any?(sub_history, &(&1.action == "form.submission_completed"))
+    end
+  end
+end
