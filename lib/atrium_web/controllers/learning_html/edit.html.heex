@@ -1,1 +1,142 @@
-<div>Learning edit stub</div>
+<div class="atrium-anim" style="max-width:640px">
+  <div style="margin-bottom:20px">
+    <a href={~p"/learning/#{@course.id}"} style="font-size:.8125rem;color:var(--text-tertiary);text-decoration:none">
+      ← Back to course
+    </a>
+  </div>
+
+  <div style="margin-bottom:24px">
+    <div class="atrium-page-eyebrow">Learning &amp; Development</div>
+    <h1 class="atrium-page-title">Edit Course</h1>
+  </div>
+
+  <form method="post" action={~p"/learning/#{@course.id}"}>
+    <input type="hidden" name="_method" value="put" />
+    <input type="hidden" name="_csrf_token" value={Plug.CSRFProtection.get_csrf_token()} />
+
+    <div class="atrium-card" style="margin-bottom:20px">
+      <div class="atrium-card-body" style="display:flex;flex-direction:column;gap:16px">
+
+        <div>
+          <label class="atrium-label" for="course_title">Title <span style="color:var(--color-error,#ef4444)">*</span></label>
+          <input id="course_title" type="text" name="course[title]" class="atrium-input"
+            value={Ecto.Changeset.get_field(@changeset, :title) || ""}
+            required />
+          <% title_err = @changeset.action && List.first(Keyword.get_values(@changeset.errors, :title)) %>
+          <%= if title_err do %><p style="font-size:.8125rem;color:var(--color-error,#ef4444);margin-top:4px"><%= elem(title_err, 0) %></p><% end %>
+        </div>
+
+        <div>
+          <label class="atrium-label" for="course_category">Category</label>
+          <input id="course_category" type="text" name="course[category]" class="atrium-input"
+            value={Ecto.Changeset.get_field(@changeset, :category) || ""}
+            placeholder="e.g. Compliance, HR, IT" />
+        </div>
+
+        <div>
+          <label class="atrium-label" for="course_description">Description</label>
+          <textarea id="course_description" name="course[description]" class="atrium-input" rows="4"
+            style="resize:vertical"
+          ><%= Ecto.Changeset.get_field(@changeset, :description) || "" %></textarea>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="atrium-card" style="margin-bottom:20px">
+      <div style="padding:14px 16px;border-bottom:1px solid var(--border);font-size:.875rem;font-weight:600;color:var(--text-primary)">
+        Materials
+      </div>
+      <div class="atrium-card-body">
+
+        <%= if !Enum.empty?(@materials) do %>
+          <ul style="list-style:none;margin:0 0 16px;padding:0">
+            <%= for material <- @materials do %>
+              <li style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid var(--border)">
+                <span style="font-size:.875rem;color:var(--text-primary)">
+                  <%= material.title %>
+                  <span style="font-size:.75rem;color:var(--text-tertiary);margin-left:6px"><%= material.type %></span>
+                </span>
+                <form method="post" action={~p"/learning/#{@course.id}/materials/#{material.id}/delete"} style="display:inline">
+                  <input type="hidden" name="_csrf_token" value={Plug.CSRFProtection.get_csrf_token()} />
+                  <button type="submit" class="atrium-btn atrium-btn-ghost" style="font-size:.75rem;padding:2px 8px;color:var(--color-error,#ef4444)">Remove</button>
+                </form>
+              </li>
+            <% end %>
+          </ul>
+        <% end %>
+
+        <div style="border:1px solid var(--border);border-radius:var(--radius);padding:14px;background:var(--surface-raised)">
+          <div style="font-size:.8125rem;font-weight:600;color:var(--text-secondary);margin-bottom:10px">Add material</div>
+          <div id="add-material-form">
+            <div style="display:flex;gap:8px;margin-bottom:8px">
+              <button type="button" onclick="setMaterialType('url')" id="btn-url"
+                class="atrium-btn atrium-btn-ghost"
+                style="font-size:.8125rem;padding:4px 10px">Link (URL)</button>
+              <button type="button" onclick="setMaterialType('document')" id="btn-document"
+                class="atrium-btn atrium-btn-ghost"
+                style="font-size:.8125rem;padding:4px 10px">Document</button>
+            </div>
+
+            <div id="material-url-fields" style="display:none;flex-direction:column;gap:8px">
+              <input type="text" id="mat-title" placeholder="Material title" class="atrium-input" style="font-size:.875rem" />
+              <input type="url" id="mat-url" placeholder="https://..." class="atrium-input" style="font-size:.875rem" />
+              <button type="button" onclick="addMaterial('url')" class="atrium-btn atrium-btn-primary" style="font-size:.8125rem;align-self:flex-start">Add</button>
+            </div>
+
+            <div id="material-document-fields" style="display:none;flex-direction:column;gap:8px">
+              <input type="text" id="mat-doc-title" placeholder="Material title" class="atrium-input" style="font-size:.875rem" />
+              <input type="text" id="mat-doc-id" placeholder="Document ID" class="atrium-input" style="font-size:.875rem" />
+              <button type="button" onclick="addMaterial('document')" class="atrium-btn atrium-btn-primary" style="font-size:.8125rem;align-self:flex-start">Add</button>
+            </div>
+          </div>
+
+          <form id="material-submit-form" method="post" action={~p"/learning/#{@course.id}/materials"} style="display:none">
+            <input type="hidden" name="_csrf_token" value={Plug.CSRFProtection.get_csrf_token()} />
+            <input type="hidden" id="mat-form-type" name="material[type]" />
+            <input type="hidden" id="mat-form-title" name="material[title]" />
+            <input type="hidden" id="mat-form-url" name="material[url]" />
+            <input type="hidden" id="mat-form-document-id" name="material[document_id]" />
+            <input type="hidden" name="material[position]" value={length(@materials)} />
+          </form>
+        </div>
+
+      </div>
+    </div>
+
+    <div style="display:flex;gap:8px">
+      <button type="submit" class="atrium-btn atrium-btn-primary">Save changes</button>
+      <%= if @course.status == "draft" do %>
+        <form method="post" action={~p"/learning/#{@course.id}/publish"} style="display:inline">
+          <input type="hidden" name="_csrf_token" value={Plug.CSRFProtection.get_csrf_token()} />
+          <button type="submit" class="atrium-btn atrium-btn-primary">Publish</button>
+        </form>
+      <% end %>
+      <a href={~p"/learning/#{@course.id}"} class="atrium-btn atrium-btn-ghost">Cancel</a>
+    </div>
+  </form>
+</div>
+
+<script>
+  function setMaterialType(type) {
+    document.getElementById('material-url-fields').style.display = type === 'url' ? 'flex' : 'none';
+    document.getElementById('material-document-fields').style.display = type === 'document' ? 'flex' : 'none';
+  }
+
+  function addMaterial(type) {
+    var title = type === 'url'
+      ? document.getElementById('mat-title').value
+      : document.getElementById('mat-doc-title').value;
+    if (!title.trim()) { alert('Please enter a title.'); return; }
+    document.getElementById('mat-form-type').value = type;
+    document.getElementById('mat-form-title').value = title;
+    if (type === 'url') {
+      var url = document.getElementById('mat-url').value;
+      if (!url.match(/^https?:\/\//)) { alert('URL must start with http:// or https://'); return; }
+      document.getElementById('mat-form-url').value = url;
+    } else {
+      document.getElementById('mat-form-document-id').value = document.getElementById('mat-doc-id').value;
+    }
+    document.getElementById('material-submit-form').submit();
+  }
+</script>

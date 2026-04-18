@@ -1,1 +1,50 @@
-<div>Learning new stub</div>
+<div class="atrium-anim" style="max-width:560px">
+  <div style="margin-bottom:20px">
+    <a href={~p"/learning"} style="font-size:.8125rem;color:var(--text-tertiary);text-decoration:none">
+      ← Learning &amp; Development
+    </a>
+  </div>
+
+  <div style="margin-bottom:24px">
+    <div class="atrium-page-eyebrow">Learning &amp; Development</div>
+    <h1 class="atrium-page-title">New Course</h1>
+  </div>
+
+  <form method="post" action={~p"/learning"}>
+    <input type="hidden" name="_csrf_token" value={Plug.CSRFProtection.get_csrf_token()} />
+
+    <div class="atrium-card" style="margin-bottom:20px">
+      <div class="atrium-card-body" style="display:flex;flex-direction:column;gap:16px">
+
+        <div>
+          <label class="atrium-label" for="course_title">Title <span style="color:var(--color-error,#ef4444)">*</span></label>
+          <input id="course_title" type="text" name="course[title]" class="atrium-input"
+            value={Ecto.Changeset.get_field(@changeset, :title) || ""}
+            required placeholder="e.g. Workplace Safety Essentials" />
+          <% title_err = @changeset.action && List.first(Keyword.get_values(@changeset.errors, :title)) %>
+          <%= if title_err do %><p style="font-size:.8125rem;color:var(--color-error,#ef4444);margin-top:4px"><%= elem(title_err, 0) %></p><% end %>
+        </div>
+
+        <div>
+          <label class="atrium-label" for="course_category">Category</label>
+          <input id="course_category" type="text" name="course[category]" class="atrium-input"
+            value={Ecto.Changeset.get_field(@changeset, :category) || ""}
+            placeholder="e.g. Compliance, HR, IT" />
+        </div>
+
+        <div>
+          <label class="atrium-label" for="course_description">Description</label>
+          <textarea id="course_description" name="course[description]" class="atrium-input" rows="4"
+            style="resize:vertical" placeholder="Brief overview of what this course covers…"
+          ><%= Ecto.Changeset.get_field(@changeset, :description) || "" %></textarea>
+        </div>
+
+      </div>
+    </div>
+
+    <div style="display:flex;gap:8px">
+      <button type="submit" class="atrium-btn atrium-btn-primary">Create course</button>
+      <a href={~p"/learning"} class="atrium-btn atrium-btn-ghost">Cancel</a>
+    </div>
+  </form>
+</div>

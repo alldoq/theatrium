@@ -1,3 +1,97 @@
-<div>
-  <h1><%= @course.title %></h1>
+<div class="atrium-anim" style="max-width:680px">
+  <div style="margin-bottom:20px">
+    <a href={~p"/learning"} style="font-size:.8125rem;color:var(--text-tertiary);text-decoration:none">
+      ← Learning &amp; Development
+    </a>
+  </div>
+
+  <div style="margin-bottom:8px">
+    <%= if @course.category do %>
+      <span style="font-size:.75rem;font-weight:600;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:.05em"><%= @course.category %></span>
+    <% end %>
+  </div>
+
+  <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:24px">
+    <h1 class="atrium-page-title" style="margin:0"><%= @course.title %></h1>
+    <%= if @can_edit do %>
+      <div style="display:flex;gap:8px;flex-shrink:0">
+        <a href={~p"/learning/#{@course.id}/edit"} class="atrium-btn atrium-btn-ghost">Edit</a>
+        <%= if @course.status == "published" do %>
+          <form method="post" action={~p"/learning/#{@course.id}/archive"} style="display:inline">
+            <input type="hidden" name="_csrf_token" value={Plug.CSRFProtection.get_csrf_token()} />
+            <button type="submit" class="atrium-btn atrium-btn-ghost" style="color:var(--color-error,#ef4444)">Archive</button>
+          </form>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+
+  <%= if @course.status != "published" do %>
+    <div style="background:var(--yellow-50,#fefce8);border:1px solid var(--yellow-200,#fef08a);border-radius:var(--radius);padding:10px 14px;margin-bottom:20px;font-size:.875rem;color:var(--yellow-800,#854d0e)">
+      This course is <strong><%= @course.status %></strong> and not visible to staff.
+    </div>
+  <% end %>
+
+  <%= if @course.description do %>
+    <p style="font-size:.9375rem;color:var(--text-secondary);line-height:1.6;margin-bottom:24px"><%= @course.description %></p>
+  <% end %>
+
+  <%= if !Enum.empty?(@materials) do %>
+    <div class="atrium-card" style="margin-bottom:24px">
+      <div style="padding:14px 16px;border-bottom:1px solid var(--border);font-size:.8125rem;font-weight:600;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:.04em">
+        Materials
+      </div>
+      <ul style="list-style:none;margin:0;padding:0">
+        <%= for material <- @materials do %>
+          <li style="border-bottom:1px solid var(--border);padding:12px 16px;display:flex;align-items:center;gap:10px">
+            <%= if material.type == "url" do %>
+              <svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" style="color:var(--text-tertiary);flex-shrink:0">
+                <path d="M6.5 9.5A3.5 3.5 0 0 0 11.5 9l1.5-1.5a3.5 3.5 0 0 0-5-5L6.5 4M9.5 6.5A3.5 3.5 0 0 0 4.5 7L3 8.5a3.5 3.5 0 0 0 5 5l1.5-1.5" stroke-linecap="round"/>
+              </svg>
+              <a href={material.url} target="_blank" rel="noopener noreferrer" style="font-size:.875rem;color:var(--blue-600,#2563eb)">
+                <%= material.title %>
+                <svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.75" style="display:inline;margin-left:3px;vertical-align:middle">
+                  <path d="M4 12L12 4M6 4h6v6" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </a>
+            <% else %>
+              <svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" style="color:var(--text-tertiary);flex-shrink:0">
+                <path d="M10 2H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V5l-2-3z" stroke-linejoin="round"/>
+                <path d="M10 2v3h2M6 8h4M6 11h3" stroke-linecap="round"/>
+              </svg>
+              <a href={~p"/sections/learning/documents/#{material.document_id}"} style="font-size:.875rem;color:var(--blue-600,#2563eb)">
+                <%= material.title %>
+              </a>
+            <% end %>
+          </li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div style="display:flex;align-items:center;gap:16px">
+    <%= if @completed do %>
+      <div style="display:flex;align-items:center;gap:8px;color:var(--green-700,#15803d);font-size:.875rem;font-weight:500">
+        <svg viewBox="0 0 16 16" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="8" cy="8" r="6"/>
+          <path d="M5 8l2.5 2.5L11 5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Completed
+      </div>
+      <form method="post" action={~p"/learning/#{@course.id}/complete"} style="display:inline">
+        <input type="hidden" name="_method" value="delete" />
+        <input type="hidden" name="_csrf_token" value={Plug.CSRFProtection.get_csrf_token()} />
+        <button type="submit" class="atrium-btn atrium-btn-ghost" style="font-size:.8125rem">Mark as incomplete</button>
+      </form>
+    <% else %>
+      <form method="post" action={~p"/learning/#{@course.id}/complete"}>
+        <input type="hidden" name="_csrf_token" value={Plug.CSRFProtection.get_csrf_token()} />
+        <button type="submit" class="atrium-btn atrium-btn-primary">Mark as complete</button>
+      </form>
+    <% end %>
+
+    <%= if @can_edit && @completion_count != nil do %>
+      <span style="font-size:.8125rem;color:var(--text-tertiary)"><%= @completion_count %> staff completed</span>
+    <% end %>
+  </div>
 </div>

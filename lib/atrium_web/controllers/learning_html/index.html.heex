@@ -1,6 +1,82 @@
-<div>
-  <h1>Learning</h1>
-  <%= for course <- @courses do %>
-    <div><%= course.title %></div>
+<div class="atrium-anim" style="max-width:800px">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px">
+    <div>
+      <div class="atrium-page-eyebrow">Platform</div>
+      <h1 class="atrium-page-title">Learning &amp; Development</h1>
+    </div>
+    <%= if @can_edit do %>
+      <a href={~p"/learning/new"} class="atrium-btn atrium-btn-primary">New course</a>
+    <% end %>
+  </div>
+
+  <%= if Enum.empty?(@courses) do %>
+    <div class="atrium-card">
+      <div class="atrium-card-body" style="text-align:center;padding:40px;color:var(--text-tertiary)">
+        No published courses yet.
+      </div>
+    </div>
+  <% else %>
+    <%= for {category, courses} <- Enum.group_by(@courses, & &1.category) do %>
+      <div style="margin-bottom:32px">
+        <div style="font-size:.75rem;font-weight:600;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px">
+          <%= category || "General" %>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px">
+          <%= for course <- courses do %>
+            <a href={~p"/learning/#{course.id}"} style="text-decoration:none">
+              <div class="atrium-card" style="height:100%;transition:box-shadow .15s">
+                <div class="atrium-card-body">
+                  <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">
+                    <div style="font-size:.9375rem;font-weight:600;color:var(--text-primary);line-height:1.35">
+                      <%= course.title %>
+                    </div>
+                    <%= if MapSet.member?(@completion_ids, course.id) do %>
+                      <svg viewBox="0 0 16 16" width="18" height="18" fill="none" stroke="var(--green-600,#16a34a)" stroke-width="2" style="flex-shrink:0;margin-top:2px">
+                        <circle cx="8" cy="8" r="6"/>
+                        <path d="M5 8l2.5 2.5L11 5" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                    <% end %>
+                  </div>
+                  <%= if course.description do %>
+                    <p style="font-size:.8125rem;color:var(--text-secondary);margin-top:6px;line-height:1.5">
+                      <%= String.slice(course.description, 0, 120) %><%= if String.length(course.description || "") > 120, do: "…" %>
+                    </p>
+                  <% end %>
+                </div>
+              </div>
+            </a>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+  <% end %>
+
+  <%= if @can_edit && !Enum.empty?(@drafts_and_archived) do %>
+    <div style="margin-top:40px">
+      <div style="font-size:.75rem;font-weight:600;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px">
+        Drafts &amp; Archived
+      </div>
+      <div class="atrium-card">
+        <table style="width:100%;border-collapse:collapse">
+          <tbody>
+            <%= for course <- @drafts_and_archived do %>
+              <tr style="border-bottom:1px solid var(--border)">
+                <td style="padding:10px 16px;font-size:.875rem;color:var(--text-primary)">
+                  <a href={~p"/learning/#{course.id}"} style="color:inherit;text-decoration:none"><%= course.title %></a>
+                </td>
+                <td style="padding:10px 16px">
+                  <span style={"font-size:.75rem;font-weight:500;padding:2px 8px;border-radius:999px;#{if course.status == "draft", do: "background:var(--yellow-100,#fef9c3);color:var(--yellow-700,#a16207)", else: "background:var(--surface-raised);color:var(--text-tertiary)"}"}>
+                    <%= course.status %>
+                  </span>
+                </td>
+                <td style="padding:10px 16px;text-align:right">
+                  <a href={~p"/learning/#{course.id}/edit"} class="atrium-btn atrium-btn-ghost" style="font-size:.8125rem;padding:4px 10px">Edit</a>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    </div>
   <% end %>
 </div>
