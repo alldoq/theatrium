@@ -30,7 +30,7 @@ defmodule AtriumWeb.SuperAdmin.SectionController do
 
   defp fetch_section!(key) do
     case SectionRegistry.get(key) do
-      nil -> raise Ecto.NoResultsError, queryable: key
+      nil -> raise Ecto.NoResultsError, queryable: Atrium.Sections.SectionCustomization
       section -> section
     end
   end
