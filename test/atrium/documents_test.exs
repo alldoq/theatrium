@@ -142,4 +142,85 @@ defmodule Atrium.DocumentsTest do
       assert hd(versions).version == 3
     end
   end
+
+  describe "lifecycle transitions" do
+    setup %{tenant_prefix: prefix} do
+      user = build_user(prefix)
+      {:ok, doc} = Documents.create_document(prefix, %{title: "Policy", section_key: "hr", body_html: "<p>v1</p>"}, user)
+      %{doc: doc, user: user}
+    end
+
+    test "submit_for_review: draft → in_review", %{tenant_prefix: prefix, doc: doc, user: user} do
+      {:ok, updated} = Documents.submit_for_review(prefix, doc, user)
+      assert updated.status == "in_review"
+    end
+
+    test "submit_for_review: non-draft is rejected", %{tenant_prefix: prefix, doc: doc, user: user} do
+      {:ok, doc} = Documents.submit_for_review(prefix, doc, user)
+      assert {:error, :invalid_transition} = Documents.submit_for_review(prefix, doc, user)
+    end
+
+    test "reject_document: in_review → draft", %{tenant_prefix: prefix, doc: doc, user: user} do
+      {:ok, doc} = Documents.submit_for_review(prefix, doc, user)
+      {:ok, rejected} = Documents.reject_document(prefix, doc, user)
+      assert rejected.status == "draft"
+    end
+
+    test "reject_document: must be in_review", %{tenant_prefix: prefix, doc: doc, user: user} do
+      assert {:error, :invalid_transition} = Documents.reject_document(prefix, doc, user)
+    end
+
+    test "approve_document: in_review → approved, sets approved_by_id and approved_at", %{tenant_prefix: prefix, doc: doc, user: user} do
+      {:ok, doc} = Documents.submit_for_review(prefix, doc, user)
+      {:ok, approved} = Documents.approve_document(prefix, doc, user)
+      assert approved.status == "approved"
+      assert approved.approved_by_id == user.id
+      assert approved.approved_at
+    end
+
+    test "approve_document: must be in_review", %{tenant_prefix: prefix, doc: doc, user: user} do
+      assert {:error, :invalid_transition} = Documents.approve_document(prefix, doc, user)
+    end
+
+    test "archive_document: approved → archived", %{tenant_prefix: prefix, doc: doc, user: user} do
+      {:ok, doc} = Documents.submit_for_review(prefix, doc, user)
+      {:ok, doc} = Documents.approve_document(prefix, doc, user)
+      {:ok, archived} = Documents.archive_document(prefix, doc, user)
+      assert archived.status == "archived"
+    end
+
+    test "archive_document: must be approved", %{tenant_prefix: prefix, doc: doc, user: user} do
+      assert {:error, :invalid_transition} = Documents.archive_document(prefix, doc, user)
+    end
+  end
+
+  describe "audit events" do
+    test "create_document emits document.created", %{tenant_prefix: prefix} do
+      user = build_user(prefix)
+      {:ok, doc} = Documents.create_document(prefix, %{title: "Audit Me", section_key: "hr", body_html: ""}, user)
+      history = Atrium.Audit.history_for(prefix, "Document", doc.id)
+      assert Enum.any?(history, &(&1.action == "document.created"))
+    end
+
+    test "update_document emits document.updated", %{tenant_prefix: prefix} do
+      user = build_user(prefix)
+      {:ok, doc} = Documents.create_document(prefix, %{title: "Before", section_key: "hr", body_html: ""}, user)
+      {:ok, _} = Documents.update_document(prefix, doc, %{title: "After", body_html: ""}, user)
+      history = Atrium.Audit.history_for(prefix, "Document", doc.id)
+      assert Enum.any?(history, &(&1.action == "document.updated"))
+    end
+
+    test "lifecycle transitions emit correct audit events", %{tenant_prefix: prefix} do
+      user = build_user(prefix)
+      {:ok, doc} = Documents.create_document(prefix, %{title: "T", section_key: "hr", body_html: ""}, user)
+      {:ok, doc} = Documents.submit_for_review(prefix, doc, user)
+      {:ok, doc} = Documents.approve_document(prefix, doc, user)
+      {:ok, _} = Documents.archive_document(prefix, doc, user)
+      history = Atrium.Audit.history_for(prefix, "Document", doc.id)
+      actions = Enum.map(history, & &1.action)
+      assert "document.submitted" in actions
+      assert "document.approved" in actions
+      assert "document.archived" in actions
+    end
+  end
 end
