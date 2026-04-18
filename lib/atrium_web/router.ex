@@ -117,6 +117,19 @@ defmodule AtriumWeb.Router do
 
       get "/helpdesk", HelpdeskController, :index
 
+      get    "/learning",                  LearningController, :index
+      get    "/learning/new",              LearningController, :new
+      post   "/learning",                  LearningController, :create
+      get    "/learning/:id",              LearningController, :show
+      get    "/learning/:id/edit",         LearningController, :edit
+      put    "/learning/:id",              LearningController, :update
+      post   "/learning/:id/publish",      LearningController, :publish
+      post   "/learning/:id/archive",      LearningController, :archive
+      post   "/learning/:id/complete",     LearningController, :complete
+      delete "/learning/:id/complete",     LearningController, :uncomplete
+      post   "/learning/:id/materials",               LearningController, :add_material
+      post   "/learning/:id/materials/:mid/delete",   LearningController, :delete_material
+
       get  "/events",              EventsController, :index
       get  "/events/new",          EventsController, :new
       post "/events",              EventsController, :create
