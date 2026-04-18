@@ -153,6 +153,9 @@ defmodule Atrium.Forms do
       {:ok, sub} ->
         Dispatcher.form_submission(prefix, form, sub, actor_user)
         enqueue_notification(prefix, sub.id)
+        Task.start(fn ->
+          Atrium.Notifications.FormMailer.notify_submission(form, sub, form.notification_recipients || [])
+        end)
         {:ok, sub}
       err -> err
     end
