@@ -3,6 +3,7 @@ defmodule Atrium.Home do
   alias Atrium.Repo
   alias Atrium.Audit
   alias Atrium.Home.{Announcement, QuickLink}
+  alias Atrium.Notifications.Dispatcher
 
   def list_announcements(prefix) do
     Repo.all(
@@ -15,14 +16,24 @@ defmodule Atrium.Home do
 
   def create_announcement(prefix, attrs, actor_user) do
     attrs_with_author = Map.put(stringify(attrs), "author_id", actor_user.id)
-    Repo.transaction(fn ->
-      with {:ok, ann} <- %Announcement{} |> Announcement.changeset(attrs_with_author) |> Repo.insert(prefix: prefix),
-           {:ok, _} <- Audit.log(prefix, "announcement.created", %{actor: {:user, actor_user.id}, resource: {"Announcement", ann.id}}) do
-        ann
-      else
-        {:error, reason} -> Repo.rollback(reason)
-      end
-    end)
+
+    result =
+      Repo.transaction(fn ->
+        with {:ok, ann} <- %Announcement{} |> Announcement.changeset(attrs_with_author) |> Repo.insert(prefix: prefix),
+             {:ok, _} <- Audit.log(prefix, "announcement.created", %{actor: {:user, actor_user.id}, resource: {"Announcement", ann.id}}) do
+          ann
+        else
+          {:error, reason} -> Repo.rollback(reason)
+        end
+      end)
+
+    case result do
+      {:ok, ann} = ok ->
+        Dispatcher.announcement_created(prefix, ann, actor_user)
+        ok
+      err ->
+        err
+    end
   end
 
   def update_announcement(prefix, %Announcement{} = ann, attrs, actor_user) do

@@ -3,6 +3,7 @@ defmodule Atrium.Forms do
   alias Atrium.Repo
   alias Atrium.Audit
   alias Atrium.Forms.{Form, FormVersion, FormSubmission, FormSubmissionReview}
+  alias Atrium.Notifications.Dispatcher
 
   def create_form(prefix, attrs, actor_user) do
     string_attrs = Map.new(attrs, fn {k, v} -> {to_string(k), v} end)
@@ -150,6 +151,7 @@ defmodule Atrium.Forms do
     end)
     |> case do
       {:ok, sub} ->
+        Dispatcher.form_submission(prefix, form, sub, actor_user)
         enqueue_notification(prefix, sub.id)
         {:ok, sub}
       err -> err
@@ -304,6 +306,44 @@ defmodule Atrium.Forms do
     else
       {:ok, :not_yet_complete}
     end
+  end
+
+  def list_submissions_for_user(prefix, user_id, section_key) do
+    form_ids =
+      Repo.all(from(f in Form, where: f.section_key == ^section_key, select: f.id), prefix: prefix)
+
+    subs =
+      Repo.all(
+        from(s in FormSubmission,
+          where: s.form_id in ^form_ids and s.submitted_by_id == ^user_id,
+          order_by: [desc: s.inserted_at]
+        ),
+        prefix: prefix
+      )
+
+    attach_forms(subs, prefix)
+  end
+
+  def list_pending_submissions(prefix, section_key) do
+    form_ids =
+      Repo.all(from(f in Form, where: f.section_key == ^section_key, select: f.id), prefix: prefix)
+
+    subs =
+      Repo.all(
+        from(s in FormSubmission,
+          where: s.form_id in ^form_ids and s.status == "pending",
+          order_by: [desc: s.inserted_at]
+        ),
+        prefix: prefix
+      )
+
+    attach_forms(subs, prefix)
+  end
+
+  defp attach_forms(subs, prefix) do
+    form_ids = subs |> Enum.map(& &1.form_id) |> Enum.uniq()
+    forms_by_id = Repo.all(from(f in Form, where: f.id in ^form_ids), prefix: prefix) |> Map.new(&{&1.id, &1})
+    Enum.map(subs, &Map.put(&1, :form, Map.get(forms_by_id, &1.form_id)))
   end
 
   defp enqueue_notification(prefix, submission_id) do

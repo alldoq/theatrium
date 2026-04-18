@@ -3,6 +3,7 @@ defmodule Atrium.Documents do
   alias Atrium.Repo
   alias Atrium.Audit
   alias Atrium.Documents.{Document, DocumentVersion}
+  alias Atrium.Notifications.Dispatcher
 
   # ---------------------------------------------------------------------------
   # CRUD
@@ -87,13 +88,25 @@ defmodule Atrium.Documents do
   # ---------------------------------------------------------------------------
 
   def submit_for_review(prefix, %Document{status: "draft"} = doc, actor_user) do
-    transition(prefix, doc, "in_review", actor_user, "document.submitted")
+    case transition(prefix, doc, "in_review", actor_user, "document.submitted") do
+      {:ok, updated} = result ->
+        Dispatcher.document_submitted(prefix, updated, actor_user)
+        result
+      err ->
+        err
+    end
   end
 
   def submit_for_review(_prefix, _doc, _actor_user), do: {:error, :invalid_transition}
 
   def reject_document(prefix, %Document{status: "in_review"} = doc, actor_user) do
-    transition(prefix, doc, "draft", actor_user, "document.rejected")
+    case transition(prefix, doc, "draft", actor_user, "document.rejected") do
+      {:ok, updated} = result ->
+        Dispatcher.document_rejected(prefix, updated, actor_user)
+        result
+      err ->
+        err
+    end
   end
 
   def reject_document(_prefix, _doc, _actor_user), do: {:error, :invalid_transition}
@@ -101,18 +114,27 @@ defmodule Atrium.Documents do
   def approve_document(prefix, %Document{status: "in_review"} = doc, actor_user) do
     extra = %{approved_by_id: actor_user.id, approved_at: DateTime.utc_now()}
 
-    Repo.transaction(fn ->
-      with {:ok, updated} <- apply_status(prefix, doc, "approved", extra),
-           {:ok, _} <- Audit.log(prefix, "document.approved", %{
-             actor: {:user, actor_user.id},
-             resource: {"Document", updated.id},
-             changes: %{"status" => [doc.status, "approved"]}
-           }) do
-        updated
-      else
-        {:error, reason} -> Repo.rollback(reason)
-      end
-    end)
+    result =
+      Repo.transaction(fn ->
+        with {:ok, updated} <- apply_status(prefix, doc, "approved", extra),
+             {:ok, _} <- Audit.log(prefix, "document.approved", %{
+               actor: {:user, actor_user.id},
+               resource: {"Document", updated.id},
+               changes: %{"status" => [doc.status, "approved"]}
+             }) do
+          updated
+        else
+          {:error, reason} -> Repo.rollback(reason)
+        end
+      end)
+
+    case result do
+      {:ok, updated} = ok ->
+        Dispatcher.document_approved(prefix, updated, actor_user)
+        ok
+      err ->
+        err
+    end
   end
 
   def approve_document(_prefix, _doc, _actor_user), do: {:error, :invalid_transition}
