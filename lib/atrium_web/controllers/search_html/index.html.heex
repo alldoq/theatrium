@@ -1,0 +1,166 @@
+<div class="atrium-anim">
+  <div style="margin-bottom:24px">
+    <div class="atrium-page-eyebrow">Search</div>
+    <h1 class="atrium-page-title">Search</h1>
+  </div>
+
+  <form method="get" action={~p"/search"} style="margin-bottom:28px">
+    <div style="position:relative;max-width:480px;display:flex;gap:8px">
+      <div style="position:relative;flex:1">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75"
+             style="width:14px;height:14px;position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text-tertiary);pointer-events:none">
+          <circle cx="7" cy="7" r="4.5"/><path d="M11 11l2.5 2.5" stroke-linecap="round"/>
+        </svg>
+        <input
+          type="text"
+          name="q"
+          value={@query}
+          placeholder="Search everything…"
+          class="atrium-input"
+          style="padding-left:32px"
+          autofocus
+        />
+      </div>
+      <button type="submit" class="atrium-btn atrium-btn-primary">Search</button>
+    </div>
+  </form>
+
+  <%= if @query == "" do %>
+    <div style="padding:48px;text-align:center;color:var(--text-tertiary);font-size:.875rem">
+      Type at least 2 characters to search across documents, people, and tools.
+    </div>
+  <% end %>
+
+  <%= if @query != "" and String.length(@query) < 2 do %>
+    <div style="padding:48px;text-align:center;color:var(--text-tertiary);font-size:.875rem">
+      Query too short — please enter at least 2 characters.
+    </div>
+  <% end %>
+
+  <%= if String.length(@query) >= 2 and @documents == [] and @users == [] and @tools == [] do %>
+    <div style="padding:48px;text-align:center;color:var(--text-tertiary);font-size:.875rem">
+      No results for <strong style="color:var(--text-primary)">"<%= @query %>"</strong>.
+    </div>
+  <% end %>
+
+  <%= if @documents != [] do %>
+    <div class="atrium-card" style="margin-bottom:16px">
+      <div class="atrium-card-header">
+        <div class="atrium-card-title">Documents</div>
+        <span class="atrium-badge"><%= length(@documents) %></span>
+      </div>
+      <table class="atrium-table">
+        <thead>
+          <tr>
+            <th>Title</th>
+            <th>Section</th>
+            <th>Approved</th>
+          </tr>
+        </thead>
+        <tbody>
+          <%= for doc <- @documents do %>
+            <tr
+              onclick={"window.location='#{~p"/sections/#{doc.section_key}/documents/#{doc.id}"}'"}
+              style="cursor:pointer"
+            >
+              <td style="font-weight:500">
+                <a
+                  href={~p"/sections/#{doc.section_key}/documents/#{doc.id}"}
+                  style="color:var(--text-primary);text-decoration:none"
+                >
+                  <%= doc.title %>
+                </a>
+              </td>
+              <td style="font-size:.8125rem;color:var(--text-secondary)">
+                <%= doc.section_key %>
+              </td>
+              <td style="font-size:.8125rem;color:var(--text-secondary)">
+                <%= if doc.approved_at, do: Calendar.strftime(doc.approved_at, "%d %b %Y"), else: "—" %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% end %>
+
+  <%= if @users != [] do %>
+    <div class="atrium-card" style="margin-bottom:16px">
+      <div class="atrium-card-header">
+        <div class="atrium-card-title">People</div>
+        <span class="atrium-badge"><%= length(@users) %></span>
+      </div>
+      <table class="atrium-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Role</th>
+            <th>Department</th>
+          </tr>
+        </thead>
+        <tbody>
+          <%= for user <- @users do %>
+            <tr
+              onclick={"window.location='#{~p"/directory/#{user.id}"}'"}
+              style="cursor:pointer"
+            >
+              <td>
+                <div style="display:flex;align-items:center;gap:10px">
+                  <div class="atrium-user-avatar" style="width:28px;height:28px;font-size:.6875rem;flex-shrink:0">
+                    <%= user.name |> String.split() |> Enum.map(&String.first/1) |> Enum.take(2) |> Enum.join() %>
+                  </div>
+                  <a
+                    href={~p"/directory/#{user.id}"}
+                    style="color:var(--text-primary);text-decoration:none;font-weight:500"
+                  >
+                    <%= user.name %>
+                  </a>
+                </div>
+              </td>
+              <td style="font-size:.8125rem;color:var(--text-secondary)"><%= user.role || "—" %></td>
+              <td style="font-size:.8125rem;color:var(--text-secondary)"><%= user.department || "—" %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% end %>
+
+  <%= if @tools != [] do %>
+    <div class="atrium-card">
+      <div class="atrium-card-header">
+        <div class="atrium-card-title">Tools</div>
+        <span class="atrium-badge"><%= length(@tools) %></span>
+      </div>
+      <table class="atrium-table">
+        <thead>
+          <tr>
+            <th>Label</th>
+            <th>Description</th>
+            <th>Kind</th>
+          </tr>
+        </thead>
+        <tbody>
+          <%= for tool <- @tools do %>
+            <tr
+              onclick={"window.location='#{~p"/tools"}'"}
+              style="cursor:pointer"
+            >
+              <td style="font-weight:500">
+                <a href={~p"/tools"} style="color:var(--text-primary);text-decoration:none">
+                  <%= tool.label %>
+                </a>
+              </td>
+              <td style="font-size:.8125rem;color:var(--text-secondary)">
+                <%= tool.description || "—" %>
+              </td>
+              <td>
+                <span class="atrium-badge"><%= tool.kind %></span>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% end %>
+</div>
