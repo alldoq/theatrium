@@ -23,11 +23,14 @@
   </div>
   <div class="atrium-topbar-spacer"></div>
   <div class="atrium-topbar-actions">
-    <button class="atrium-topbar-btn" title="Notifications">
+    <a href="/notifications" class="atrium-topbar-btn" title="Notifications" style="position:relative">
       <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75">
         <path d="M8 2a4.5 4.5 0 0 1 4.5 4.5c0 2.5.5 3.5 1.5 4.5H2c1-1 1.5-2 1.5-4.5A4.5 4.5 0 0 1 8 2zM6.5 13.5a1.5 1.5 0 0 0 3 0" stroke-linecap="round"/>
       </svg>
-    </button>
+      <%= if assigns[:unread_notification_count] && @unread_notification_count > 0 do %>
+        <span style="position:absolute;top:4px;right:4px;width:7px;height:7px;border-radius:50%;background:var(--blue-500);border:1.5px solid var(--surface)"></span>
+      <% end %>
+    </a>
     <div class="atrium-topbar-divider"></div>
     <%= if assigns[:current_user] do %>
       <div class="atrium-topbar-user">
