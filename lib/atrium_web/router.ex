@@ -50,6 +50,10 @@ defmodule AtriumWeb.Router do
       resources "/tenants", SuperAdmin.TenantController, except: [:delete]
       post "/tenants/:id/reseed_acls", SuperAdmin.TenantController, :reseed_acls
       resources "/tenants/:tenant_id/idps", SuperAdmin.TenantIdpController, except: [:show]
+
+      get "/sections", SuperAdmin.SectionController, :index
+      get "/sections/:key/edit", SuperAdmin.SectionController, :edit
+      put "/sections/:key", SuperAdmin.SectionController, :update
     end
   end
 
