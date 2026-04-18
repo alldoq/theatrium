@@ -40,7 +40,7 @@ defmodule AtriumWeb.DocumentControllerTest do
   describe "GET /sections/:section_key/documents/new" do
     test "renders new form", %{conn: conn} do
       conn = get(conn, "/sections/docs/documents/new")
-      assert html_response(conn, 200) =~ "trix-editor"
+      assert html_response(conn, 200) =~ "tiptap-editor"
     end
   end
 
@@ -54,7 +54,7 @@ defmodule AtriumWeb.DocumentControllerTest do
 
     test "re-renders new form on invalid attrs", %{conn: conn} do
       conn = post(conn, "/sections/docs/documents", %{document: %{title: ""}})
-      assert html_response(conn, 422) =~ "trix-editor"
+      assert html_response(conn, 422) =~ "tiptap-editor"
     end
   end
 
@@ -70,7 +70,7 @@ defmodule AtriumWeb.DocumentControllerTest do
     test "renders edit form for draft document", %{conn: conn, prefix: prefix, user: user} do
       {:ok, doc} = Documents.create_document(prefix, %{title: "EditMe", section_key: "docs", body_html: "<p>y</p>"}, user)
       conn = get(conn, "/sections/docs/documents/#{doc.id}/edit")
-      assert html_response(conn, 200) =~ "trix-editor"
+      assert html_response(conn, 200) =~ "tiptap-editor"
     end
   end
 

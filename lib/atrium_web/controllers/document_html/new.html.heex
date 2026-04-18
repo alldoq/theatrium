@@ -19,7 +19,7 @@
     <div class="mb-4">
       <label class="block text-sm font-medium mb-1">Body</label>
       <input type="hidden" id="document_body_html" name="document[body_html]" value={Phoenix.HTML.Form.input_value(f, :body_html) || ""} />
-      <trix-editor input="document_body_html" class="border rounded min-h-48 p-2"></trix-editor>
+      <div data-tiptap-editor data-input-id="document_body_html" class="border rounded min-h-48 p-2 prose max-w-none"></div>
     </div>
 
     <div class="flex gap-2">

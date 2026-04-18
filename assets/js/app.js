@@ -102,4 +102,5 @@ if (document.readyState === "loading") {
 }
 
 import "./islands/hello.js"
+import "./tiptap_editor.js"
 
