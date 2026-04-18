@@ -33,7 +33,8 @@ config :atrium, Oban,
     Oban.Plugins.Pruner,
     {Oban.Plugins.Cron,
      crontab: [
-       {"*/15 * * * *", Atrium.Accounts.SessionSweeper}
+       {"*/15 * * * *", Atrium.Accounts.SessionSweeper},
+       {"0 2 * * *", Atrium.Audit.RetentionSweeper}
      ]}
   ],
   queues: [default: 10, maintenance: 2, audit: 5]
