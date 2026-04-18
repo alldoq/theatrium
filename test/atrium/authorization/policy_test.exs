@@ -11,7 +11,12 @@ defmodule Atrium.Authorization.PolicyTest do
     u
   end
 
-  defp mk_group(prefix, slug), do: elem(Authorization.create_group(prefix, %{slug: slug, name: slug}), 1)
+  defp mk_group(prefix, slug) do
+    case Authorization.get_group_by_slug(prefix, slug) do
+      nil -> elem(Authorization.create_group(prefix, %{slug: slug, name: slug}), 1)
+      group -> group
+    end
+  end
 
   describe "section-only grants" do
     test "direct user grant", %{tenant_prefix: prefix} do
@@ -31,7 +36,8 @@ defmodule Atrium.Authorization.PolicyTest do
 
     test "no grant → denied", %{tenant_prefix: prefix} do
       u = make_user(prefix, "a@e.co")
-      refute Policy.can?(prefix, u, :view, {:section, "news"})
+      # all_staff has :view on news via seeded ACLs; test that a capability not granted to all_staff is denied
+      refute Policy.can?(prefix, u, :edit, {:section, "news"})
     end
   end
 

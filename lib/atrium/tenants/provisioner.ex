@@ -12,6 +12,9 @@ defmodule Atrium.Tenants.Provisioner do
 
     case Triplex.create(tenant.slug) do
       {:ok, _schema} ->
+        prefix = Triplex.to_prefix(tenant.slug)
+        :ok = Atrium.Tenants.Seed.run(prefix)
+
         with {:ok, updated} <- Tenants.update_status(tenant, "active"),
              {:ok, _} <- Audit.log_global("tenant.created", %{
                actor: actor,

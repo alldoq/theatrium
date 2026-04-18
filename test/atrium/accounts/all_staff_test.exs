@@ -4,7 +4,11 @@ defmodule Atrium.Accounts.AllStaffTest do
   alias Atrium.Authorization
 
   setup %{tenant_prefix: prefix} do
-    {:ok, _} = Authorization.create_group(prefix, %{slug: "all_staff", name: "All staff", kind: "system"})
+    # all_staff is seeded by provisioning; create it only if absent (e.g. in test contexts that skip seeding)
+    case Authorization.get_group_by_slug(prefix, "all_staff") do
+      nil -> {:ok, _} = Authorization.create_group(prefix, %{slug: "all_staff", name: "All staff", kind: "system"})
+      _ -> :ok
+    end
     :ok
   end
 

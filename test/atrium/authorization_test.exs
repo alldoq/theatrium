@@ -14,8 +14,8 @@ defmodule Atrium.AuthorizationTest do
       {:ok, group} = Authorization.create_group(prefix, %{slug: "marketing", name: "Marketing"})
       user = make_user(prefix, "a@e.co")
       {:ok, _m} = Authorization.add_member(prefix, user, group)
-      assert [%{id: gid}] = Authorization.list_groups_for_user(prefix, user)
-      assert gid == group.id
+      groups = Authorization.list_groups_for_user(prefix, user)
+      assert Enum.any?(groups, &(&1.id == group.id))
     end
 
     test "removing membership revokes group", %{tenant_prefix: prefix} do
@@ -23,7 +23,8 @@ defmodule Atrium.AuthorizationTest do
       u = make_user(prefix, "a@e.co")
       {:ok, _} = Authorization.add_member(prefix, u, g)
       :ok = Authorization.remove_member(prefix, u, g)
-      assert [] = Authorization.list_groups_for_user(prefix, u)
+      groups = Authorization.list_groups_for_user(prefix, u)
+      refute Enum.any?(groups, &(&1.id == g.id))
     end
   end
 
@@ -33,14 +34,15 @@ defmodule Atrium.AuthorizationTest do
       {:ok, _} = Authorization.grant_section(prefix, "news", {:group, group.id}, :view)
 
       rows = Authorization.list_section_acls(prefix, "news")
-      assert length(rows) == 1
+      assert Enum.any?(rows, fn r -> r.principal_type == "group" and r.principal_id == group.id and r.capability == "view" end)
     end
 
     test "revoke removes the ACL", %{tenant_prefix: prefix} do
       {:ok, group} = Authorization.create_group(prefix, %{slug: "x", name: "X"})
       {:ok, _} = Authorization.grant_section(prefix, "news", {:group, group.id}, :view)
       :ok = Authorization.revoke_section(prefix, "news", {:group, group.id}, :view)
-      assert Authorization.list_section_acls(prefix, "news") == []
+      rows = Authorization.list_section_acls(prefix, "news")
+      refute Enum.any?(rows, fn r -> r.principal_type == "group" and r.principal_id == group.id and r.capability == "view" end)
     end
 
     test "subsection grant", %{tenant_prefix: prefix} do
