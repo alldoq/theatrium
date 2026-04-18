@@ -1,1 +1,102 @@
-<div>sections edit</div>
+<div class="atrium-anim" style="max-width:640px">
+  <div style="margin-bottom:20px">
+    <a href={~p"/super/sections"} style="font-size:.8125rem;color:var(--text-tertiary);text-decoration:none">
+      ← Back to Sections
+    </a>
+  </div>
+
+  <div style="margin-bottom:24px">
+    <div class="atrium-page-eyebrow">Platform / Sections</div>
+    <h1 class="atrium-page-title">Edit Section</h1>
+    <p style="font-size:.875rem;color:var(--text-secondary);margin-top:4px">
+      Customizing: <code style="font-size:.875rem;background:var(--surface-raised);padding:2px 6px;border-radius:4px"><%= @section.key %></code>
+    </p>
+  </div>
+
+  <form method="post" action={~p"/super/sections/#{@section.key}"}>
+    <input type="hidden" name="_method" value="put" />
+    <input type="hidden" name="_csrf_token" value={Plug.CSRFProtection.get_csrf_token()} />
+
+    <div class="atrium-card" style="margin-bottom:20px">
+      <div class="atrium-card-body" style="display:flex;flex-direction:column;gap:20px">
+
+        <div>
+          <label class="atrium-label" for="section_display_name">Display Name</label>
+          <input
+            id="section_display_name"
+            type="text"
+            name="section[display_name]"
+            class="atrium-input"
+            value={(@customization && @customization.display_name) || ""}
+            placeholder={"Default: #{@section.name}"}
+          />
+          <p style="font-size:.8125rem;color:var(--text-tertiary);margin-top:4px">Leave blank to use the default name.</p>
+        </div>
+
+        <div>
+          <label class="atrium-label">Icon</label>
+          <p style="font-size:.8125rem;color:var(--text-tertiary);margin-bottom:8px">
+            Current: <strong><%= (@customization && @customization.icon_name) || @section.icon %></strong>
+            &nbsp;
+            <span style="vertical-align:middle;color:var(--text-secondary)">
+              <%= AtriumWeb.Heroicons.icon((@customization && @customization.icon_name) || @section.icon) %>
+            </span>
+          </p>
+
+          <input
+            id="icon_search"
+            type="text"
+            class="atrium-input"
+            placeholder="Search icons…"
+            oninput="filterIcons(this.value)"
+            autocomplete="off"
+            style="margin-bottom:12px"
+          />
+
+          <input type="hidden" id="section_icon_name" name="section[icon_name]" value={(@customization && @customization.icon_name) || @section.icon} />
+
+          <div id="icon-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(72px,1fr));gap:6px;max-height:360px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--radius);padding:12px">
+            <%= for name <- AtriumWeb.Heroicons.names() do %>
+              <% selected = ((@customization && @customization.icon_name) || @section.icon) == name %>
+              <button
+                type="button"
+                class="icon-option"
+                data-name={name}
+                onclick={"selectIcon('#{name}')"}
+                title={name}
+                style={"display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 4px;border-radius:var(--radius);border:1.5px solid #{if selected, do: "var(--blue-500)", else: "transparent"};background:#{if selected, do: "var(--blue-50,#eff6ff)", else: "transparent"};cursor:pointer;font-size:.625rem;color:var(--text-tertiary);word-break:break-all;text-align:center;line-height:1.2"}
+              >
+                <%= AtriumWeb.Heroicons.icon(name, size: 20) %>
+                <%= name %>
+              </button>
+            <% end %>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div style="display:flex;gap:8px">
+      <button type="submit" class="atrium-btn atrium-btn-primary">Save changes</button>
+      <a href={~p"/super/sections"} class="atrium-btn atrium-btn-ghost">Cancel</a>
+    </div>
+  </form>
+</div>
+
+<script>
+  function selectIcon(name) {
+    document.getElementById('section_icon_name').value = name;
+    document.querySelectorAll('.icon-option').forEach(function(btn) {
+      var selected = btn.dataset.name === name;
+      btn.style.border = selected ? '1.5px solid var(--blue-500)' : '1.5px solid transparent';
+      btn.style.background = selected ? 'var(--blue-50,#eff6ff)' : 'transparent';
+    });
+  }
+
+  function filterIcons(query) {
+    var q = query.toLowerCase();
+    document.querySelectorAll('.icon-option').forEach(function(btn) {
+      btn.style.display = btn.dataset.name.includes(q) ? '' : 'none';
+    });
+  }
+</script>
