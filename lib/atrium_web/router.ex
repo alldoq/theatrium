@@ -71,6 +71,8 @@ defmodule AtriumWeb.Router do
     scope "/" do
       pipe_through [AtriumWeb.Plugs.RequireUser, AtriumWeb.Plugs.AssignNav]
       get "/", PageController, :home
+      get "/audit", AuditViewerController, :index
+      get "/audit/export", AuditViewerController, :export
     end
   end
 

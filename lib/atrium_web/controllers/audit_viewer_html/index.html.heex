@@ -1,0 +1,28 @@
+<main class="p-8">
+  <h1 class="text-xl font-semibold mb-4">Audit log</h1>
+  <form method="get" class="flex gap-2 mb-4">
+    <input name="action" placeholder="action" value={@filters["action"]} class="border rounded p-1" />
+    <input name="actor_id" placeholder="actor_id" value={@filters["actor_id"]} class="border rounded p-1" />
+    <input name="resource_type" placeholder="resource_type" value={@filters["resource_type"]} class="border rounded p-1" />
+    <input name="resource_id" placeholder="resource_id" value={@filters["resource_id"]} class="border rounded p-1" />
+    <button type="submit" class="rounded bg-slate-900 text-white px-3">Filter</button>
+    <.link href={~p"/audit/export?#{@filters}"} class="rounded border px-3 py-1">CSV</.link>
+  </form>
+
+  <table class="w-full text-sm border">
+    <thead class="bg-slate-50">
+      <tr><th class="p-2 text-left">When</th><th class="p-2 text-left">Actor</th><th class="p-2 text-left">Action</th><th class="p-2 text-left">Resource</th><th class="p-2 text-left">Changes</th></tr>
+    </thead>
+    <tbody>
+      <%= for e <- @events do %>
+        <tr class="border-t">
+          <td class="p-2"><%= Calendar.strftime(e.occurred_at, "%Y-%m-%d %H:%M:%S") %></td>
+          <td class="p-2"><%= e.actor_type %> <%= e.actor_id %></td>
+          <td class="p-2 font-mono"><%= e.action %></td>
+          <td class="p-2"><%= e.resource_type %> <%= e.resource_id %></td>
+          <td class="p-2 font-mono text-xs"><%= Jason.encode!(e.changes) %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</main>
