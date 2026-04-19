@@ -1,11 +1,16 @@
 <header class="atrium-topbar">
   <div class="atrium-topbar-brand">
-    <div class="atrium-brand-icon">
-      <svg viewBox="0 0 16 16"><path d="M8 1L2 5v8h4v-4h4v4h4V5L8 1z"/></svg>
-    </div>
-    <span class="atrium-brand-name">
-      <%= if assigns[:tenant], do: @tenant.name, else: "Atrium" %>
-    </span>
+    <% logo_url = assigns[:tenant] && get_in(@tenant.theme || %{}, ["logo_url"]) %>
+    <%= if logo_url do %>
+      <img src={logo_url} alt={@tenant.name} style="height:28px;max-width:120px;object-fit:contain" />
+    <% else %>
+      <div class="atrium-brand-icon">
+        <svg viewBox="0 0 16 16"><path d="M8 1L2 5v8h4v-4h4v4h4V5L8 1z"/></svg>
+      </div>
+      <span class="atrium-brand-name">
+        <%= if assigns[:tenant], do: @tenant.name, else: "Atrium" %>
+      </span>
+    <% end %>
   </div>
   <div class="atrium-brand-sep"></div>
   <div class="atrium-topbar-search">

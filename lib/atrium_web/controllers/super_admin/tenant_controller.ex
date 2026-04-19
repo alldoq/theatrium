@@ -40,6 +40,9 @@ defmodule AtriumWeb.SuperAdmin.TenantController do
   def update(conn, %{"id" => id, "tenant" => attrs}) do
     tenant = Tenants.get_tenant!(id)
     attrs = Map.update(attrs, "enabled_sections", [], &Enum.reject(&1, fn v -> v == "" end))
+    attrs = Map.update(attrs, "theme", %{}, fn t ->
+      Map.update(t, "logo_url", nil, fn v -> if v == "", do: nil, else: v end)
+    end)
 
     case Tenants.update_tenant(tenant, attrs) do
       {:ok, updated} ->
