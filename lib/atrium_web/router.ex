@@ -182,6 +182,8 @@ defmodule AtriumWeb.Router do
       post "/sections/:section_key/documents/:id/archive", DocumentController, :archive
       get  "/sections/:section_key/documents/:id/pdf",     DocumentController, :download_pdf
       post "/sections/:section_key/documents/upload_image", DocumentController, :upload_image
+      post "/sections/:section_key/documents/:id/comments",             DocumentController, :create_comment
+      post "/sections/:section_key/documents/:id/comments/:cid/delete", DocumentController, :delete_comment
 
       get  "/sections/:section_key/forms",                                    FormController, :index
       get  "/sections/:section_key/forms/new",                                FormController, :new

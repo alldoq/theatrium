@@ -15,6 +15,10 @@ defmodule AtriumWeb.DocumentController do
        [capability: :approve, target: &__MODULE__.section_target/1]
        when action in [:reject, :approve, :archive]
 
+  plug AtriumWeb.Plugs.Authorize,
+       [capability: :view, target: &__MODULE__.section_target/1]
+       when action in [:create_comment, :delete_comment]
+
   def section_target(conn), do: {:section, conn.path_params["section_key"]}
 
   def index(conn, %{"section_key" => section_key} = params) do
@@ -60,10 +64,21 @@ defmodule AtriumWeb.DocumentController do
 
   def show(conn, %{"section_key" => section_key, "id" => id}) do
     prefix = conn.assigns.tenant_prefix
+    user = conn.assigns.current_user
     doc = Documents.get_document!(prefix, id)
     versions = Documents.list_versions(prefix, doc.id)
     history = Atrium.Audit.history_for(prefix, "Document", doc.id)
-    render(conn, :show, document: doc, versions: versions, history: history, section_key: section_key)
+    comments = Documents.list_comments(prefix, doc.id)
+    can_edit = Atrium.Authorization.Policy.can?(prefix, user, :edit, {:section, section_key})
+    render(conn, :show,
+      document: doc,
+      versions: versions,
+      history: history,
+      comments: comments,
+      can_edit: can_edit,
+      section_key: section_key,
+      current_user: user
+    )
   end
 
   def edit(conn, %{"section_key" => section_key, "id" => id}) do
@@ -158,6 +173,43 @@ defmodule AtriumWeb.DocumentController do
     conn
     |> put_status(400)
     |> json(%{error: "No image file provided"})
+  end
+
+  def create_comment(conn, %{"section_key" => section_key, "id" => id, "comment" => %{"body" => body}}) do
+    prefix = conn.assigns.tenant_prefix
+    user = conn.assigns.current_user
+
+    case Documents.add_comment(prefix, id, %{body: body, author_id: user.id}) do
+      {:ok, _} ->
+        conn
+        |> put_flash(:info, "Comment added.")
+        |> redirect(to: ~p"/sections/#{section_key}/documents/#{id}" <> "#comments")
+      {:error, _changeset} ->
+        conn
+        |> put_flash(:error, "Comment cannot be blank.")
+        |> redirect(to: ~p"/sections/#{section_key}/documents/#{id}" <> "#comments")
+    end
+  end
+
+  def delete_comment(conn, %{"section_key" => section_key, "id" => id, "cid" => cid}) do
+    prefix = conn.assigns.tenant_prefix
+    user = conn.assigns.current_user
+    can_edit = Atrium.Authorization.Policy.can?(prefix, user, :edit, {:section, section_key})
+    comment = Atrium.Repo.get(Atrium.Documents.Comment, cid, prefix: prefix)
+
+    cond do
+      is_nil(comment) ->
+        conn |> redirect(to: ~p"/sections/#{section_key}/documents/#{id}" <> "#comments")
+      can_edit || comment.author_id == user.id ->
+        Documents.delete_comment(prefix, cid)
+        conn
+        |> put_flash(:info, "Comment deleted.")
+        |> redirect(to: ~p"/sections/#{section_key}/documents/#{id}" <> "#comments")
+      true ->
+        conn
+        |> put_flash(:error, "Not authorised.")
+        |> redirect(to: ~p"/sections/#{section_key}/documents/#{id}" <> "#comments")
+    end
   end
 
   defp build_pdf_html(doc) do

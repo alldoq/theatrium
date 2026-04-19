@@ -96,6 +96,45 @@
 
     <%# Metadata below the sheet %>
     <div class="doc-meta-panel">
+      <%# Comments %>
+      <div id="comments" class="atrium-card" style="margin-bottom:12px">
+        <div class="atrium-card-header">
+          <span class="atrium-card-title">Comments</span>
+          <span style="font-size:.8125rem;color:var(--text-tertiary)"><%= length(@comments) %></span>
+        </div>
+        <%= if @comments == [] do %>
+          <div style="padding:24px;text-align:center;color:var(--text-tertiary);font-size:.875rem">No comments yet.</div>
+        <% end %>
+        <%= for comment <- @comments do %>
+          <div style="padding:14px 16px;border-bottom:1px solid var(--border);display:flex;gap:12px;align-items:flex-start">
+            <div style="width:28px;height:28px;border-radius:50%;background:var(--blue-100,#dbeafe);display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:600;color:var(--blue-600,#2563eb);flex-shrink:0">
+              ?
+            </div>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:.8125rem;color:var(--text-tertiary);margin-bottom:4px">
+                <%= Calendar.strftime(comment.inserted_at, "%d %b %Y %H:%M") %>
+              </div>
+              <div style="font-size:.875rem;color:var(--text-primary);white-space:pre-wrap"><%= comment.body %></div>
+            </div>
+            <%= if @can_edit || comment.author_id == @current_user.id do %>
+              <form method="post" action={~p"/sections/#{@section_key}/documents/#{@document.id}/comments/#{comment.id}/delete"} style="flex-shrink:0">
+                <input type="hidden" name="_csrf_token" value={Plug.CSRFProtection.get_csrf_token()} />
+                <button type="submit" style="background:none;border:none;cursor:pointer;color:var(--text-tertiary);padding:2px 4px;font-size:.75rem" title="Delete comment">✕</button>
+              </form>
+            <% end %>
+          </div>
+        <% end %>
+        <div style="padding:14px 16px;border-top:1px solid var(--border)">
+          <form method="post" action={~p"/sections/#{@section_key}/documents/#{@document.id}/comments"}>
+            <input type="hidden" name="_csrf_token" value={Plug.CSRFProtection.get_csrf_token()} />
+            <textarea name="comment[body]" placeholder="Add a comment…" style="width:100%;border:1px solid var(--border);border-radius:var(--radius);padding:8px 10px;font-size:.875rem;resize:vertical;min-height:64px;font-family:inherit;color:var(--text-primary);background:var(--surface)" required></textarea>
+            <div style="margin-top:8px;display:flex;justify-content:flex-end">
+              <button type="submit" class="atrium-btn atrium-btn-primary" style="height:32px;font-size:.8125rem">Post comment</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
       <div class="atrium-card" style="margin-bottom:12px">
         <div class="atrium-card-header">
           <span class="atrium-card-title">Version history</span>
