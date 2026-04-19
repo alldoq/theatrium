@@ -16,7 +16,17 @@ defmodule AtriumWeb.HomeController do
     announcements = Home.list_announcements(prefix)
     quick_links = Home.list_quick_links(prefix)
     can_edit = Atrium.Authorization.Policy.can?(prefix, user, :edit, {:section, "home"})
-    render(conn, :show, announcements: announcements, quick_links: quick_links, can_edit: can_edit)
+    upcoming_events = Atrium.Events.list_upcoming_events(prefix)
+    recent_activity = Atrium.Audit.list(prefix, limit: 10)
+    all_users = Atrium.Accounts.list_users(prefix)
+    render(conn, :show,
+      announcements: announcements,
+      quick_links: quick_links,
+      can_edit: can_edit,
+      upcoming_events: upcoming_events,
+      recent_activity: recent_activity,
+      all_users: all_users
+    )
   end
 
   def create_announcement(conn, %{"announcement" => params}) do
