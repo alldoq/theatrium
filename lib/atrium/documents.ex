@@ -3,6 +3,7 @@ defmodule Atrium.Documents do
   alias Atrium.Repo
   alias Atrium.Audit
   alias Atrium.Documents.{Document, DocumentVersion}
+  alias Atrium.Documents.Comment
   alias Atrium.Notifications.Dispatcher
 
   # ---------------------------------------------------------------------------
@@ -194,5 +195,39 @@ defmodule Atrium.Documents do
     doc
     |> Document.status_changeset(status, extra_attrs)
     |> Repo.update(prefix: prefix)
+  end
+
+  # ---------------------------------------------------------------------------
+  # Comments
+  # ---------------------------------------------------------------------------
+
+  def list_comments(prefix, document_id) do
+    Repo.all(
+      from(c in Comment,
+        where: c.document_id == ^document_id,
+        order_by: [asc: c.inserted_at]
+      ),
+      prefix: prefix
+    )
+  end
+
+  def add_comment(prefix, document_id, attrs) do
+    attrs = Map.new(attrs, fn {k, v} -> {to_string(k), v} end)
+    attrs = Map.put(attrs, "document_id", document_id)
+
+    %Comment{}
+    |> Comment.changeset(attrs)
+    |> Repo.insert(prefix: prefix)
+  end
+
+  def delete_comment(prefix, comment_id) do
+    case Repo.get(Comment, comment_id, prefix: prefix) do
+      nil -> :ok
+      comment ->
+        case Repo.delete(comment, prefix: prefix) do
+          {:ok, _} -> :ok
+          {:error, _} = err -> err
+        end
+    end
   end
 end
