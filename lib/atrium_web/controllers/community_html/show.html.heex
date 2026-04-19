@@ -1,0 +1,59 @@
+<% author = Enum.find(@all_users, fn u -> u.id == @post.author_id end) %>
+<div class="atrium-anim">
+  <div style="margin-bottom:24px">
+    <div class="atrium-page-eyebrow"><a href={~p"/community"} style="color:inherit;text-decoration:none">Community</a></div>
+    <div style="display:flex;align-items:flex-start;justify-content:space-between">
+      <h1 class="atrium-page-title"><%= @post.title %></h1>
+      <%= if @can_edit || @post.author_id == @current_user.id do %>
+        <form action={~p"/community/#{@post.id}/delete"} method="post" style="display:inline">
+          <input type="hidden" name="_csrf_token" value={Plug.CSRFProtection.get_csrf_token()} />
+          <button type="submit" class="atrium-btn atrium-btn-ghost" onclick="return confirm('Delete this post?')">Delete post</button>
+        </form>
+      <% end %>
+    </div>
+    <div style="font-size:.8125rem;color:var(--text-tertiary)">
+      Posted by <%= if author, do: author.name, else: "Unknown" %> · <%= Calendar.strftime(@post.inserted_at, "%b %-d, %Y") %>
+    </div>
+  </div>
+
+  <div class="atrium-card" style="margin-bottom:24px">
+    <div style="padding:20px;white-space:pre-wrap"><%= @post.body %></div>
+  </div>
+
+  <div class="atrium-card" id="replies">
+    <div class="atrium-card-header">
+      <div class="atrium-card-title">Replies (<%= length(@replies) %>)</div>
+    </div>
+    <div style="padding:0 20px">
+      <%= for reply <- @replies do %>
+        <% reply_author = Enum.find(@all_users, fn u -> u.id == reply.author_id end) %>
+        <div style="border-bottom:1px solid var(--border);padding:12px 0;display:flex;gap:12px;align-items:flex-start">
+          <div style="flex:1">
+            <div style="font-size:.8125rem;color:var(--text-tertiary);margin-bottom:4px">
+              <%= if reply_author, do: reply_author.name, else: "Unknown" %> · <%= Calendar.strftime(reply.inserted_at, "%b %-d, %Y") %>
+            </div>
+            <div style="white-space:pre-wrap"><%= reply.body %></div>
+          </div>
+          <%= if @can_edit || reply.author_id == @current_user.id do %>
+            <form action={~p"/community/#{@post.id}/replies/#{reply.id}/delete"} method="post" style="display:inline">
+              <input type="hidden" name="_csrf_token" value={Plug.CSRFProtection.get_csrf_token()} />
+              <button type="submit" class="atrium-btn atrium-btn-ghost" style="height:24px;font-size:.75rem;padding:0 8px">Delete</button>
+            </form>
+          <% end %>
+        </div>
+      <% end %>
+      <%= if @replies == [] do %>
+        <div style="padding:32px 0;text-align:center;color:var(--text-tertiary)">No replies yet. Be the first to reply.</div>
+      <% end %>
+    </div>
+    <div style="padding:16px 20px;border-top:1px solid var(--border)">
+      <form action={~p"/community/#{@post.id}/replies"} method="post">
+        <input type="hidden" name="_csrf_token" value={Plug.CSRFProtection.get_csrf_token()} />
+        <textarea name="reply[body]" placeholder="Write a reply…" rows="3" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:.875rem;resize:vertical;background:var(--surface);color:var(--text-primary)"></textarea>
+        <div style="margin-top:8px;text-align:right">
+          <button type="submit" class="atrium-btn atrium-btn-primary" style="height:28px;font-size:.8125rem">Post reply</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

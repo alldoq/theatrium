@@ -128,6 +128,16 @@ defmodule AtriumWeb.Router do
       post   "/projects/:id/updates",                         ProjectsController, :add_update
       post   "/projects/:id/updates/:uid/delete",             ProjectsController, :delete_update
 
+      get    "/community",                                      CommunityController, :index
+      get    "/community/new",                                  CommunityController, :new
+      post   "/community",                                      CommunityController, :create
+      get    "/community/:id",                                  CommunityController, :show
+      post   "/community/:id/delete",                           CommunityController, :delete_post
+      post   "/community/:id/pin",                              CommunityController, :pin_post
+      post   "/community/:id/unpin",                            CommunityController, :unpin_post
+      post   "/community/:id/replies",                          CommunityController, :add_reply
+      post   "/community/:id/replies/:rid/delete",              CommunityController, :delete_reply
+
       get "/helpdesk", HelpdeskController, :index
 
       get    "/learning",                  LearningController, :index

@@ -1,0 +1,26 @@
+<div class="atrium-anim">
+  <div style="margin-bottom:28px">
+    <div class="atrium-page-eyebrow"><a href={~p"/community"} style="color:inherit;text-decoration:none">Community</a></div>
+    <h1 class="atrium-page-title">New Post</h1>
+  </div>
+
+  <div class="atrium-card" style="max-width:700px">
+    <div style="padding:24px">
+      <form action={~p"/community"} method="post">
+        <input type="hidden" name="_csrf_token" value={Plug.CSRFProtection.get_csrf_token()} />
+        <div style="margin-bottom:16px">
+          <label style="display:block;font-size:.875rem;font-weight:500;margin-bottom:4px">Title</label>
+          <input type="text" name="post[title]" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:.875rem;background:var(--surface);color:var(--text-primary)" />
+        </div>
+        <div style="margin-bottom:16px">
+          <label style="display:block;font-size:.875rem;font-weight:500;margin-bottom:4px">Body</label>
+          <textarea name="post[body]" rows="8" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:.875rem;resize:vertical;background:var(--surface);color:var(--text-primary)"></textarea>
+        </div>
+        <div style="display:flex;gap:8px;justify-content:flex-end">
+          <a href={~p"/community"} class="atrium-btn atrium-btn-ghost">Cancel</a>
+          <button type="submit" class="atrium-btn atrium-btn-primary">Post</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
