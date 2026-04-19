@@ -65,31 +65,23 @@
       </div>
       <div class="atrium-card-body" style="display:flex;flex-direction:column;gap:16px">
         <% theme = @tenant.theme || %{}
-           primary   = theme["primary"]   || "#0F172A"
-           secondary = theme["secondary"] || "#64748B"
-           accent    = theme["accent"]    || "#2563EB"
-           font      = theme["font"]      || "Inter, system-ui, sans-serif"
+           secondary = theme["secondary"] || "#1e293b"
+           accent    = theme["accent"]    || "#2563eb"
+           font      = theme["font"]      || ""
            logo_url  = theme["logo_url"]  || "" %>
-        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px">
+        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:16px">
           <div>
-            <label class="atrium-label">Primary colour</label>
-            <div style="display:flex;align-items:center;gap:8px;margin-top:4px">
-              <input type="color" name="tenant[theme][primary]" value={primary} style="width:36px;height:36px;border:1px solid var(--border);border-radius:var(--radius-sm);padding:2px;cursor:pointer;background:none" />
-              <input type="text" name="tenant[theme][primary]" value={primary} class="atrium-input" style="font-family:'IBM Plex Mono',monospace;font-size:.8125rem" maxlength="7" />
-            </div>
-          </div>
-          <div>
-            <label class="atrium-label">Secondary colour</label>
-            <div style="display:flex;align-items:center;gap:8px;margin-top:4px">
-              <input type="color" name="tenant[theme][secondary]" value={secondary} style="width:36px;height:36px;border:1px solid var(--border);border-radius:var(--radius-sm);padding:2px;cursor:pointer;background:none" />
-              <input type="text" name="tenant[theme][secondary]" value={secondary} class="atrium-input" style="font-family:'IBM Plex Mono',monospace;font-size:.8125rem" maxlength="7" />
-            </div>
-          </div>
-          <div>
-            <label class="atrium-label">Accent colour</label>
+            <label class="atrium-label">Accent colour <span style="font-weight:400;color:var(--text-tertiary)">(buttons, links, active states)</span></label>
             <div style="display:flex;align-items:center;gap:8px;margin-top:4px">
               <input type="color" name="tenant[theme][accent]" value={accent} style="width:36px;height:36px;border:1px solid var(--border);border-radius:var(--radius-sm);padding:2px;cursor:pointer;background:none" />
               <input type="text" name="tenant[theme][accent]" value={accent} class="atrium-input" style="font-family:'IBM Plex Mono',monospace;font-size:.8125rem" maxlength="7" />
+            </div>
+          </div>
+          <div>
+            <label class="atrium-label">Nav background <span style="font-weight:400;color:var(--text-tertiary)">(topbar and sidebar)</span></label>
+            <div style="display:flex;align-items:center;gap:8px;margin-top:4px">
+              <input type="color" name="tenant[theme][secondary]" value={secondary} style="width:36px;height:36px;border:1px solid var(--border);border-radius:var(--radius-sm);padding:2px;cursor:pointer;background:none" />
+              <input type="text" name="tenant[theme][secondary]" value={secondary} class="atrium-input" style="font-family:'IBM Plex Mono',monospace;font-size:.8125rem" maxlength="7" />
             </div>
           </div>
         </div>

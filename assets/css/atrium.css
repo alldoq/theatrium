@@ -1,0 +1,650 @@
+:root {
+  --slate-950: #0a0f1a;
+  --slate-900: #0f172a;
+  --slate-800: #1e293b;
+  --slate-700: #2d3f55;
+  --slate-600: #3d5068;
+  --slate-400: #94a3b8;
+  --slate-300: #cbd5e1;
+  --slate-200: #e2e8f0;
+  --slate-100: #f1f5f9;
+  --slate-50:  #f8fafc;
+
+  --blue-600:  #2563eb;
+  --blue-500:  #3b82f6;
+  --blue-400:  #60a5fa;
+  --blue-100:  #dbeafe;
+  --blue-50:   #eff6ff;
+
+  --surface:        #ffffff;
+  --surface-muted:  #f8fafc;
+  --text-primary:   #0f172a;
+  --text-secondary: #475569;
+  --text-tertiary:  #94a3b8;
+  --border:         #e2e8f0;
+  --border-subtle:  #f1f5f9;
+
+  --topbar-h:  52px;
+  --sidebar-w: 248px;
+  --radius-sm: 4px;
+  --radius:    6px;
+  --radius-lg: 10px;
+
+  --shadow-sm: 0 1px 2px rgba(15,23,42,.06), 0 0 0 1px rgba(15,23,42,.04);
+  --shadow-md: 0 4px 12px rgba(15,23,42,.08), 0 0 0 1px rgba(15,23,42,.04);
+  --shadow-lg: 0 12px 32px rgba(15,23,42,.12), 0 0 0 1px rgba(15,23,42,.05);
+}
+
+html { font-size: 15px; -webkit-font-smoothing: antialiased; }
+body { font-family: var(--brand-font, 'DM Sans', 'Inter', system-ui, sans-serif); background: var(--surface-muted); color: var(--text-primary); }
+a { color: inherit; text-decoration: none; }
+
+/* ── Topbar ── */
+.atrium-topbar {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: var(--topbar-h);
+  background: var(--slate-800);
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  z-index: 100;
+  border-bottom: 1px solid rgba(255,255,255,.06);
+}
+.atrium-topbar-brand {
+  display: flex; align-items: center; gap: 10px;
+  width: var(--sidebar-w); padding-right: 20px; flex-shrink: 0;
+}
+.atrium-brand-icon {
+  width: 26px; height: 26px;
+  background: var(--blue-500);
+  border-radius: var(--radius-sm);
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.atrium-brand-icon svg { width: 14px; height: 14px; fill: white; }
+.atrium-brand-name {
+  font-family: 'DM Serif Display', 'Georgia', serif;
+  font-size: 1.1rem; color: #fff; letter-spacing: .02em;
+}
+.atrium-brand-sep {
+  width: 1px; height: 24px;
+  background: rgba(255,255,255,.1);
+  margin-right: 20px; flex-shrink: 0;
+}
+.atrium-topbar-search {
+  flex: 1; max-width: 420px; position: relative;
+}
+.atrium-topbar-search input {
+  width: 100%; height: 32px;
+  background: rgba(255,255,255,.07);
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: var(--radius);
+  color: rgba(255,255,255,.85);
+  font-family: inherit; font-size: .875rem;
+  padding: 0 12px 0 34px; outline: none;
+  transition: border-color .15s, background .15s;
+}
+.atrium-topbar-search input::placeholder { color: rgba(255,255,255,.35); }
+.atrium-topbar-search input:focus { border-color: var(--blue-500); background: rgba(255,255,255,.09); }
+.atrium-topbar-search-icon {
+  position: absolute; left: 10px; top: 50%; transform: translateY(-50%);
+  width: 14px; height: 14px; color: rgba(255,255,255,.35); pointer-events: none;
+}
+.atrium-topbar-kbd {
+  position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+  font-family: 'IBM Plex Mono', monospace; font-size: .625rem;
+  color: rgba(255,255,255,.3);
+  background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.1);
+  border-radius: 3px; padding: 1px 5px; letter-spacing: .02em;
+}
+.atrium-topbar-spacer { flex: 1; }
+.atrium-topbar-actions { display: flex; align-items: center; gap: 4px; }
+.atrium-topbar-btn {
+  width: 32px; height: 32px;
+  border-radius: var(--radius);
+  display: flex; align-items: center; justify-content: center;
+  color: rgba(255,255,255,.55);
+  transition: background .15s, color .15s;
+  position: relative; background: none; border: none; cursor: pointer;
+}
+.atrium-topbar-btn:hover { background: rgba(255,255,255,.08); color: rgba(255,255,255,.85); }
+.atrium-topbar-btn svg { width: 16px; height: 16px; }
+.atrium-topbar-badge {
+  position: absolute; top: 5px; right: 5px;
+  width: 7px; height: 7px;
+  background: var(--blue-500); border-radius: 50%;
+  border: 1.5px solid var(--slate-800);
+}
+.atrium-topbar-divider { width: 1px; height: 20px; background: rgba(255,255,255,.1); margin: 0 8px; }
+.atrium-topbar-user {
+  display: flex; align-items: center; gap: 8px;
+  padding: 4px 8px 4px 4px; border-radius: var(--radius); cursor: pointer;
+  transition: background .15s;
+}
+.atrium-topbar-user:hover { background: rgba(255,255,255,.08); }
+.atrium-user-avatar {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--blue-600), var(--blue-400));
+  display: flex; align-items: center; justify-content: center;
+  font-size: .6875rem; font-weight: 600; color: white;
+  letter-spacing: .03em; flex-shrink: 0;
+}
+.atrium-user-name { font-size: .8125rem; font-weight: 500; color: rgba(255,255,255,.9); line-height: 1.2; }
+.atrium-user-role { font-size: .6875rem; color: rgba(255,255,255,.4); line-height: 1.2; }
+
+/* ── Layout ── */
+.atrium-layout {
+  display: flex;
+  padding-top: var(--topbar-h);
+  min-height: 100vh;
+}
+
+/* ── Sidebar ── */
+.atrium-sidebar {
+  width: var(--sidebar-w);
+  background: var(--slate-800);
+  flex-shrink: 0;
+  position: fixed;
+  top: var(--topbar-h); left: 0; bottom: 0;
+  overflow-y: auto;
+  padding: 16px 0;
+  border-right: 1px solid rgba(255,255,255,.05);
+  scrollbar-width: none;
+}
+.atrium-sidebar::-webkit-scrollbar { display: none; }
+.atrium-sidebar-section {
+  margin-bottom: 8px; padding-bottom: 8px;
+  border-bottom: 1px solid rgba(255,255,255,.05);
+}
+.atrium-sidebar-section:last-child { border-bottom: none; }
+.atrium-sidebar-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .625rem; font-weight: 500;
+  letter-spacing: .1em; text-transform: uppercase;
+  color: rgba(255,255,255,.25);
+  padding: 8px 20px 4px;
+}
+.atrium-sidebar-item {
+  display: flex; align-items: center; gap: 9px;
+  padding: 7px 20px;
+  font-size: .875rem; font-weight: 400;
+  color: rgba(255,255,255,.55);
+  cursor: pointer;
+  transition: background .12s, color .12s;
+  position: relative;
+}
+.atrium-sidebar-item:hover { background: rgba(255,255,255,.05); color: rgba(255,255,255,.8); }
+.atrium-sidebar-item.active { color: #fff; background: rgba(59,130,246,.15); }
+.atrium-sidebar-item.active::before {
+  content: '';
+  position: absolute; left: 0; top: 4px; bottom: 4px;
+  width: 2.5px; background: var(--blue-500);
+  border-radius: 0 2px 2px 0;
+}
+.atrium-sidebar-item svg { width: 15px; height: 15px; flex-shrink: 0; opacity: .75; }
+.atrium-sidebar-item.active svg { opacity: 1; }
+.atrium-sidebar-badge {
+  margin-left: auto;
+  font-family: 'IBM Plex Mono', monospace; font-size: .625rem;
+  background: rgba(59,130,246,.25); color: var(--blue-400);
+  padding: 2px 6px; border-radius: 20px; letter-spacing: .02em;
+}
+
+/* ── Main ── */
+.atrium-main {
+  margin-left: var(--sidebar-w);
+  flex: 1;
+  padding: 28px 32px;
+  max-width: 1200px;
+}
+
+/* ── Page header ── */
+.atrium-page-eyebrow {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .6875rem; color: var(--blue-500);
+  letter-spacing: .08em; text-transform: uppercase; margin-bottom: 4px;
+}
+.atrium-page-title {
+  font-family: 'DM Serif Display', 'Georgia', serif;
+  font-size: 1.625rem; font-weight: 400;
+  color: var(--slate-900); letter-spacing: -.01em; line-height: 1.2;
+}
+.atrium-page-subtitle { font-size: .875rem; color: var(--text-secondary); margin-top: 3px; }
+
+/* ── Buttons ── */
+.atrium-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  height: 34px; padding: 0 14px;
+  border-radius: var(--radius); font-size: .875rem; font-weight: 500;
+  font-family: inherit; cursor: pointer; border: none;
+  transition: background .15s, box-shadow .15s, transform .08s;
+}
+.atrium-btn:active { transform: translateY(1px); }
+.atrium-btn svg { width: 14px; height: 14px; }
+.atrium-btn-primary {
+  background: var(--blue-500); color: white;
+  box-shadow: 0 1px 3px rgba(59,130,246,.3);
+}
+.atrium-btn-primary:hover { background: var(--blue-600); box-shadow: 0 2px 8px rgba(59,130,246,.35); }
+.atrium-btn-ghost {
+  background: var(--surface); color: var(--text-secondary);
+  border: 1px solid var(--border); box-shadow: var(--shadow-sm);
+}
+.atrium-btn-ghost:hover { background: var(--slate-50); color: var(--text-primary); }
+
+/* ── Card ── */
+.atrium-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+.atrium-card-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 20px; border-bottom: 1px solid var(--border-subtle);
+}
+.atrium-card-title { font-size: .9375rem; font-weight: 600; color: var(--slate-900); letter-spacing: -.01em; }
+.atrium-card-action { font-size: .8125rem; color: var(--blue-500); font-weight: 500; cursor: pointer; transition: color .12s; }
+.atrium-card-action:hover { color: var(--blue-600); }
+.atrium-card-body { padding: 20px; }
+.atrium-card-footer { padding: 10px 16px; border-top: 1px solid var(--border); background: var(--surface-raised, #f8fafc); border-radius: 0 0 var(--radius) var(--radius); display: flex; align-items: center; gap: 8px; }
+
+/* ── Status badge ── */
+.atrium-badge {
+  display: inline-flex; align-items: center;
+  height: 20px; padding: 0 7px;
+  border-radius: 20px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .625rem; font-weight: 500;
+  letter-spacing: .03em; text-transform: uppercase;
+}
+.atrium-badge-draft    { background: var(--slate-100); color: var(--slate-600); }
+.atrium-badge-published { background: #d1fae5; color: #065f46; }
+.atrium-badge-archived  { background: var(--slate-100); color: var(--slate-400); }
+.atrium-badge-pending   { background: #fef3c7; color: #92400e; }
+.atrium-badge-completed { background: #d1fae5; color: #065f46; }
+.atrium-badge-in-review { background: #dbeafe; color: #1d4ed8; }
+.atrium-badge-approved  { background: #d1fae5; color: #065f46; }
+.atrium-badge-rejected  { background: #fee2e2; color: #991b1b; }
+
+/* ── Table ── */
+.atrium-table { width: 100%; border-collapse: collapse; }
+.atrium-table th {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .625rem; letter-spacing: .08em; text-transform: uppercase;
+  color: var(--text-tertiary); font-weight: 500; text-align: left;
+  padding: 8px 12px; border-bottom: 1px solid var(--border); white-space: nowrap;
+}
+.atrium-table td {
+  padding: 11px 12px; font-size: .875rem;
+  color: var(--text-primary); border-bottom: 1px solid var(--border-subtle);
+  vertical-align: middle;
+}
+.atrium-table tr:last-child td { border-bottom: none; }
+.atrium-table tbody tr { cursor: pointer; transition: background .12s; }
+.atrium-table tbody tr:hover { background: var(--slate-50); }
+
+/* ── Notice / flash ── */
+.atrium-notice {
+  display: flex; align-items: center; gap: 12px;
+  background: var(--blue-50); border: 1px solid var(--blue-100);
+  border-radius: var(--radius); padding: 12px 16px;
+  font-size: .875rem; color: var(--slate-900);
+}
+.atrium-notice-error { background: #fef2f2; border-color: #fecaca; }
+.atrium-notice svg { width: 16px; height: 16px; color: var(--blue-500); flex-shrink: 0; }
+
+/* ── Form inputs ── */
+.atrium-input {
+  width: 100%; height: 36px; box-sizing: border-box;
+  border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 0 10px; font-family: inherit; font-size: .875rem;
+  color: var(--text-primary); background: var(--surface);
+  outline: none; transition: border-color .15s, box-shadow .15s;
+}
+.atrium-input:focus { border-color: var(--blue-500); box-shadow: 0 0 0 3px rgba(59,130,246,.1); }
+.atrium-label { display: block; font-size: .8125rem; font-weight: 500; color: var(--text-secondary); margin-bottom: 6px; }
+textarea.atrium-input { height: auto; padding: 8px 10px; }
+
+/* ── Animations ── */
+@keyframes atrium-fade-up {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.atrium-anim { animation: atrium-fade-up .25s ease both; }
+
+/* ── Stat cards ── */
+.atrium-stats-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 24px;
+}
+.atrium-stat-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 18px 20px;
+  box-shadow: var(--shadow-sm);
+  position: relative;
+  overflow: hidden;
+  transition: box-shadow .2s, transform .15s;
+}
+.atrium-stat-card:hover { box-shadow: var(--shadow-md); transform: translateY(-1px); }
+.atrium-stat-card::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: var(--blue-500);
+  opacity: 0;
+  transition: opacity .2s;
+}
+.atrium-stat-card:hover::after { opacity: 1; }
+.atrium-stat-label {
+  font-size: .75rem; font-weight: 500;
+  color: var(--text-tertiary);
+  letter-spacing: .03em; text-transform: uppercase;
+  margin-bottom: 8px;
+}
+.atrium-stat-value {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 1.625rem; font-weight: 500;
+  color: var(--slate-900);
+  letter-spacing: -.02em; line-height: 1;
+  margin-bottom: 6px;
+}
+.atrium-stat-delta {
+  display: inline-flex; align-items: center; gap: 3px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .6875rem; font-weight: 500;
+}
+.atrium-stat-delta.up { color: #16a34a; }
+.atrium-stat-delta.down { color: #dc2626; }
+.atrium-stat-delta.neutral { color: var(--text-tertiary); }
+.atrium-stat-delta svg { width: 10px; height: 10px; }
+
+/* ── Content grid ── */
+.atrium-content-grid {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 16px;
+}
+.atrium-content-col { display: flex; flex-direction: column; gap: 16px; }
+
+/* ── Announcement feed ── */
+.atrium-announcement-list { display: flex; flex-direction: column; }
+.atrium-announcement-item {
+  display: flex;
+  gap: 14px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-subtle);
+  cursor: pointer;
+  transition: background .12s;
+  margin: 0 -20px;
+}
+.atrium-announcement-item:last-child { border-bottom: none; }
+.atrium-announcement-item:hover { background: var(--slate-50); }
+.atrium-ann-icon {
+  width: 36px; height: 36px;
+  border-radius: var(--radius);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; margin-top: 1px;
+}
+.atrium-ann-icon svg { width: 16px; height: 16px; }
+.atrium-ann-icon.blue  { background: var(--blue-50);  color: var(--blue-600); }
+.atrium-ann-icon.green { background: #f0fdf4; color: #16a34a; }
+.atrium-ann-icon.amber { background: #fffbeb; color: #d97706; }
+.atrium-ann-icon.slate { background: var(--slate-100); color: var(--slate-600); }
+.atrium-ann-content { flex: 1; min-width: 0; }
+.atrium-ann-category {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .6rem; font-weight: 500;
+  letter-spacing: .1em; text-transform: uppercase;
+  color: var(--text-tertiary); margin-bottom: 3px;
+}
+.atrium-ann-title {
+  font-size: .9rem; font-weight: 500;
+  color: var(--text-primary); line-height: 1.4; margin-bottom: 4px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.atrium-ann-excerpt {
+  font-size: .8125rem; color: var(--text-secondary); line-height: 1.5;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.atrium-ann-meta { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
+.atrium-ann-author { font-size: .75rem; color: var(--text-tertiary); }
+.atrium-ann-dot { width: 3px; height: 3px; background: var(--slate-300); border-radius: 50%; }
+.atrium-ann-time { font-family: 'IBM Plex Mono', monospace; font-size: .6875rem; color: var(--text-tertiary); }
+
+/* ── Quick links ── */
+.atrium-quick-links {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
+}
+.atrium-quick-link {
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  padding: 14px 8px;
+  border: 1px solid var(--border); border-radius: var(--radius);
+  cursor: pointer; text-decoration: none;
+  transition: background .12s, border-color .12s, box-shadow .15s, transform .1s;
+}
+.atrium-quick-link:hover {
+  background: var(--blue-50); border-color: var(--blue-100);
+  box-shadow: 0 0 0 3px rgba(59,130,246,.06); transform: translateY(-1px);
+}
+.atrium-ql-icon {
+  width: 32px; height: 32px; border-radius: var(--radius);
+  display: flex; align-items: center; justify-content: center;
+  background: var(--slate-100); color: var(--slate-600);
+  transition: background .12s, color .12s;
+}
+.atrium-quick-link:hover .atrium-ql-icon { background: var(--blue-100); color: var(--blue-600); }
+.atrium-ql-icon svg { width: 15px; height: 15px; }
+.atrium-ql-label { font-size: .75rem; font-weight: 500; color: var(--text-secondary); text-align: center; line-height: 1.3; }
+
+/* ── People directory ── */
+.atrium-people-list { display: flex; flex-direction: column; gap: 2px; }
+.atrium-person-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 9px 10px; border-radius: var(--radius);
+  cursor: pointer; transition: background .12s;
+}
+.atrium-person-row:hover { background: var(--slate-50); }
+.atrium-person-avatar {
+  width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0;
+  font-size: .7rem; font-weight: 600;
+  display: flex; align-items: center; justify-content: center;
+  color: white; letter-spacing: .02em;
+}
+.atrium-person-info { flex: 1; min-width: 0; }
+.atrium-person-name { font-size: .875rem; font-weight: 500; color: var(--text-primary); line-height: 1.3; }
+.atrium-person-title { font-size: .75rem; color: var(--text-tertiary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.atrium-person-status { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.atrium-person-status.online  { background: #22c55e; }
+.atrium-person-status.away    { background: #f59e0b; }
+.atrium-person-status.busy    { background: #ef4444; }
+.atrium-person-status.offline { background: var(--slate-300); }
+
+/* ── Events ── */
+.atrium-event-list { display: flex; flex-direction: column; gap: 10px; }
+.atrium-event-item {
+  display: flex; gap: 12px; align-items: flex-start;
+  padding: 12px; background: var(--surface-muted);
+  border-radius: var(--radius); border: 1px solid var(--border-subtle);
+  cursor: pointer; transition: border-color .12s, background .12s;
+}
+.atrium-event-item:hover { border-color: #bfdbfe; background: var(--blue-50); }
+.atrium-event-date {
+  width: 38px; background: var(--slate-800);
+  border-radius: var(--radius-sm);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 4px 0; flex-shrink: 0;
+}
+.atrium-event-month {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .55rem; letter-spacing: .08em; text-transform: uppercase;
+  color: var(--blue-400); line-height: 1;
+}
+.atrium-event-day {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 1.1rem; font-weight: 500; color: white; line-height: 1.2;
+}
+.atrium-event-info { flex: 1; min-width: 0; }
+.atrium-event-title { font-size: .875rem; font-weight: 500; color: var(--text-primary); line-height: 1.3; margin-bottom: 3px; }
+.atrium-event-detail { display: flex; align-items: center; gap: 10px; font-size: .75rem; color: var(--text-tertiary); }
+.atrium-event-detail span { display: flex; align-items: center; gap: 4px; }
+.atrium-event-detail svg { width: 11px; height: 11px; }
+
+/* ── Doc file icon ── */
+.atrium-doc-name { display: flex; align-items: center; gap: 9px; font-weight: 500; }
+.atrium-doc-file-icon {
+  width: 26px; height: 26px; border-radius: var(--radius-sm);
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.atrium-doc-file-icon svg { width: 13px; height: 13px; }
+.atrium-doc-file-icon.pdf { background: #fee2e2; color: #dc2626; }
+.atrium-doc-file-icon.doc { background: #dbeafe; color: #2563eb; }
+.atrium-doc-file-icon.xls { background: #d1fae5; color: #16a34a; }
+.atrium-doc-file-icon.ppt { background: #fef3c7; color: #d97706; }
+.atrium-doc-tag {
+  display: inline-flex; align-items: center;
+  height: 20px; padding: 0 7px; border-radius: 20px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .625rem; font-weight: 500; letter-spacing: .03em; text-transform: uppercase;
+}
+.atrium-doc-tag.hr  { background: #f3e8ff; color: #7c3aed; }
+.atrium-doc-tag.fin { background: #d1fae5; color: #065f46; }
+.atrium-doc-tag.eng { background: #dbeafe; color: #1d4ed8; }
+.atrium-doc-tag.ops { background: #fef3c7; color: #92400e; }
+.atrium-doc-modified { font-family: 'IBM Plex Mono', monospace; font-size: .75rem; color: var(--text-tertiary); }
+
+/* ── Auth pages (login, password reset, invitation) ── */
+.atrium-auth-page {
+  min-height: 100vh;
+  background: var(--surface-muted);
+  display: flex; align-items: center; justify-content: center;
+  padding: 24px;
+}
+.atrium-auth-card {
+  width: 100%; max-width: 400px;
+}
+.atrium-auth-brand {
+  display: flex; flex-direction: column; align-items: center;
+  text-align: center; margin-bottom: 28px;
+}
+.atrium-auth-logo {
+  width: 44px; height: 44px;
+  background: var(--slate-800);
+  border-radius: var(--radius);
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 14px;
+  box-shadow: var(--shadow-md);
+}
+.atrium-auth-logo svg { width: 22px; height: 22px; fill: white; }
+.atrium-auth-tenant {
+  font-family: 'DM Serif Display', serif;
+  font-size: 1.375rem; color: var(--slate-900);
+  letter-spacing: .01em; line-height: 1.2; margin-bottom: 4px;
+}
+.atrium-auth-subtitle { font-size: .875rem; color: var(--text-secondary); }
+.atrium-auth-box {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  padding: 28px;
+}
+.atrium-auth-divider {
+  position: relative; margin: 18px 0;
+}
+.atrium-auth-divider::before {
+  content: '';
+  position: absolute; inset: 50% 0 auto;
+  border-top: 1px solid var(--border);
+}
+.atrium-auth-divider span {
+  position: relative; display: block;
+  width: fit-content; margin: 0 auto;
+  padding: 0 10px;
+  font-size: .75rem; color: var(--text-tertiary);
+  background: var(--surface);
+}
+.atrium-auth-field { margin-bottom: 16px; }
+.atrium-auth-field:last-of-type { margin-bottom: 20px; }
+.atrium-auth-field-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+.atrium-auth-submit {
+  width: 100%; height: 38px;
+  background: var(--blue-500); color: white;
+  border: none; border-radius: var(--radius);
+  font-family: inherit; font-size: .875rem; font-weight: 500;
+  cursor: pointer; transition: background .15s;
+}
+.atrium-auth-submit:hover { background: var(--blue-600); }
+.atrium-auth-error {
+  background: #fef2f2; border: 1px solid #fecaca;
+  border-radius: var(--radius); padding: 10px 14px;
+  font-size: .875rem; color: #991b1b; margin-bottom: 16px;
+}
+.atrium-auth-idp-btn {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  width: 100%; height: 38px;
+  border-radius: var(--radius); font-size: .875rem; font-weight: 500;
+  font-family: inherit; cursor: pointer; transition: background .15s, border-color .15s;
+  margin-bottom: 8px;
+}
+.atrium-auth-idp-btn.primary { background: var(--blue-500); color: white; border: 1px solid var(--blue-500); }
+.atrium-auth-idp-btn.primary:hover { background: var(--blue-600); }
+.atrium-auth-idp-btn.secondary { background: var(--surface); color: var(--text-primary); border: 1px solid var(--border); }
+.atrium-auth-idp-btn.secondary:hover { background: var(--slate-50); }
+
+/* ── TipTap / ProseMirror editor ───────────────────���─────────────────── */
+
+/* Make the inner editable div fill the container height */
+[data-tiptap-editor] .ProseMirror {
+  min-height: inherit;
+  outline: none;
+  font-size: .9375rem;
+  line-height: 1.7;
+  color: var(--text-primary);
+}
+
+/* Word-like document sheet */
+.atrium-doc-editor {
+  background: var(--surface-raised, #f1f5f9);
+  padding: 32px 0 48px;
+}
+
+.atrium-doc-sheet {
+  background: white;
+  width: 794px;
+  max-width: 100%;
+  margin: 0 auto;
+  padding: 64px 72px;
+  box-shadow: 0 2px 8px rgba(0,0,0,.10), 0 0 0 1px rgba(0,0,0,.04);
+  border-radius: 2px;
+}
+
+.atrium-doc-sheet [data-tiptap-editor] .ProseMirror {
+  min-height: 600px;
+}
+
+/* Prose styles inside the editor */
+[data-tiptap-editor] .ProseMirror h1 { font-size: 1.75rem; font-weight: 700; margin: 1.2em 0 .4em; }
+[data-tiptap-editor] .ProseMirror h2 { font-size: 1.35rem; font-weight: 700; margin: 1.1em 0 .4em; }
+[data-tiptap-editor] .ProseMirror h3 { font-size: 1.1rem;  font-weight: 600; margin: 1em 0 .3em; }
+[data-tiptap-editor] .ProseMirror p  { margin: 0 0 .75em; }
+[data-tiptap-editor] .ProseMirror ul { list-style: disc;    padding-left: 1.5em; margin: .5em 0; }
+[data-tiptap-editor] .ProseMirror ol { list-style: decimal; padding-left: 1.5em; margin: .5em 0; }
+[data-tiptap-editor] .ProseMirror li { margin: .2em 0; }
+[data-tiptap-editor] .ProseMirror blockquote { border-left: 3px solid var(--blue-300,#93c5fd); padding-left: 1em; color: var(--text-secondary); margin: .75em 0; }
+[data-tiptap-editor] .ProseMirror pre  { background: var(--surface-raised,#f1f5f9); border-radius: var(--radius); padding: .75em 1em; font-family: 'IBM Plex Mono', monospace; font-size: .875rem; overflow-x: auto; margin: .75em 0; }
+[data-tiptap-editor] .ProseMirror code { background: var(--surface-raised,#f1f5f9); border-radius: 3px; padding: .1em .3em; font-family: 'IBM Plex Mono', monospace; font-size: .875rem; }
+[data-tiptap-editor] .ProseMirror strong { font-weight: 700; }
+[data-tiptap-editor] .ProseMirror em { font-style: italic; }
+[data-tiptap-editor] .ProseMirror s  { text-decoration: line-through; }
+
+/* Toolbar inside the doc sheet — flush top, no outer border */
+.atrium-doc-sheet [data-tiptap-editor] {
+  padding: 0;
+}

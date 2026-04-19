@@ -12,16 +12,58 @@ defmodule AtriumWeb.Layouts do
   embed_templates "layouts/*"
 
   def theme_style(%{tenant: %{theme: theme}}) when is_map(theme) do
-    [
-      {"--color-primary", Map.get(theme, "primary", "#0F172A")},
-      {"--color-secondary", Map.get(theme, "secondary", "#64748B")},
-      {"--color-accent", Map.get(theme, "accent", "#2563EB")},
-      {"--font-sans", Map.get(theme, "font", "Inter, system-ui, sans-serif")}
+    accent   = Map.get(theme, "accent", "#2563eb")
+    nav_bg   = Map.get(theme, "secondary", "#1e293b")
+    font     = Map.get(theme, "font", nil)
+
+    vars = [
+      # Accent palette — --blue-500 is the base; derive neighbours
+      {"--blue-500", accent},
+      {"--blue-600", darken(accent, 0.12)},
+      {"--blue-400", lighten(accent, 0.15)},
+      {"--blue-100", lighten(accent, 0.75)},
+      {"--blue-50",  lighten(accent, 0.88)},
+      # Nav/sidebar background
+      {"--slate-800", nav_bg},
     ]
-    |> Enum.map_join("; ", fn {k, v} -> "#{k}: #{v}" end)
+
+    vars = if font, do: [{"--brand-font", font} | vars], else: vars
+
+    Enum.map_join(vars, "; ", fn {k, v} -> "#{k}: #{v}" end)
   end
 
   def theme_style(_), do: ""
+
+  # Lighten a hex color by blending toward white by `amount` (0..1).
+  defp lighten(hex, amount) do
+    {r, g, b} = parse_hex(hex)
+    r2 = round(r + (255 - r) * amount)
+    g2 = round(g + (255 - g) * amount)
+    b2 = round(b + (255 - b) * amount)
+    format_hex(r2, g2, b2)
+  end
+
+  # Darken a hex color by blending toward black by `amount` (0..1).
+  defp darken(hex, amount) do
+    {r, g, b} = parse_hex(hex)
+    r2 = round(r * (1 - amount))
+    g2 = round(g * (1 - amount))
+    b2 = round(b * (1 - amount))
+    format_hex(r2, g2, b2)
+  end
+
+  defp parse_hex("#" <> hex) do
+    hex = String.downcase(hex)
+    {r, _} = Integer.parse(String.slice(hex, 0, 2), 16)
+    {g, _} = Integer.parse(String.slice(hex, 2, 2), 16)
+    {b, _} = Integer.parse(String.slice(hex, 4, 2), 16)
+    {r, g, b}
+  end
+  defp parse_hex(hex), do: parse_hex("#" <> hex)
+
+  defp format_hex(r, g, b) do
+    "##{Integer.to_string(r, 16) |> String.pad_leading(2, "0")}#{Integer.to_string(g, 16) |> String.pad_leading(2, "0")}#{Integer.to_string(b, 16) |> String.pad_leading(2, "0")}"
+  end
 
   @doc """
   Shows the flash group with standard titles and content.
