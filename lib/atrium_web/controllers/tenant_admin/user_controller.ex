@@ -119,7 +119,7 @@ defmodule AtriumWeb.TenantAdmin.UserController do
       nil -> params
       raw ->
         skills = raw |> String.split(",") |> Enum.map(&String.trim/1) |> Enum.reject(&(&1 == ""))
-        Map.put(params, "skills", skills)
+        params |> Map.put("skills", skills) |> Map.delete("skills_input")
     end
 
     case Accounts.update_profile(prefix, user, params) do
