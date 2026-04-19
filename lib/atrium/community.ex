@@ -14,6 +14,10 @@ defmodule Atrium.Community do
     Repo.get!(Post, id, prefix: prefix)
   end
 
+  def get_post(prefix, id) do
+    Repo.get(Post, id, prefix: prefix)
+  end
+
   def create_post(prefix, attrs) do
     changeset = Post.changeset(%Post{}, stringify(attrs))
     Repo.insert(changeset, prefix: prefix)

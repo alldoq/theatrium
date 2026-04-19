@@ -99,14 +99,6 @@ defmodule Atrium.Authorization.SectionRegistry do
       default_acls: [{:group, :all_staff, :view}]
     },
     %{
-      key: :social,
-      name: "Social / Community",
-      icon: "chat",
-      supports_subsections: false,
-      default_capabilities: @capabilities,
-      default_acls: [{:group, :all_staff, :view}, {:group, :all_staff, :edit}]
-    },
-    %{
       key: :community,
       name: "Community",
       icon: "chat",

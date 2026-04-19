@@ -109,29 +109,36 @@ defmodule AtriumWeb.CommunityController do
     prefix = conn.assigns.tenant_prefix
     user = conn.assigns.current_user
     can_edit = Atrium.Authorization.Policy.can?(prefix, user, :edit, {:section, "community"})
-    post = Community.get_post!(prefix, id)
+    post = Community.get_post(prefix, id)
 
-    if can_edit || post.author_id == user.id do
-      Community.delete_post(prefix, id)
-      conn
-      |> put_flash(:info, "Post deleted.")
-      |> redirect(to: ~p"/community")
-    else
-      conn
-      |> put_flash(:error, "Not authorised.")
-      |> redirect(to: ~p"/community/#{id}")
+    cond do
+      is_nil(post) ->
+        redirect(conn, to: ~p"/community")
+      can_edit || post.author_id == user.id ->
+        Community.delete_post(prefix, id)
+        conn
+        |> put_flash(:info, "Post deleted.")
+        |> redirect(to: ~p"/community")
+      true ->
+        conn
+        |> put_flash(:error, "Not authorised.")
+        |> redirect(to: ~p"/community/#{id}")
     end
   end
 
   def pin_post(conn, %{"id" => id}) do
     prefix = conn.assigns.tenant_prefix
     Community.pin_post(prefix, id)
-    redirect(conn, to: ~p"/community")
+    conn
+    |> put_flash(:info, "Post pinned.")
+    |> redirect(to: ~p"/community")
   end
 
   def unpin_post(conn, %{"id" => id}) do
     prefix = conn.assigns.tenant_prefix
     Community.unpin_post(prefix, id)
-    redirect(conn, to: ~p"/community")
+    conn
+    |> put_flash(:info, "Post unpinned.")
+    |> redirect(to: ~p"/community")
   end
 end
