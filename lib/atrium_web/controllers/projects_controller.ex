@@ -53,12 +53,7 @@ defmodule AtriumWeb.ProjectsController do
     can_edit = Atrium.Authorization.Policy.can?(prefix, user, :edit, {:section, "projects"})
     is_member = Projects.member?(prefix, id, user.id)
 
-    all_users =
-      if can_edit do
-        Atrium.Accounts.list_users(prefix)
-      else
-        []
-      end
+    all_users = Atrium.Accounts.list_users(prefix)
 
     render(conn, :show,
       project: project,
@@ -111,10 +106,15 @@ defmodule AtriumWeb.ProjectsController do
     end
   end
 
-  def add_member(conn, %{"id" => id, "user_id" => user_id}) do
+  def add_member(conn, %{"id" => id, "user_id" => user_id}) when user_id != "" do
     prefix = conn.assigns.tenant_prefix
-    Projects.add_member(prefix, id, user_id)
-    redirect(conn, to: ~p"/projects/#{id}")
+    case Projects.add_member(prefix, id, user_id) do
+      {:ok, _} -> redirect(conn, to: ~p"/projects/#{id}")
+      {:error, _} ->
+        conn
+        |> put_flash(:error, "Could not add member.")
+        |> redirect(to: ~p"/projects/#{id}")
+    end
   end
 
   def add_member(conn, %{"id" => id}) do

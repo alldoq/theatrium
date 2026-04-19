@@ -68,7 +68,8 @@
         <div style="padding:0 20px">
           <%= for member <- @members do %>
             <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)">
-              <div style="font-size:.875rem"><%= member.user_id %></div>
+              <% member_user = Enum.find(@all_users, fn u -> u.id == member.user_id end) %>
+              <div style="font-size:.875rem"><%= if member_user, do: member_user.name, else: "Unknown" %></div>
               <div style="display:flex;align-items:center;gap:8px">
                 <span style="font-size:.75rem;color:var(--text-tertiary)"><%= member.role %></span>
                 <%= if @can_edit do %>

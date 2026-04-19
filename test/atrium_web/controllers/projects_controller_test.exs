@@ -90,4 +90,16 @@ defmodule AtriumWeb.ProjectsControllerTest do
     assert redirected_to(conn) == "/projects"
     assert Projects.get_project!(prefix, project.id).status == "archived"
   end
+
+  test "viewer cannot create a project", %{viewer_conn: viewer_conn} do
+    conn = post(viewer_conn, "/projects", %{"project" => %{"title" => "Unauthorized"}})
+    assert conn.status in [302, 403]
+  end
+
+  test "POST /projects/:id/members adds a member", %{editor_conn: editor_conn, prefix: prefix, editor: editor, viewer: viewer} do
+    {:ok, project} = Projects.create_project(prefix, %{"title" => "Members"}, editor)
+    conn = post(editor_conn, "/projects/#{project.id}/members", %{"user_id" => viewer.id})
+    assert redirected_to(conn) =~ "/projects/#{project.id}"
+    assert Projects.member?(prefix, project.id, viewer.id)
+  end
 end
