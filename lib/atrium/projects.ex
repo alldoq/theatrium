@@ -17,7 +17,7 @@ defmodule Atrium.Projects do
 
     Repo.transaction(fn ->
       with {:ok, project} <- Repo.insert(changeset, prefix: prefix),
-           :ok <- audit_project(prefix, "project.created", project, {:user, user.id}) do
+           {:ok, _} <- Atrium.Audit.log(prefix, "project.created", %{actor: {:user, user.id}, resource: {"Project", project.id}}) do
         project
       else
         {:error, reason} -> Repo.rollback(reason)
@@ -30,7 +30,7 @@ defmodule Atrium.Projects do
 
     Repo.transaction(fn ->
       with {:ok, updated} <- Repo.update(changeset, prefix: prefix),
-           :ok <- audit_project(prefix, "project.updated", updated, {:user, user.id}) do
+           {:ok, _} <- Atrium.Audit.log(prefix, "project.updated", %{actor: {:user, user.id}, resource: {"Project", updated.id}}) do
         updated
       else
         {:error, reason} -> Repo.rollback(reason)
@@ -55,18 +55,17 @@ defmodule Atrium.Projects do
       user_id: user_id,
       role: role
     })
-    case Repo.insert(changeset, prefix: prefix) do
-      {:ok, member} -> {:ok, member}
-      {:error, changeset} -> {:error, changeset}
-    end
+    Repo.insert(changeset, prefix: prefix)
   end
 
   def remove_member(prefix, project_id, user_id) do
     case Repo.get_by(ProjectMember, [project_id: project_id, user_id: user_id], prefix: prefix) do
       nil -> {:error, :not_found}
       member ->
-        Repo.delete(member, prefix: prefix)
-        :ok
+        case Repo.delete(member, prefix: prefix) do
+          {:ok, _} -> :ok
+          {:error, _} = err -> err
+        end
     end
   end
 
@@ -97,8 +96,10 @@ defmodule Atrium.Projects do
     case Repo.get(ProjectUpdate, update_id, prefix: prefix) do
       nil -> {:error, :not_found}
       update ->
-        Repo.delete(update, prefix: prefix)
-        :ok
+        case Repo.delete(update, prefix: prefix) do
+          {:ok, _} -> :ok
+          {:error, _} = err -> err
+        end
     end
   end
 
@@ -109,16 +110,6 @@ defmodule Atrium.Projects do
       :id,
       prefix: prefix
     )
-  end
-
-  defp audit_project(prefix, action, project, actor) do
-    case Atrium.Audit.log(prefix, action, %{
-      actor: actor,
-      resource: {"Project", project.id}
-    }) do
-      {:ok, _} -> :ok
-      {:error, reason} -> {:error, reason}
-    end
   end
 
   defp stringify(attrs) when is_map(attrs) do
