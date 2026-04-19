@@ -115,6 +115,13 @@ defmodule AtriumWeb.TenantAdmin.UserController do
     prefix = conn.assigns.tenant_prefix
     user = Accounts.get_user!(prefix, id)
 
+    params = case Map.get(params, "skills_input") do
+      nil -> params
+      raw ->
+        skills = raw |> String.split(",") |> Enum.map(&String.trim/1) |> Enum.reject(&(&1 == ""))
+        Map.put(params, "skills", skills)
+    end
+
     case Accounts.update_profile(prefix, user, params) do
       {:ok, _} ->
         conn |> put_flash(:info, "Profile updated.") |> redirect(to: ~p"/directory/#{id}")

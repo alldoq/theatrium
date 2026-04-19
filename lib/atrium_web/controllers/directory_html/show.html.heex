@@ -44,6 +44,16 @@
           <span style="font-size:.875rem;color:var(--text-primary)"><%= @profile.bio %></span>
         </div>
       <% end %>
+      <%= if @profile.skills && @profile.skills != [] do %>
+        <div style="display:flex;gap:12px">
+          <span style="font-size:.8125rem;color:var(--text-tertiary);width:80px;flex-shrink:0">Skills</span>
+          <div style="display:flex;flex-wrap:wrap;gap:6px">
+            <%= for skill <- @profile.skills do %>
+              <span style="font-size:.75rem;font-weight:500;padding:2px 8px;border-radius:999px;background:var(--blue-50);color:var(--blue-700);border:1px solid var(--blue-200)"><%= skill %></span>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
     </div>
   </div>
 </div>

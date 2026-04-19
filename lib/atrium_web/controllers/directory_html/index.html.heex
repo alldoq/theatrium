@@ -38,6 +38,16 @@
               <%= if user.department do %>
                 <div style="font-size:.75rem;color:var(--text-tertiary)"><%= user.department %></div>
               <% end %>
+              <%= if user.skills && user.skills != [] do %>
+                <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px">
+                  <%= for skill <- Enum.take(user.skills, 3) do %>
+                    <span style="font-size:.6875rem;padding:1px 6px;border-radius:999px;background:var(--blue-50);color:var(--blue-600);border:1px solid var(--blue-100)"><%= skill %></span>
+                  <% end %>
+                  <%= if length(user.skills) > 3 do %>
+                    <span style="font-size:.6875rem;color:var(--text-tertiary)">+<%= length(user.skills) - 3 %></span>
+                  <% end %>
+                </div>
+              <% end %>
             </div>
           </div>
         </div>

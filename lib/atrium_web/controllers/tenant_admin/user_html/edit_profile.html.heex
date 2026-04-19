@@ -33,6 +33,11 @@
           <label class="atrium-label">Bio</label>
           <textarea name="user[bio]" class="atrium-input" rows="4" placeholder="Short bio…" style="resize:vertical"><%= @profile_user.bio %></textarea>
         </div>
+        <div>
+          <label class="atrium-label">Skills</label>
+          <input type="text" name="user[skills_input]" value={Enum.join(@profile_user.skills || [], ", ")} class="atrium-input" placeholder="e.g. Excel, Project management, Python" />
+          <div style="font-size:.75rem;color:var(--text-tertiary);margin-top:4px">Comma-separated list of skills</div>
+        </div>
       </div>
       <div class="atrium-card-footer" style="display:flex;gap:8px;justify-content:flex-end">
         <a href={~p"/admin/users/#{@profile_user.id}"} class="atrium-btn atrium-btn-ghost">Cancel</a>

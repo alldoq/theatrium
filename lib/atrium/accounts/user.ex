@@ -17,6 +17,7 @@ defmodule Atrium.Accounts.User do
     field :phone, :string
     field :bio, :string
     field :avatar_url, :string
+    field :skills, {:array, :string}, default: []
     field :password, :string, virtual: true, redact: true
     timestamps(type: :utc_datetime_usec)
   end
@@ -67,7 +68,7 @@ defmodule Atrium.Accounts.User do
 
   def profile_changeset(user, attrs) do
     user
-    |> cast(attrs, [:name, :role, :department, :phone, :bio, :avatar_url])
+    |> cast(attrs, [:name, :role, :department, :phone, :bio, :avatar_url, :skills])
     |> validate_required([:name])
     |> validate_length(:bio, max: 1000)
   end
