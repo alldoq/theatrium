@@ -1,0 +1,51 @@
+<div class="atrium-anim" style="max-width:680px">
+  <div style="margin-bottom:20px">
+    <a href={~p"/projects"} style="font-size:.8125rem;color:var(--text-tertiary);text-decoration:none">
+      ← Projects &amp; Collaboration
+    </a>
+  </div>
+
+  <div style="margin-bottom:24px">
+    <div class="atrium-page-eyebrow">Projects</div>
+    <h1 class="atrium-page-title">New Project</h1>
+  </div>
+
+  <form method="post" action={~p"/projects"}>
+    <input type="hidden" name="_csrf_token" value={Plug.CSRFProtection.get_csrf_token()} />
+
+    <div class="atrium-card" style="margin-bottom:20px">
+      <div class="atrium-card-body" style="display:flex;flex-direction:column;gap:16px">
+
+        <div>
+          <label class="atrium-label" for="project_title">Title</label>
+          <input
+            id="project_title"
+            type="text"
+            name="project[title]"
+            class="atrium-input"
+            value={Ecto.Changeset.get_field(@changeset, :title) || ""}
+          />
+          <% title_err = @changeset.action && List.first(Keyword.get_values(@changeset.errors, :title)) %>
+          <%= if title_err do %><p style="font-size:.8125rem;color:var(--color-error,#ef4444);margin-top:4px"><%= elem(title_err, 0) %></p><% end %>
+        </div>
+
+        <div>
+          <label class="atrium-label" for="project_description">Description</label>
+          <textarea
+            id="project_description"
+            name="project[description]"
+            class="atrium-input"
+            rows="4"
+            style="resize:vertical"
+          ><%= Ecto.Changeset.get_field(@changeset, :description) || "" %></textarea>
+        </div>
+
+      </div>
+    </div>
+
+    <div style="display:flex;gap:8px">
+      <button type="submit" class="atrium-btn atrium-btn-primary">Create project</button>
+      <a href={~p"/projects"} class="atrium-btn atrium-btn-ghost">Cancel</a>
+    </div>
+  </form>
+</div>

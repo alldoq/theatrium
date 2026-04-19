@@ -1,0 +1,49 @@
+<div class="atrium-anim">
+  <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:28px">
+    <div>
+      <div class="atrium-page-eyebrow">Projects</div>
+      <h1 class="atrium-page-title">Projects &amp; Collaboration</h1>
+    </div>
+    <%= if @can_edit do %>
+      <a href={~p"/projects/new"} class="atrium-btn atrium-btn-primary">New project</a>
+    <% end %>
+  </div>
+
+  <div class="atrium-card">
+    <table class="atrium-table">
+      <thead>
+        <tr>
+          <th>Project</th>
+          <th>Status</th>
+          <th>Members</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <%= for project <- @projects do %>
+          <tr>
+            <td style="font-weight:500">
+              <a href={~p"/projects/#{project.id}"} style="color:var(--text-primary);text-decoration:none"><%= project.title %></a>
+            </td>
+            <td>
+              <span class={"atrium-badge atrium-badge-#{project.status}"}><%= project.status %></span>
+            </td>
+            <td style="font-size:.875rem;color:var(--text-secondary)">
+              <%= Map.get(@member_counts, project.id, 0) %>
+            </td>
+            <td style="text-align:right">
+              <a href={~p"/projects/#{project.id}"} class="atrium-btn atrium-btn-ghost" style="height:28px;font-size:.8125rem">View</a>
+            </td>
+          </tr>
+        <% end %>
+        <%= if @projects == [] do %>
+          <tr>
+            <td colspan="4" style="padding:32px;text-align:center;color:var(--text-tertiary)">
+              No projects yet.<%= if @can_edit do %> <a href={~p"/projects/new"} style="color:var(--blue-600)">Create one</a>.<% end %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+</div>

@@ -116,6 +116,18 @@ defmodule AtriumWeb.Router do
       get "/compliance", ComplianceController, :index
       get "/feedback", FeedbackController, :index
 
+      get    "/projects",                                     ProjectsController, :index
+      get    "/projects/new",                                 ProjectsController, :new
+      post   "/projects",                                     ProjectsController, :create
+      get    "/projects/:id",                                 ProjectsController, :show
+      get    "/projects/:id/edit",                            ProjectsController, :edit
+      put    "/projects/:id",                                 ProjectsController, :update
+      post   "/projects/:id/archive",                         ProjectsController, :archive
+      post   "/projects/:id/members",                         ProjectsController, :add_member
+      post   "/projects/:id/members/:user_id/delete",         ProjectsController, :remove_member
+      post   "/projects/:id/updates",                         ProjectsController, :add_update
+      post   "/projects/:id/updates/:uid/delete",             ProjectsController, :delete_update
+
       get "/helpdesk", HelpdeskController, :index
 
       get    "/learning",                  LearningController, :index
