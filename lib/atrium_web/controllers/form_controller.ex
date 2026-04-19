@@ -19,9 +19,13 @@ defmodule AtriumWeb.FormController do
 
   def index(conn, %{"section_key" => section_key} = params) do
     prefix = conn.assigns.tenant_prefix
+    user = conn.assigns.current_user
     opts = if st = params["status"], do: [status: st], else: []
     forms = Forms.list_forms(prefix, section_key, opts)
-    render(conn, :index, forms: forms, section_key: section_key)
+    can_edit = Atrium.Authorization.Policy.can?(prefix, user, :edit, {:section, section_key})
+    section = Atrium.Authorization.SectionRegistry.get(section_key)
+    section_name = if section, do: section.name, else: section_key
+    render(conn, :index, forms: forms, section_key: section_key, can_edit: can_edit, section_name: section_name)
   end
 
   def new(conn, %{"section_key" => section_key}) do

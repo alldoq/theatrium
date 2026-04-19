@@ -19,11 +19,15 @@ defmodule AtriumWeb.DocumentController do
 
   def index(conn, %{"section_key" => section_key} = params) do
     prefix = conn.assigns.tenant_prefix
+    user = conn.assigns.current_user
     opts = []
     opts = if s = params["subsection_slug"], do: Keyword.put(opts, :subsection_slug, s), else: opts
     opts = if st = params["status"], do: Keyword.put(opts, :status, st), else: opts
     documents = Documents.list_documents(prefix, section_key, opts)
-    render(conn, :index, documents: documents, section_key: section_key)
+    can_edit = Atrium.Authorization.Policy.can?(prefix, user, :edit, {:section, section_key})
+    section = Atrium.Authorization.SectionRegistry.get(section_key)
+    section_name = if section, do: section.name, else: section_key
+    render(conn, :index, documents: documents, section_key: section_key, can_edit: can_edit, section_name: section_name)
   end
 
   def new(conn, %{"section_key" => section_key}) do
