@@ -222,7 +222,7 @@ defmodule Atrium.Documents do
 
   def delete_comment(prefix, comment_id) do
     case Repo.get(Comment, comment_id, prefix: prefix) do
-      nil -> :ok
+      nil -> {:error, :not_found}
       comment ->
         case Repo.delete(comment, prefix: prefix) do
           {:ok, _} -> :ok

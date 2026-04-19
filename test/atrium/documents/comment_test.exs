@@ -60,6 +60,19 @@ defmodule Atrium.Documents.CommentTest do
     {:ok, comment} = Documents.add_comment(prefix, doc.id, %{body: "Delete me", author_id: user.id})
     assert :ok = Documents.delete_comment(prefix, comment.id)
     assert Documents.list_comments(prefix, doc.id) == []
+    assert {:error, :not_found} = Documents.delete_comment(prefix, comment.id)
+  end
+
+  test "add_comment/3 rejects body over 4000 chars", %{tenant_prefix: prefix} do
+    user = build_user(prefix)
+    {:ok, doc} = Documents.create_document(prefix, %{
+      "title" => "Test Doc",
+      "section_key" => "docs",
+      "body_html" => ""
+    }, user)
+    long_body = String.duplicate("a", 4001)
+    assert {:error, changeset} = Documents.add_comment(prefix, doc.id, %{body: long_body, author_id: user.id})
+    assert changeset.errors[:body]
   end
 
   test "add_comment/3 requires body", %{tenant_prefix: prefix} do
