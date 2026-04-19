@@ -191,11 +191,17 @@ defmodule AtriumWeb.DocumentController do
     end
   end
 
+  def create_comment(conn, %{"section_key" => section_key, "id" => id}) do
+    conn
+    |> put_flash(:error, "Comment cannot be blank.")
+    |> redirect(to: ~p"/sections/#{section_key}/documents/#{id}" <> "#comments")
+  end
+
   def delete_comment(conn, %{"section_key" => section_key, "id" => id, "cid" => cid}) do
     prefix = conn.assigns.tenant_prefix
     user = conn.assigns.current_user
     can_edit = Atrium.Authorization.Policy.can?(prefix, user, :edit, {:section, section_key})
-    comment = Atrium.Repo.get(Atrium.Documents.Comment, cid, prefix: prefix)
+    comment = Documents.get_comment(prefix, cid)
 
     cond do
       is_nil(comment) ->

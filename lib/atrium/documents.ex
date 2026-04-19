@@ -201,6 +201,10 @@ defmodule Atrium.Documents do
   # Comments
   # ---------------------------------------------------------------------------
 
+  def get_comment(prefix, comment_id) do
+    Repo.get(Comment, comment_id, prefix: prefix)
+  end
+
   def list_comments(prefix, document_id) do
     Repo.all(
       from(c in Comment,
