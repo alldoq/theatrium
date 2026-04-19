@@ -1,0 +1,77 @@
+<div class="atrium-anim">
+  <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:28px">
+    <div>
+      <div class="atrium-page-eyebrow">Feedback</div>
+      <h1 class="atrium-page-title">Feedback &amp; Surveys</h1>
+    </div>
+    <%= if @can_edit do %>
+      <a href={~p"/sections/feedback/forms/new"} class="atrium-btn atrium-btn-primary">New survey</a>
+    <% end %>
+  </div>
+
+  <%= if !@can_edit do %>
+    <div class="atrium-card">
+      <div class="atrium-card-header"><div class="atrium-card-title">Open surveys</div></div>
+      <table class="atrium-table">
+        <thead>
+          <tr>
+            <th>Survey</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <%= for form <- @published do %>
+            <tr>
+              <td style="font-weight:500"><%= form.title %></td>
+              <td style="text-align:right">
+                <a href={~p"/sections/feedback/forms/#{form.id}/submit"} class="atrium-btn atrium-btn-primary" style="height:28px;font-size:.8125rem">Fill in</a>
+              </td>
+            </tr>
+          <% end %>
+          <%= if @published == [] do %>
+            <tr><td colspan="2" style="padding:32px;text-align:center;color:var(--text-tertiary)">No open surveys right now.</td></tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% else %>
+    <div class="atrium-card">
+      <div class="atrium-card-header"><div class="atrium-card-title">All surveys</div></div>
+      <table class="atrium-table">
+        <thead>
+          <tr>
+            <th>Survey</th>
+            <th>Status</th>
+            <th>Responses</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <%= for form <- @all_forms do %>
+            <tr>
+              <td style="font-weight:500">
+                <a href={~p"/sections/feedback/forms/#{form.id}"} style="color:var(--text-primary);text-decoration:none"><%= form.title %></a>
+              </td>
+              <td>
+                <span class={"atrium-badge atrium-badge-#{form.status}"}><%= form.status %></span>
+              </td>
+              <td style="font-size:.875rem;color:var(--text-secondary)">
+                <%= Map.get(@submission_counts, form.id, 0) %>
+              </td>
+              <td style="text-align:right">
+                <%= if form.status == "published" do %>
+                  <a href={~p"/sections/feedback/forms/#{form.id}/submissions"} class="atrium-btn atrium-btn-ghost" style="height:28px;font-size:.8125rem">Responses</a>
+                <% else %>
+                  <a href={~p"/sections/feedback/forms/#{form.id}"} class="atrium-btn atrium-btn-ghost" style="height:28px;font-size:.8125rem">View</a>
+                <% end %>
+              </td>
+            </tr>
+          <% end %>
+          <%= if @all_forms == [] do %>
+            <tr><td colspan="4" style="padding:32px;text-align:center;color:var(--text-tertiary)">No surveys yet. <a href={~p"/sections/feedback/forms/new"} style="color:var(--blue-600,#2563eb)">Create one</a>.</td></tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% end %>
+</div>

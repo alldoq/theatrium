@@ -114,6 +114,7 @@ defmodule AtriumWeb.Router do
       get "/directory/:id",  DirectoryController, :show
 
       get "/compliance", ComplianceController, :index
+      get "/feedback", FeedbackController, :index
 
       get "/helpdesk", HelpdeskController, :index
 

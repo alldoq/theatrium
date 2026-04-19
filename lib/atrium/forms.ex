@@ -180,6 +180,15 @@ defmodule Atrium.Forms do
     Repo.all(query, prefix: prefix)
   end
 
+  def count_submissions(prefix, form_id) do
+    Repo.aggregate(
+      from(s in FormSubmission, where: s.form_id == ^form_id),
+      :count,
+      :id,
+      prefix: prefix
+    )
+  end
+
   def list_reviews(prefix, submission_id) do
     from(r in FormSubmissionReview,
       where: r.submission_id == ^submission_id

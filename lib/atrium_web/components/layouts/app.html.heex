@@ -61,7 +61,7 @@
     <%= if assigns[:nav] && @nav != [] do %>
       <div class="atrium-sidebar-section">
         <div class="atrium-sidebar-label">Sections</div>
-        <% dedicated = ~w(home news directory tools compliance helpdesk events learning) %>
+        <% dedicated = ~w(home news directory tools compliance helpdesk events learning feedback) %>
         <%= for entry <- @nav do %>
           <% key = to_string(entry.key)
              path = @conn.request_path
