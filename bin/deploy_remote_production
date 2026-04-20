@@ -1,0 +1,15 @@
+#!/bin/bash
+# Production deploy wrapper for theatrium.online.
+# Usage: bin/deploy_remote_production [deploy|rollback|setup|cleanup]
+
+export REMOTE_HOST="theatrium.online"
+export REMOTE_USER="${REMOTE_USER:-user}"
+export REMOTE_PORT="${REMOTE_PORT:-22}"
+
+export REPO_URL="${REPO_URL:-git@github.com:alldoq/atrium.git}"
+export BRANCH="${BRANCH:-main}"
+export DEPLOY_PATH="/home/user/atrium"
+export APP_PORT="${APP_PORT:-4100}"
+export KEEP_RELEASES="${KEEP_RELEASES:-5}"
+
+exec "$(dirname "$0")/deploy_remote" "$@"

@@ -72,7 +72,7 @@ if config_env() == :prod do
 
   config :atrium,
     :uploads_root,
-    System.get_env("ATRIUM_UPLOADS_ROOT") || "/var/www/atrium/shared/uploads"
+    System.get_env("ATRIUM_UPLOADS_ROOT") || "/home/user/atrium/shared/uploads"
 
   config :atrium, AtriumWeb.Endpoint,
     url: [host: host, port: 443, scheme: "https"],

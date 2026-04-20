@@ -1,0 +1,300 @@
+#!/bin/bash
+set -e
+
+# ==============================================================================
+# Atrium deployment script (runs on the target VPS).
+# Clones the repo, builds a prod release under asdf, rotates symlinks, runs
+# migrations (global + per-tenant), restarts the daemon, cleans up old releases.
+#
+# Isolation: app name, deploy path, and default port are atrium-specific so
+# this can coexist with other Phoenix apps on the same host.
+# ==============================================================================
+
+DEPLOY_USER="${DEPLOY_USER:-$(whoami)}"
+DEPLOY_PATH="${DEPLOY_PATH:-/home/user/atrium}"
+REPO_URL="${REPO_URL:-git@github.com:alldoq/atrium.git}"
+BRANCH="${BRANCH:-main}"
+KEEP_RELEASES="${KEEP_RELEASES:-5}"
+APP_NAME="${APP_NAME:-atrium}"
+MIX_ENV="${MIX_ENV:-prod}"
+PORT="${PORT:-4100}"
+
+SHARED_DIRS="uploads logs"
+SHARED_FILES=".env"
+
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m'
+
+log_info()  { echo -e "${GREEN}[INFO]${NC}  $1" >&2; }
+log_warn()  { echo -e "${YELLOW}[WARN]${NC}  $1" >&2; }
+log_error() { echo -e "${RED}[ERROR]${NC} $1" >&2; }
+
+command_exists() { command -v "$1" >/dev/null 2>&1; }
+
+# --- asdf -------------------------------------------------------------------
+
+install_asdf() {
+  if [ -d "$HOME/.asdf" ]; then
+    log_info "asdf already installed"
+    return 0
+  fi
+  log_info "Installing asdf..."
+  git clone https://github.com/asdf-vm/asdf.git ~/.asdf --branch v0.14.0
+  if [ -f "$HOME/.bashrc" ]; then
+    echo '. "$HOME/.asdf/asdf.sh"' >> ~/.bashrc
+  fi
+  if [ -f "$HOME/.zshrc" ]; then
+    echo '. "$HOME/.asdf/asdf.sh"' >> ~/.zshrc
+  fi
+  . "$HOME/.asdf/asdf.sh"
+}
+
+setup_asdf() {
+  if [ -d "$HOME/.asdf/shims" ]; then
+    export PATH="$HOME/.asdf/shims:$PATH"
+  fi
+  if [ -f "$HOME/.asdf/asdf.sh" ]; then
+    . "$HOME/.asdf/asdf.sh"
+  fi
+  if ! command_exists asdf; then
+    install_asdf
+  fi
+}
+
+install_asdf_plugin() {
+  local plugin=$1
+  if asdf plugin list 2>/dev/null | grep -q "^${plugin}$"; then
+    log_info "asdf plugin ${plugin} already installed"
+  else
+    log_info "Installing asdf plugin: ${plugin}"
+    asdf plugin add "${plugin}" >&2 2>&1 || true
+  fi
+}
+
+install_language_versions() {
+  local file=$1
+  if [ ! -f "$file" ]; then
+    log_warn ".tool-versions not found at ${file}"
+    return 0
+  fi
+  while IFS= read -r line; do
+    [[ -z "$line" || "$line" =~ ^# ]] && continue
+    local plugin version
+    plugin=$(echo "$line" | awk '{print $1}')
+    version=$(echo "$line" | awk '{print $2}')
+    install_asdf_plugin "$plugin"
+    if asdf list "$plugin" 2>/dev/null | grep -q "$version"; then
+      log_info "${plugin} ${version} already installed"
+    else
+      log_info "Installing ${plugin} ${version}..."
+      asdf install "$plugin" "$version" >&2 2>&1
+    fi
+  done < "$file"
+}
+
+# --- deploy -----------------------------------------------------------------
+
+init_directory_structure() {
+  log_info "Initializing directory structure at ${DEPLOY_PATH}"
+  mkdir -p "${DEPLOY_PATH}/releases"
+  mkdir -p "${DEPLOY_PATH}/shared"
+  for dir in $SHARED_DIRS; do
+    mkdir -p "${DEPLOY_PATH}/shared/${dir}"
+  done
+}
+
+create_release() {
+  local ts release_path
+  ts=$(date +%Y%m%d%H%M%S)
+  release_path="${DEPLOY_PATH}/releases/${ts}"
+
+  log_info "Creating new release: ${ts}"
+  log_info "Cloning ${REPO_URL} @ ${BRANCH}"
+  git clone --depth 1 --branch "${BRANCH}" "${REPO_URL}" "${release_path}" >&2 2>&1
+
+  install_language_versions "${release_path}/.tool-versions"
+
+  # Symlink shared dirs into release
+  for dir in $SHARED_DIRS; do
+    if [ -d "${release_path}/${dir}" ]; then rm -rf "${release_path}/${dir}"; fi
+    ln -sf "${DEPLOY_PATH}/shared/${dir}" "${release_path}/${dir}"
+  done
+
+  for file in $SHARED_FILES; do
+    if [ -f "${DEPLOY_PATH}/shared/${file}" ]; then
+      ln -sf "${DEPLOY_PATH}/shared/${file}" "${release_path}/${file}"
+    else
+      log_warn "shared/${file} not found"
+    fi
+  done
+
+  cd "${release_path}"
+
+  log_info "Installing mix/rebar"
+  mix local.hex --force >&2 2>&1
+  mix local.rebar --force >&2 2>&1
+
+  log_info "Fetching prod deps"
+  mix deps.get --only prod >&2 2>&1
+
+  if [ -f "assets/package.json" ]; then
+    log_info "Installing npm deps"
+    (cd assets && npm ci --production=false >&2 2>&1)
+  fi
+
+  log_info "Compiling assets"
+  MIX_ENV=prod mix assets.deploy >&2 2>&1
+
+  log_info "Building release"
+  MIX_ENV=prod mix release --overwrite >&2 2>&1
+
+  log_info "Running migrations (global + tenants)"
+  if ! _build/prod/rel/${APP_NAME}/bin/${APP_NAME} eval "Atrium.Release.migrate" >&2 2>&1; then
+    log_warn "Migrations reported an error (continuing)"
+  fi
+
+  echo "$ts" > "${release_path}/REVISION"
+  echo "$ts"
+}
+
+update_current_symlink() {
+  local release=$1
+  local current_path="${DEPLOY_PATH}/current"
+  if [ -L "$current_path" ]; then
+    log_info "Previous release: $(basename "$(readlink "$current_path")")"
+  fi
+  ln -sfn "${DEPLOY_PATH}/releases/${release}" "$current_path"
+}
+
+cleanup_old_releases() {
+  local keep=$1
+  local dir="${DEPLOY_PATH}/releases"
+  cd "$dir"
+  local count
+  count=$(ls -1 | wc -l)
+  if [ "$count" -gt "$keep" ]; then
+    local remove=$((count - keep))
+    log_info "Removing ${remove} old release(s)"
+    ls -1t | tail -n "$remove" | while read -r old; do
+      log_info "  rm -rf ${old}"
+      rm -rf "${dir}/${old}"
+    done
+  fi
+}
+
+restart_application() {
+  local current_path="${DEPLOY_PATH}/current"
+  local bin_path="${current_path}/_build/prod/rel/${APP_NAME}/bin/${APP_NAME}"
+  local env_file="${DEPLOY_PATH}/shared/.env"
+
+  cd "$current_path"
+
+  if [ ! -f "$bin_path" ]; then
+    log_error "Release binary not found at ${bin_path}"
+    exit 1
+  fi
+
+  if [ -f "$env_file" ]; then
+    set -a; source "$env_file"; set +a
+  else
+    log_warn ".env not found at ${env_file}"
+  fi
+
+  export PORT="${PORT:-4100}"
+  export MIX_ENV="${MIX_ENV:-prod}"
+  export PHX_SERVER="true"
+
+  log_info "Stopping any existing daemon"
+  "$bin_path" stop >&2 2>&1 || true
+  sleep 2
+
+  local port_pid
+  port_pid=$(lsof -ti :${PORT} 2>/dev/null || true)
+  if [ -n "$port_pid" ]; then
+    log_warn "Port ${PORT} still in use; killing pid ${port_pid}"
+    kill "$port_pid" 2>/dev/null || true
+    sleep 2
+  fi
+
+  log_info "Starting daemon on port ${PORT}"
+  "$bin_path" daemon >&2 2>&1
+  sleep 3
+
+  if "$bin_path" pid >/dev/null 2>&1; then
+    log_info "Running (pid $("$bin_path" pid 2>&1))"
+  else
+    log_error "Failed to start"
+    tail -50 "${current_path}/logs/phoenix.log" >&2 2>&1 || true
+    exit 1
+  fi
+}
+
+rollback() {
+  local current_path="${DEPLOY_PATH}/current"
+  if [ ! -L "$current_path" ]; then
+    log_error "No current release"
+    exit 1
+  fi
+
+  local current previous=""
+  current=$(basename "$(readlink "$current_path")")
+  local found=false
+
+  for r in $(ls -1t "${DEPLOY_PATH}/releases"); do
+    if [ "$found" = true ]; then previous="$r"; break; fi
+    if [ "$r" = "$current" ]; then found=true; fi
+  done
+
+  if [ -z "$previous" ]; then
+    log_error "No previous release to roll back to"
+    exit 1
+  fi
+
+  log_info "Rolling back from ${current} to ${previous}"
+  update_current_symlink "$previous"
+  restart_application
+}
+
+deploy() {
+  log_info "Deploying ${REPO_URL}#${BRANCH} to ${DEPLOY_PATH}"
+  setup_asdf
+  init_directory_structure
+  local release
+  release=$(create_release)
+  update_current_symlink "$release"
+  cleanup_old_releases "$KEEP_RELEASES"
+  restart_application
+  log_info "Deployed release ${release}"
+}
+
+show_help() {
+  cat <<EOF
+Atrium deployment
+
+Usage: $0 [deploy|rollback|setup|cleanup|help]
+
+Env vars:
+  DEPLOY_PATH    default /home/user/atrium
+  REPO_URL       git URL to clone
+  BRANCH         default main
+  KEEP_RELEASES  default 5
+  PORT           default 4100
+  APP_NAME       default atrium
+EOF
+}
+
+main() {
+  local cmd=${1:-deploy}
+  case "$cmd" in
+    deploy)    deploy ;;
+    rollback)  rollback ;;
+    setup)     setup_asdf; [ -f .tool-versions ] && install_language_versions .tool-versions ;;
+    cleanup)   cleanup_old_releases "$KEEP_RELEASES" ;;
+    help|-h|--help) show_help ;;
+    *) log_error "unknown command: $cmd"; show_help; exit 1 ;;
+  esac
+}
+
+main "$@"
