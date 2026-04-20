@@ -12,8 +12,10 @@ defmodule AtriumWeb.TenantAdmin.UserController do
   end
 
   def new(conn, _params) do
+    prefix = conn.assigns.tenant_prefix
     sections = enabled_sections(conn)
-    render(conn, :new, sections: sections)
+    all_groups = Authorization.list_groups(prefix)
+    render(conn, :new, sections: sections, all_groups: all_groups)
   end
 
   def create(conn, %{"user" => params}) do
@@ -29,6 +31,8 @@ defmodule AtriumWeb.TenantAdmin.UserController do
         desired = decode_section_params(params["sections"] || %{})
         sync_permissions(prefix, user, desired, actor)
 
+        sync_groups(prefix, user, params["groups"] || %{}, actor)
+
         flash = deliver_invitation(conn, user, token)
 
         conn
@@ -37,7 +41,8 @@ defmodule AtriumWeb.TenantAdmin.UserController do
 
       {:error, changeset} ->
         sections = enabled_sections(conn)
-        render(conn, :new, sections: sections, changeset: changeset)
+        all_groups = Authorization.list_groups(prefix)
+        render(conn, :new, sections: sections, all_groups: all_groups, changeset: changeset)
     end
   end
 
@@ -220,6 +225,29 @@ defmodule AtriumWeb.TenantAdmin.UserController do
   # ---------------------------------------------------------------------------
   # Private helpers
   # ---------------------------------------------------------------------------
+
+  defp sync_groups(prefix, user, group_params, actor) do
+    selected_ids =
+      group_params
+      |> Enum.filter(fn {_gid, v} -> v == "true" end)
+      |> Enum.map(fn {gid, _} -> gid end)
+
+    if selected_ids != [] do
+      by_id = Map.new(Authorization.list_groups(prefix), &{&1.id, &1})
+
+      for gid <- selected_ids, group = Map.get(by_id, gid) do
+        Authorization.add_member(prefix, user, group)
+      end
+
+      Audit.log(prefix, "user.groups_updated", %{
+        actor: {:user, actor.id},
+        resource: {"User", user.id},
+        changes: %{"added" => selected_ids, "removed" => []}
+      })
+    end
+
+    :ok
+  end
 
   defp deliver_invitation(conn, user, token) do
     url = url(conn, ~p"/invitations/#{token}")

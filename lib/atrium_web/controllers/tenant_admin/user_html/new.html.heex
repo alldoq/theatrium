@@ -29,10 +29,42 @@
       </div>
     </div>
 
-    <div class="atrium-card" style="margin-bottom:24px">
+    <div class="atrium-card" style="margin-bottom:16px">
       <div class="atrium-card-header">
-        <div class="atrium-card-title">Section access</div>
-        <div style="font-size:.8125rem;color:var(--text-tertiary)">Optional — can be changed later</div>
+        <div class="atrium-card-title">Groups</div>
+        <div style="font-size:.8125rem;color:var(--text-tertiary)">Preferred — groups grant section permissions</div>
+      </div>
+      <div class="atrium-card-body">
+        <%= if @all_groups == [] do %>
+          <div style="padding:8px;color:var(--text-tertiary);font-size:.875rem">No groups exist yet.</div>
+        <% else %>
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:6px">
+            <%= for g <- @all_groups do %>
+              <label style="display:flex;align-items:center;gap:8px;font-size:.875rem;padding:6px 8px;border:1px solid var(--border-subtle);border-radius:var(--radius)">
+                <input type="checkbox"
+                       name={"groups[#{g.id}]"}
+                       value="true"
+                       style="accent-color:var(--blue-500);width:15px;height:15px" />
+                <span><%= g.name %></span>
+                <%= if g.kind == "system" do %>
+                  <span class="atrium-badge" style="background:var(--blue-50);color:var(--blue-600);font-size:.625rem;margin-left:auto">system</span>
+                <% end %>
+              </label>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+    </div>
+
+    <details style="margin-bottom:24px">
+      <summary style="cursor:pointer;font-size:.8125rem;color:var(--text-secondary);padding:8px 0">
+        Direct section permissions (advanced)
+      </summary>
+
+    <div class="atrium-card" style="margin-bottom:0;margin-top:8px">
+      <div class="atrium-card-header">
+        <div class="atrium-card-title">User-scoped section permissions</div>
+        <div style="font-size:.8125rem;color:var(--text-tertiary)">Prefer groups. Grants here apply only to this user.</div>
       </div>
       <div class="atrium-card-body">
         <div style="display:grid;grid-template-columns:1fr auto auto auto;gap:0;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden">
@@ -51,6 +83,7 @@
         </div>
       </div>
     </div>
+    </details>
 
     <div style="display:flex;gap:8px">
       <button type="submit" class="atrium-btn atrium-btn-primary">Send invitation</button>
