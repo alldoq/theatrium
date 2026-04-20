@@ -8,30 +8,70 @@
     <h1 class="atrium-page-title">New document</h1>
   </div>
 
+  <div style="display:flex;gap:2px;border-bottom:1px solid var(--border);margin-bottom:16px">
+    <a href={~p"/sections/#{@section_key}/documents/new?kind=rich_text"}
+       style={"padding:10px 16px;font-size:.875rem;text-decoration:none;border-bottom:2px solid #{if @kind == "rich_text", do: "var(--blue-600,#2563eb)", else: "transparent"};color:#{if @kind == "rich_text", do: "var(--text-primary)", else: "var(--text-tertiary)"};font-weight:#{if @kind == "rich_text", do: "600", else: "400"}"}>
+      Write document
+    </a>
+    <a href={~p"/sections/#{@section_key}/documents/new?kind=file"}
+       style={"padding:10px 16px;font-size:.875rem;text-decoration:none;border-bottom:2px solid #{if @kind == "file", do: "var(--blue-600,#2563eb)", else: "transparent"};color:#{if @kind == "file", do: "var(--text-primary)", else: "var(--text-tertiary)"};font-weight:#{if @kind == "file", do: "600", else: "400"}"}>
+      Upload file
+    </a>
+  </div>
+
   <div class="atrium-card">
     <div class="atrium-card-body">
-      <.form :let={f} for={@changeset} action={~p"/sections/#{@section_key}/documents"} method="post">
-        <div style="margin-bottom:16px">
-          <label class="atrium-label">Title</label>
-          <input type="text" name="document[title]" value={Phoenix.HTML.Form.input_value(f, :title) || ""} class="atrium-input" />
-          <%= if msg = f[:title].errors |> Enum.map(fn {msg, _} -> msg end) |> List.first() do %>
-            <p style="color:#dc2626;font-size:.8125rem;margin-top:4px"><%= msg %></p>
-          <% end %>
-        </div>
+      <%= if @kind == "file" do %>
+        <.form :let={f} for={@changeset} action={~p"/sections/#{@section_key}/documents"}
+               method="post" multipart>
+          <input type="hidden" name="document[kind]" value="file" />
 
-        <div style="margin-bottom:20px">
-          <label class="atrium-label">Body</label>
-          <input type="hidden" id="document_body_html" name="document[body_html]" value={Phoenix.HTML.Form.input_value(f, :body_html) || ""} />
-          <div data-tiptap-editor data-input-id="document_body_html" data-section-key={@section_key}
-               class="prose max-w-none"
-               style="border:1px solid var(--border);border-radius:var(--radius);min-height:200px;padding:12px;background:var(--surface)"></div>
-        </div>
+          <div style="margin-bottom:16px">
+            <label class="atrium-label">Title</label>
+            <input type="text" name="document[title]" value={Phoenix.HTML.Form.input_value(f, :title) || ""} class="atrium-input" required />
+          </div>
 
-        <div style="display:flex;gap:8px">
-          <button type="submit" class="atrium-btn atrium-btn-primary">Save draft</button>
-          <a href={~p"/sections/#{@section_key}/documents"} class="atrium-btn atrium-btn-ghost">Cancel</a>
-        </div>
-      </.form>
+          <div style="margin-bottom:20px">
+            <label class="atrium-label">File</label>
+            <input type="file" name="document[file]" required
+                   accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.odt,.txt,.png,.jpg,.jpeg,.gif,.webp"
+                   style="display:block;width:100%;font-size:.875rem;padding:8px 0" />
+            <p style="margin-top:6px;font-size:.75rem;color:var(--text-tertiary)">
+              Max 100 MB. PDF, Word, Excel, PowerPoint, OpenDocument, plain text, or images.
+            </p>
+          </div>
+
+          <div style="display:flex;gap:8px">
+            <button type="submit" class="atrium-btn atrium-btn-primary">Upload file</button>
+            <a href={~p"/sections/#{@section_key}/documents"} class="atrium-btn atrium-btn-ghost">Cancel</a>
+          </div>
+        </.form>
+      <% else %>
+        <.form :let={f} for={@changeset} action={~p"/sections/#{@section_key}/documents"} method="post">
+          <input type="hidden" name="document[kind]" value="rich_text" />
+
+          <div style="margin-bottom:16px">
+            <label class="atrium-label">Title</label>
+            <input type="text" name="document[title]" value={Phoenix.HTML.Form.input_value(f, :title) || ""} class="atrium-input" />
+            <%= if msg = f[:title].errors |> Enum.map(fn {msg, _} -> msg end) |> List.first() do %>
+              <p style="color:#dc2626;font-size:.8125rem;margin-top:4px"><%= msg %></p>
+            <% end %>
+          </div>
+
+          <div style="margin-bottom:20px">
+            <label class="atrium-label">Body</label>
+            <input type="hidden" id="document_body_html" name="document[body_html]" value={Phoenix.HTML.Form.input_value(f, :body_html) || ""} />
+            <div data-tiptap-editor data-input-id="document_body_html" data-section-key={@section_key}
+                 class="prose max-w-none"
+                 style="border:1px solid var(--border);border-radius:var(--radius);min-height:200px;padding:12px;background:var(--surface)"></div>
+          </div>
+
+          <div style="display:flex;gap:8px">
+            <button type="submit" class="atrium-btn atrium-btn-primary">Save draft</button>
+            <a href={~p"/sections/#{@section_key}/documents"} class="atrium-btn atrium-btn-ghost">Cancel</a>
+          </div>
+        </.form>
+      <% end %>
     </div>
   </div>
 </div>

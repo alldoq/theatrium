@@ -115,6 +115,7 @@ defmodule AtriumWeb.DocumentController do
       comments: comments,
       can_edit: can_edit,
       section_key: section_key,
+      tenant_prefix: prefix,
       current_user: user
     )
   end

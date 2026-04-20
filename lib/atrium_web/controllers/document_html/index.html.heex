@@ -36,6 +36,9 @@
                   </svg>
                 </div>
                 <a href={~p"/sections/#{@section_key}/documents/#{doc.id}"} style="color:var(--blue-600)"><%= doc.title %></a>
+                <%= if doc.kind == "file" do %>
+                  <span style="margin-left:6px;font-size:.6875rem;padding:1px 6px;border-radius:3px;background:var(--blue-50,#eff6ff);color:var(--blue-600,#2563eb);font-weight:600;text-transform:uppercase">file</span>
+                <% end %>
               </div>
             </td>
             <td>

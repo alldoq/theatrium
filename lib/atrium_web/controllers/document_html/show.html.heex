@@ -36,6 +36,11 @@
   .doc-show-sheet-body code { background: #f1f5f9; border-radius: 3px; padding: .1em .35em; font-family: 'IBM Plex Mono', monospace; font-size: .875rem; }
   .doc-show-sheet-body strong { font-weight: 700; }
   .doc-show-sheet-body em { font-style: italic; }
+  .doc-show-sheet-body img { max-width: 100%; height: auto; border-radius: 4px; }
+  .doc-show-sheet-body [data-image-wrapper] { display: block; margin: 4px 0; line-height: 0; }
+  .doc-show-sheet-body [data-image-wrapper][style*="float: right"] { float: right; margin-left: 1rem; margin-bottom: .5rem; }
+  .doc-show-sheet-body [data-image-wrapper][style*="text-align: center"] { text-align: center; }
+  .doc-show-sheet-body [data-image-wrapper]::after { content: ""; display: table; clear: both; }
   .doc-meta-panel { width: 794px; max-width: 100%; margin: 20px auto 0; }
 </style>
 
@@ -86,10 +91,36 @@
         <h1 style="font-size:1.875rem;font-weight:700;color:#0f172a;line-height:1.25;margin:0"><%= @document.title %></h1>
       </div>
       <div class="doc-show-sheet-body">
-        <%= if @document.body_html && @document.body_html != "" do %>
-          <%= Phoenix.HTML.raw(@document.body_html) %>
+        <%= if @document.kind == "file" do %>
+          <% df = Atrium.Documents.get_current_file(@tenant_prefix, @document) %>
+          <%= if df do %>
+            <div style="display:flex;align-items:center;gap:16px;padding:16px;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface)">
+              <div class="atrium-doc-file-icon doc" style="width:40px;height:40px">
+                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path d="M4 2h6l4 4v8a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z" stroke-linejoin="round"/>
+                  <path d="M10 2v4h4" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </div>
+              <div style="flex:1;min-width:0">
+                <div style="font-weight:600;color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap"><%= df.file_name %></div>
+                <div style="font-size:.8125rem;color:var(--text-tertiary);margin-top:2px">
+                  <%= Atrium.Documents.Format.bytes(df.byte_size) %> · <%= df.mime_type %> · v<%= @document.current_version %>
+                </div>
+              </div>
+              <a href={~p"/sections/#{@section_key}/documents/#{@document.id}/download"}
+                 class="atrium-btn atrium-btn-primary" style="height:32px;font-size:.8125rem">
+                Download
+              </a>
+            </div>
+          <% else %>
+            <p style="color:#94a3b8;font-style:italic">File missing.</p>
+          <% end %>
         <% else %>
-          <p style="color:#94a3b8;font-style:italic">No content yet.</p>
+          <%= if @document.body_html && @document.body_html != "" do %>
+            <%= Phoenix.HTML.raw(@document.body_html) %>
+          <% else %>
+            <p style="color:#94a3b8;font-style:italic">No content yet.</p>
+          <% end %>
         <% end %>
       </div>
     </div>
