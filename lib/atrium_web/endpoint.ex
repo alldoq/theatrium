@@ -26,10 +26,7 @@ defmodule AtriumWeb.Endpoint do
     gzip: not code_reloading?,
     only: AtriumWeb.static_paths()
 
-  plug Plug.Static,
-    at: "/uploads",
-    from: "priv/uploads",
-    gzip: false
+  plug AtriumWeb.Plugs.StaticUploads
 
   # Code reloading can be explicitly enabled under the
   # :code_reloader configuration of your endpoint.
@@ -50,6 +47,7 @@ defmodule AtriumWeb.Endpoint do
   plug Plug.Parsers,
     parsers: [:urlencoded, :multipart, :json],
     pass: ["*/*"],
+    length: 100 * 1024 * 1024,
     json_decoder: Phoenix.json_library()
 
   plug Plug.MethodOverride
