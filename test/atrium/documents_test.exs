@@ -39,6 +39,29 @@ defmodule Atrium.Documents.DocumentSchemaTest do
       cs = Document.status_changeset(doc, "nonsense")
       assert errors_on(cs)[:status]
     end
+
+    test "defaults kind to rich_text" do
+      attrs = %{title: "T", section_key: "hr", author_id: Ecto.UUID.generate()}
+      cs = Document.changeset(%Document{}, attrs)
+      assert cs.valid?
+      assert Ecto.Changeset.get_field(cs, :kind) == "rich_text"
+    end
+
+    test "kind must be rich_text or file" do
+      attrs = %{title: "T", section_key: "hr", author_id: Ecto.UUID.generate(), kind: "bogus"}
+      cs = Document.changeset(%Document{}, attrs)
+      refute cs.valid?
+      assert errors_on(cs)[:kind]
+    end
+  end
+
+  describe "Document.file_changeset/2" do
+    test "forces kind to file and does not require body_html" do
+      attrs = %{title: "Policy.pdf", section_key: "hr", author_id: Ecto.UUID.generate()}
+      cs = Document.file_changeset(%Document{}, attrs)
+      assert cs.valid?
+      assert Ecto.Changeset.get_field(cs, :kind) == "file"
+    end
   end
 end
 
