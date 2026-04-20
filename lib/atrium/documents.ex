@@ -4,6 +4,9 @@ defmodule Atrium.Documents do
   alias Atrium.Audit
   alias Atrium.Documents.{Document, DocumentVersion}
   alias Atrium.Documents.Comment
+  alias Atrium.Documents.DocumentFile
+  alias Atrium.Documents.Encryption.Processor
+  alias Atrium.Documents.Storage
   alias Atrium.Notifications.Dispatcher
 
   # ---------------------------------------------------------------------------
@@ -233,5 +236,153 @@ defmodule Atrium.Documents do
           {:error, _} = err -> err
         end
     end
+  end
+
+  # ---------------------------------------------------------------------------
+  # File documents
+  # ---------------------------------------------------------------------------
+
+  def create_file_document(prefix, actor_user, section_key, attrs, %Plug.Upload{} = upload) do
+    with :ok <- validate_upload(upload) do
+      attrs =
+        attrs
+        |> Map.new(fn {k, v} -> {to_string(k), v} end)
+        |> Map.put("section_key", section_key)
+        |> Map.put("author_id", actor_user.id)
+
+      Repo.transaction(fn ->
+        with {:ok, doc} <- insert_file_document(prefix, attrs),
+             {:ok, dest_abs, rel_path} <- prepare_dest_paths(prefix, doc.id, 1),
+             {:ok, meta} <- Processor.encrypt_upload(upload, dest_abs),
+             {:ok, df} <- insert_document_file(prefix, doc, 1, upload, meta, rel_path, actor_user),
+             {:ok, _} <- Audit.log(prefix, "document.file_uploaded", %{
+               actor: {:user, actor_user.id},
+               resource: {"Document", doc.id},
+               meta: %{version: df.version, file_name: df.file_name}
+             }) do
+          doc
+        else
+          {:error, reason} -> Repo.rollback(reason)
+        end
+      end)
+    end
+  end
+
+  def replace_file_document(prefix, %Document{kind: "file"} = doc, actor_user, %Plug.Upload{} = upload) do
+    with :ok <- validate_upload(upload) do
+      new_version = doc.current_version + 1
+
+      Repo.transaction(fn ->
+        with {:ok, updated_doc} <- bump_version(prefix, doc),
+             {:ok, dest_abs, rel_path} <- prepare_dest_paths(prefix, doc.id, new_version),
+             {:ok, meta} <- Processor.encrypt_upload(upload, dest_abs),
+             {:ok, df} <-
+               insert_document_file(prefix, updated_doc, new_version, upload, meta, rel_path, actor_user),
+             {:ok, _} <- Audit.log(prefix, "document.file_replaced", %{
+               actor: {:user, actor_user.id},
+               resource: {"Document", doc.id},
+               meta: %{version: df.version, file_name: df.file_name}
+             }) do
+          updated_doc
+        else
+          {:error, reason} -> Repo.rollback(reason)
+        end
+      end)
+    end
+  end
+
+  def replace_file_document(_prefix, _doc, _user, _upload), do: {:error, :not_file_document}
+
+  def get_current_file(prefix, %Document{} = doc) do
+    Repo.one(
+      from(f in DocumentFile,
+        where: f.document_id == ^doc.id and f.version == ^doc.current_version
+      ),
+      prefix: prefix
+    )
+  end
+
+  def decrypt_for_download(prefix, %Document{kind: "file"} = doc) do
+    case get_current_file(prefix, doc) do
+      nil ->
+        {:error, :not_found}
+
+      %DocumentFile{} = df ->
+        abs = Storage.absolute_from_relative(df.storage_path)
+
+        case Processor.decrypt_to_temp(%{
+               storage_path_abs: abs,
+               wrapped_key: df.wrapped_key,
+               iv: df.iv,
+               auth_tag: df.auth_tag
+             }) do
+          {:ok, tmp} -> {:ok, tmp, df.file_name, df.mime_type}
+          {:error, reason} -> {:error, reason}
+        end
+    end
+  end
+
+  def decrypt_for_download(_prefix, _doc), do: {:error, :not_file_document}
+
+  # --- private helpers ---
+
+  defp validate_upload(%Plug.Upload{path: path, content_type: ct}) do
+    max = Application.fetch_env!(:atrium, :document_file_max_bytes)
+    allowed = Application.fetch_env!(:atrium, :document_file_allowed_mime)
+
+    with {:ok, %{size: size}} <- File.stat(path),
+         :ok <- check_size(size, max),
+         :ok <- check_mime(ct, allowed) do
+      :ok
+    else
+      {:error, _} = e -> e
+    end
+  end
+
+  defp check_size(size, max) when size <= max, do: :ok
+  defp check_size(_, _), do: {:error, :too_large}
+
+  defp check_mime(ct, allowed) when is_binary(ct) do
+    if ct in allowed, do: :ok, else: {:error, :invalid_mime}
+  end
+
+  defp check_mime(_, _), do: {:error, :invalid_mime}
+
+  defp insert_file_document(prefix, attrs) do
+    %Document{}
+    |> Document.file_changeset(attrs)
+    |> Repo.insert(prefix: prefix)
+  end
+
+  defp prepare_dest_paths(prefix, doc_id, version) do
+    dir = Storage.tenant_files_dir(prefix, doc_id)
+    File.mkdir_p!(dir)
+    abs = Storage.version_file_path(prefix, doc_id, version)
+    rel = Storage.relative_storage_path(prefix, doc_id, version)
+    {:ok, abs, rel}
+  end
+
+  defp insert_document_file(prefix, doc, version, upload, meta, rel_path, actor_user) do
+    %DocumentFile{}
+    |> DocumentFile.changeset(%{
+      document_id: doc.id,
+      version: version,
+      file_name: upload.filename,
+      mime_type: upload.content_type,
+      byte_size: meta.byte_size,
+      storage_path: rel_path,
+      wrapped_key: meta.wrapped_key,
+      iv: meta.iv,
+      auth_tag: meta.auth_tag,
+      checksum_sha256: meta.sha256,
+      uploaded_by_id: actor_user.id
+    })
+    |> Repo.insert(prefix: prefix)
+  end
+
+  defp bump_version(prefix, doc) do
+    doc
+    |> Document.version_bump_changeset()
+    |> Repo.update(prefix: prefix)
   end
 end
