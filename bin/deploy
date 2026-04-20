@@ -151,6 +151,12 @@ create_release() {
   MIX_ENV=prod mix release --overwrite >&2 2>&1
 
   log_info "Running migrations (global + tenants)"
+  local env_file="${DEPLOY_PATH}/shared/.env"
+  if [ -f "$env_file" ]; then
+    set -a; source "$env_file"; set +a
+  else
+    log_warn ".env not found at ${env_file} — migrations will likely fail"
+  fi
   if ! _build/prod/rel/${APP_NAME}/bin/${APP_NAME} eval "Atrium.Release.migrate" >&2 2>&1; then
     log_warn "Migrations reported an error (continuing)"
   fi
