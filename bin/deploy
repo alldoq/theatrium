@@ -144,8 +144,14 @@ create_release() {
     (cd assets && npm ci --production=false >&2 2>&1)
   fi
 
-  log_info "Compiling assets"
-  MIX_ENV=prod mix assets.deploy >&2 2>&1
+  log_info "Compiling assets (workaround: tailwind/daisyui plugin incompat)"
+  # TODO: restore `MIX_ENV=prod mix assets.deploy` once daisyui vendor file
+  # accepts Tailwind v4 plugin options again. For now, ship atrium.css directly
+  # and build JS with vite.
+  mkdir -p priv/static/assets/css priv/static/assets/js
+  cp assets/css/atrium.css priv/static/assets/css/app.css
+  (cd assets && npm run build >&2 2>&1)
+  MIX_ENV=prod mix phx.digest >&2 2>&1 || log_warn "phx.digest failed (continuing)"
 
   log_info "Building release"
   MIX_ENV=prod mix release --overwrite >&2 2>&1
