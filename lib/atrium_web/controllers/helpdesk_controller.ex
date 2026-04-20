@@ -13,13 +13,20 @@ defmodule AtriumWeb.HelpdeskController do
     ticket_forms = Forms.list_forms(prefix, "helpdesk") |> Enum.filter(&(&1.status == "published"))
     my_submissions = Forms.list_submissions_for_user(prefix, user.id, "helpdesk")
 
+    can_edit = Atrium.Authorization.Policy.can?(prefix, user, :edit, {:section, "helpdesk"})
+
     pending =
-      if Atrium.Authorization.Policy.can?(prefix, user, :edit, {:section, "helpdesk"}) do
+      if can_edit do
         Forms.list_pending_submissions(prefix, "helpdesk")
       else
         []
       end
 
-    render(conn, :index, ticket_forms: ticket_forms, my_submissions: my_submissions, pending: pending)
+    render(conn, :index,
+      ticket_forms: ticket_forms,
+      my_submissions: my_submissions,
+      pending: pending,
+      can_edit: can_edit
+    )
   end
 end

@@ -1,8 +1,39 @@
 <div class="atrium-anim">
-  <div style="margin-bottom:28px">
-    <div class="atrium-page-eyebrow">IT Support</div>
-    <h1 class="atrium-page-title">Help Desk</h1>
+  <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:28px;gap:16px">
+    <div>
+      <div class="atrium-page-eyebrow">IT Support</div>
+      <h1 class="atrium-page-title">Help Desk</h1>
+    </div>
+    <%= if @can_edit do %>
+      <a href={~p"/sections/helpdesk/forms"} class="atrium-btn atrium-btn-primary">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round">
+          <rect x="2.5" y="2.5" width="11" height="11" rx="1.5"/>
+          <path d="M5 6h6M5 8.5h6M5 11h4"/>
+        </svg>
+        Manage request forms
+      </a>
+    <% end %>
   </div>
+
+  <%= if @ticket_forms == [] and @can_edit do %>
+    <div class="atrium-card" style="margin-bottom:20px">
+      <div class="atrium-card-body" style="padding:20px;display:flex;flex-direction:column;gap:12px">
+        <div style="font-weight:500">No request forms yet</div>
+        <div style="font-size:.875rem;color:var(--text-secondary)">
+          Create a ticket-intake form so staff can submit IT requests. You can add fields,
+          publish it, and review submissions here once it's live.
+        </div>
+        <div>
+          <a href={~p"/sections/helpdesk/forms/new"} class="atrium-btn atrium-btn-primary">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round">
+              <path d="M8 3v10M3 8h10"/>
+            </svg>
+            Create first form
+          </a>
+        </div>
+      </div>
+    </div>
+  <% end %>
 
   <%= if @ticket_forms != [] do %>
     <div class="atrium-card" style="margin-bottom:20px">
