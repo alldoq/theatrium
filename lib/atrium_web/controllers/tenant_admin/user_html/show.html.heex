@@ -43,13 +43,56 @@
     </div>
   </div>
 
-  <form action={~p"/admin/users/#{@user.id}/permissions"} method="post">
+  <form action={~p"/admin/users/#{@user.id}/groups"} method="post">
     <input type="hidden" name="_csrf_token" value={Phoenix.Controller.get_csrf_token()} />
     <div class="atrium-card" style="margin-bottom:16px">
       <div class="atrium-card-header">
-        <div class="atrium-card-title">Section permissions</div>
+        <div class="atrium-card-title">Groups</div>
       </div>
       <div class="atrium-card-body">
+        <div style="font-size:.8125rem;color:var(--text-secondary);margin-bottom:12px">
+          Groups grant capabilities on sections. Manage what each group can do at
+          <a href={~p"/admin/sections"} style="color:var(--blue-600)">Section permissions</a>.
+        </div>
+        <%= if @all_groups == [] do %>
+          <div style="padding:12px;color:var(--text-tertiary);font-size:.875rem">No groups exist yet.</div>
+        <% else %>
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:6px">
+            <%= for g <- @all_groups do %>
+              <label style="display:flex;align-items:center;gap:8px;font-size:.875rem;padding:6px 8px;border:1px solid var(--border-subtle);border-radius:var(--radius)">
+                <input type="checkbox"
+                       name={"groups[#{g.id}]"}
+                       value="true"
+                       checked={MapSet.member?(@member_of, g.id)}
+                       style="accent-color:var(--blue-500);width:15px;height:15px" />
+                <span><%= g.name %></span>
+                <%= if g.kind == "system" do %>
+                  <span class="atrium-badge" style="background:var(--blue-50);color:var(--blue-600);font-size:.625rem;margin-left:auto">system</span>
+                <% end %>
+              </label>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+    </div>
+    <button type="submit" class="atrium-btn atrium-btn-primary" style="margin-bottom:24px">Save groups</button>
+  </form>
+
+  <details style="margin-bottom:16px">
+    <summary style="cursor:pointer;font-size:.8125rem;color:var(--text-secondary);padding:8px 0">
+      Direct permissions (advanced)
+    </summary>
+
+  <form action={~p"/admin/users/#{@user.id}/permissions"} method="post">
+    <input type="hidden" name="_csrf_token" value={Phoenix.Controller.get_csrf_token()} />
+    <div class="atrium-card" style="margin-bottom:16px;margin-top:8px">
+      <div class="atrium-card-header">
+        <div class="atrium-card-title">User-scoped section permissions</div>
+      </div>
+      <div class="atrium-card-body">
+        <div style="font-size:.8125rem;color:var(--text-secondary);margin-bottom:12px">
+          Prefer groups. Grants here apply only to this user.
+        </div>
         <div style="display:grid;grid-template-columns:1fr auto auto auto;gap:0;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden">
           <div style="padding:8px 12px;font-family:'IBM Plex Mono',monospace;font-size:.625rem;letter-spacing:.08em;text-transform:uppercase;color:var(--text-tertiary);border-bottom:1px solid var(--border)">Section</div>
           <%= for cap <- ["view", "edit", "approve"] do %>
@@ -75,4 +118,5 @@
     </div>
     <button type="submit" class="atrium-btn atrium-btn-primary">Save permissions</button>
   </form>
+  </details>
 </div>

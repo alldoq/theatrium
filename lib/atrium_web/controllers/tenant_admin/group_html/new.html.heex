@@ -1,0 +1,43 @@
+<div class="atrium-anim" style="max-width:540px">
+  <div style="margin-bottom:20px">
+    <a href={~p"/admin/groups"} style="font-size:.8125rem;color:var(--text-tertiary)">← Groups</a>
+  </div>
+
+  <div style="margin-bottom:24px">
+    <div class="atrium-page-eyebrow">Admin</div>
+    <h1 class="atrium-page-title">New group</h1>
+  </div>
+
+  <form action={~p"/admin/groups"} method="post" class="atrium-card" style="padding:20px;display:flex;flex-direction:column;gap:16px">
+    <input type="hidden" name="_csrf_token" value={Phoenix.Controller.get_csrf_token()} />
+
+    <div>
+      <label class="atrium-label">Name</label>
+      <input type="text" name="group[name]" value={Phoenix.HTML.Form.normalize_value("text", @changeset.changes[:name])} class="atrium-input" required />
+    </div>
+
+    <div>
+      <label class="atrium-label">Slug</label>
+      <input type="text" name="group[slug]" value={Phoenix.HTML.Form.normalize_value("text", @changeset.changes[:slug])} class="atrium-input" pattern="[a-z0-9_]+" required />
+      <div style="font-size:.75rem;color:var(--text-tertiary);margin-top:4px">Lowercase letters, digits, underscores.</div>
+    </div>
+
+    <div>
+      <label class="atrium-label">Description</label>
+      <textarea name="group[description]" class="atrium-input" rows="3"><%= Phoenix.HTML.Form.normalize_value("textarea", @changeset.changes[:description]) %></textarea>
+    </div>
+
+    <%= if @changeset.errors != [] do %>
+      <div style="color:var(--color-error);font-size:.8125rem">
+        <%= for {field, {msg, _}} <- @changeset.errors do %>
+          <div><%= field %>: <%= msg %></div>
+        <% end %>
+      </div>
+    <% end %>
+
+    <div style="display:flex;gap:8px">
+      <button type="submit" class="atrium-btn atrium-btn-primary">Create group</button>
+      <a href={~p"/admin/groups"} class="atrium-btn atrium-btn-ghost">Cancel</a>
+    </div>
+  </form>
+</div>

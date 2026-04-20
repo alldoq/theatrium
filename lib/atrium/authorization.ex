@@ -12,26 +12,65 @@ defmodule Atrium.Authorization do
 
   # Groups -----------------------------------------------------------------
 
-  def create_group(prefix, attrs) do
+  def create_group(prefix, attrs, actor_id \\ nil) do
     with {:ok, group} <- %Group{} |> Group.create_changeset(attrs) |> Repo.insert(prefix: prefix) do
-      {:ok, _} = Audit.log(prefix, "group.created", %{actor: :system, resource: {"Group", group.id}})
+      {:ok, _} = Audit.log(prefix, "group.created", %{actor: actor(actor_id), resource: {"Group", group.id}})
       {:ok, group}
     end
   end
 
-  def update_group(prefix, %Group{} = group, attrs) do
+  def update_group(prefix, %Group{} = group, attrs, actor_id \\ nil) do
     with {:ok, updated} <- group |> Group.update_changeset(attrs) |> Repo.update(prefix: prefix) do
-      {:ok, _} = Audit.log(prefix, "group.updated", %{actor: :system, resource: {"Group", updated.id}})
+      {:ok, _} = Audit.log(prefix, "group.updated", %{actor: actor(actor_id), resource: {"Group", updated.id}})
       {:ok, updated}
     end
   end
 
+  defp actor(nil), do: :system
+  defp actor(user_id), do: {:user, user_id}
+
   def delete_group(_prefix, %Group{kind: "system"}), do: {:error, :cannot_delete_system_group}
-  def delete_group(prefix, %Group{} = group) do
-    with {:ok, deleted} <- Repo.delete(group, prefix: prefix) do
-      {:ok, _} = Audit.log(prefix, "group.deleted", %{actor: :system, resource: {"Group", deleted.id}})
-      {:ok, deleted}
+  def delete_group(prefix, %Group{id: gid} = group) do
+    references =
+      count_acls_for_principal(prefix, "group", gid) +
+        count_subsection_acls_for_principal(prefix, "group", gid)
+
+    cond do
+      references > 0 ->
+        {:error, {:cannot_delete_referenced_group, references}}
+
+      true ->
+        Repo.transaction(fn ->
+          Repo.delete_all(from(m in Membership, where: m.group_id == ^gid), prefix: prefix)
+
+          case Repo.delete(group, prefix: prefix) do
+            {:ok, deleted} ->
+              {:ok, _} = Audit.log(prefix, "group.deleted", %{actor: :system, resource: {"Group", deleted.id}})
+              deleted
+
+            {:error, cs} ->
+              Repo.rollback(cs)
+          end
+        end)
     end
+  end
+
+  defp count_acls_for_principal(prefix, ptype, pid) do
+    Repo.aggregate(
+      from(a in SectionAcl, where: a.principal_type == ^ptype and a.principal_id == ^pid),
+      :count,
+      :id,
+      prefix: prefix
+    )
+  end
+
+  defp count_subsection_acls_for_principal(prefix, ptype, pid) do
+    Repo.aggregate(
+      from(a in SubsectionAcl, where: a.principal_type == ^ptype and a.principal_id == ^pid),
+      :count,
+      :id,
+      prefix: prefix
+    )
   end
 
   def get_group!(prefix, id), do: Repo.get!(Group, id, prefix: prefix)

@@ -191,6 +191,23 @@ defmodule AtriumWeb.Router do
         get  "/sections/:section_key/subsections/new",        SubsectionController, :new
         post "/sections/:section_key/subsections",            SubsectionController, :create
         post "/sections/:section_key/subsections/:id/delete", SubsectionController, :delete
+
+        get  "/groups",                     GroupController, :index
+        get  "/groups/new",                 GroupController, :new
+        post "/groups",                     GroupController, :create
+        get  "/groups/:id",                 GroupController, :show
+        get  "/groups/:id/edit",            GroupController, :edit
+        put  "/groups/:id",                 GroupController, :update
+        post "/groups/:id/delete",          GroupController, :delete
+        post "/groups/:id/members",         GroupController, :add_member
+        post "/groups/:id/members/:user_id/delete", GroupController, :remove_member
+
+        post "/users/:id/groups",           UserController, :update_groups
+
+        get  "/sections",                   SectionController, :index
+        get  "/sections/:section_key",      SectionController, :show
+        post "/sections/:section_key/acls", SectionController, :grant
+        post "/sections/:section_key/acls/delete", SectionController, :revoke
       end
 
       get  "/sections/:section_key/documents",             DocumentController, :index

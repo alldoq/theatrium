@@ -43,7 +43,55 @@ defmodule AtriumWeb.TenantAdmin.UserController do
     user = Accounts.get_user!(prefix, id)
     sections = enabled_sections(conn)
     current_grants = load_user_grants(prefix, user.id)
-    render(conn, :show, user: user, sections: sections, current_grants: current_grants)
+    all_groups = Authorization.list_groups(prefix)
+    member_of = MapSet.new(Authorization.list_groups_for_user(prefix, user), & &1.id)
+
+    render(conn, :show,
+      user: user,
+      sections: sections,
+      current_grants: current_grants,
+      all_groups: all_groups,
+      member_of: member_of
+    )
+  end
+
+  def update_groups(conn, %{"id" => id} = params) do
+    prefix = conn.assigns.tenant_prefix
+    actor = conn.assigns.current_user
+    user = Accounts.get_user!(prefix, id)
+
+    desired_ids =
+      params
+      |> Map.get("groups", %{})
+      |> Enum.filter(fn {_gid, v} -> v == "true" end)
+      |> Enum.map(fn {gid, _} -> gid end)
+      |> MapSet.new()
+
+    all_groups = Authorization.list_groups(prefix)
+    current_ids = Authorization.list_groups_for_user(prefix, user) |> MapSet.new(& &1.id)
+
+    to_add = MapSet.difference(desired_ids, current_ids)
+    to_remove = MapSet.difference(current_ids, desired_ids)
+
+    by_id = Map.new(all_groups, &{&1.id, &1})
+
+    for gid <- to_add, group = Map.get(by_id, gid), do: Authorization.add_member(prefix, user, group)
+    for gid <- to_remove, group = Map.get(by_id, gid), do: Authorization.remove_member(prefix, user, group)
+
+    if MapSet.size(to_add) + MapSet.size(to_remove) > 0 do
+      Audit.log(prefix, "user.groups_updated", %{
+        actor: {:user, actor.id},
+        resource: {"User", user.id},
+        changes: %{
+          "added" => MapSet.to_list(to_add),
+          "removed" => MapSet.to_list(to_remove)
+        }
+      })
+    end
+
+    conn
+    |> put_flash(:info, "Group memberships updated.")
+    |> redirect(to: ~p"/admin/users/#{user.id}")
   end
 
   def update_permissions(conn, %{"id" => id, "sections" => section_params}) do
