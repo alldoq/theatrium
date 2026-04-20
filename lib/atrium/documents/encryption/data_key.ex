@@ -37,4 +37,8 @@ defmodule Atrium.Documents.Encryption.DataKey do
     e in ErlangError ->
       raise "DataKey.unwrap failed: #{inspect(e)}"
   end
+
+  def unwrap(blob) when is_binary(blob) do
+    raise "DataKey.unwrap: malformed wrapped key (expected >= 28 bytes, got #{byte_size(blob)})"
+  end
 end

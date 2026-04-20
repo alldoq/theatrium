@@ -33,4 +33,9 @@ defmodule Atrium.Documents.Encryption.DataKeyTest do
 
     assert_raise RuntimeError, fn -> DataKey.unwrap(tampered) end
   end
+
+  test "unwrap raises a clear error on a too-short binary (no key leak)" do
+    short = :crypto.strong_rand_bytes(10)
+    assert_raise RuntimeError, ~r/malformed/, fn -> DataKey.unwrap(short) end
+  end
 end

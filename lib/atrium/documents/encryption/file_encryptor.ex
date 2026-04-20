@@ -32,9 +32,9 @@ defmodule Atrium.Documents.Encryption.FileEncryptor do
          sha256: :crypto.hash(:sha256, plaintext) |> Base.encode16(case: :lower)
        }}
     rescue
-      e ->
+      _e ->
         _ = File.rm(dest_path)
-        {:error, Exception.message(e)}
+        {:error, :encrypt_failed}
     end
   end
 end
