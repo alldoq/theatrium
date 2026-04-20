@@ -15,12 +15,15 @@ defmodule Atrium.Release do
 
   def migrate do
     load_app()
+    Application.ensure_all_started(:triplex)
 
     for repo <- repos() do
-      {:ok, _, _} = Ecto.Migrator.with_repo(repo, &Ecto.Migrator.run(&1, :up, all: true))
+      {:ok, _, _} =
+        Ecto.Migrator.with_repo(repo, fn r ->
+          Ecto.Migrator.run(r, :up, all: true)
+          if r == Atrium.Repo, do: migrate_tenants()
+        end)
     end
-
-    migrate_tenants()
   end
 
   def rollback(repo, version) do
@@ -29,20 +32,7 @@ defmodule Atrium.Release do
   end
 
   defp migrate_tenants do
-    Application.ensure_all_started(:ecto_sql)
-    Application.ensure_all_started(:postgrex)
-    Application.ensure_all_started(:triplex)
-
-    tenants =
-      try do
-        Atrium.Tenants.list_tenants()
-      rescue
-        e ->
-          Logger.warning("Skipping tenant migrations — Atrium.Tenants.list_tenants/0 failed: #{inspect(e)}")
-          []
-      end
-
-    for tenant <- tenants do
+    for tenant <- Atrium.Tenants.list_tenants() do
       Logger.info("Migrating tenant schema: #{tenant.slug}")
       Triplex.migrate(tenant.slug)
     end
