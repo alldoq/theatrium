@@ -61,6 +61,26 @@ config :phoenix, :json_library, Jason
 # Swoosh mailer — no HTTP client needed in dev/test
 config :swoosh, :api_client, false
 
+# File-document encryption & storage
+config :atrium, :uploads_root, "priv/uploads"
+config :atrium, :document_file_max_bytes, 100 * 1024 * 1024
+
+config :atrium, :document_file_allowed_mime, [
+  "application/pdf",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+  "application/msword",
+  "application/vnd.ms-excel",
+  "application/vnd.ms-powerpoint",
+  "application/vnd.oasis.opendocument.text",
+  "text/plain",
+  "image/png",
+  "image/jpeg",
+  "image/gif",
+  "image/webp"
+]
+
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.
 import_config "#{config_env()}.exs"

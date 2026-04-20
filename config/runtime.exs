@@ -64,6 +64,16 @@ if config_env() == :prod do
       default: {Cloak.Ciphers.AES.GCM, tag: "AES.GCM.V1", key: Base.decode64!(cloak_key), iv_length: 12}
     ]
 
+  file_key =
+    System.get_env("ATRIUM_FILE_ENCRYPTION_KEY") ||
+      raise "ATRIUM_FILE_ENCRYPTION_KEY must be set in production (32 bytes, base64-encoded)"
+
+  config :atrium, :file_encryption_key, Base.decode64!(file_key)
+
+  config :atrium,
+    :uploads_root,
+    System.get_env("ATRIUM_UPLOADS_ROOT") || "/var/www/atrium/shared/uploads"
+
   config :atrium, AtriumWeb.Endpoint,
     url: [host: host, port: 443, scheme: "https"],
     http: [
