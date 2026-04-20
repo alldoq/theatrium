@@ -12,8 +12,8 @@ defmodule AtriumWeb.Layouts do
   embed_templates "layouts/*"
 
   def theme_style(%{tenant: %{theme: theme}}) when is_map(theme) do
-    accent   = Map.get(theme, "accent", "#2563eb")
-    nav_bg   = Map.get(theme, "secondary", "#1e293b")
+    accent   = normalize_hex(Map.get(theme, "accent", "#2563eb"))
+    nav_bg   = normalize_hex(Map.get(theme, "secondary", "#1e293b"))
     font     = Map.get(theme, "font", nil)
 
     vars = [
@@ -33,6 +33,10 @@ defmodule AtriumWeb.Layouts do
   end
 
   def theme_style(_), do: ""
+
+  defp normalize_hex(nil), do: nil
+  defp normalize_hex("#" <> _ = hex), do: hex
+  defp normalize_hex(hex) when is_binary(hex), do: "#" <> hex
 
   # Lighten a hex color by blending toward white by `amount` (0..1).
   defp lighten(hex, amount) do
