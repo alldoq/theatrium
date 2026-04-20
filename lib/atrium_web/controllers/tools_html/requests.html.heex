@@ -1,0 +1,62 @@
+<div class="atrium-anim">
+  <div style="margin-bottom:20px">
+    <a href={~p"/tools"} style="font-size:.8125rem;color:var(--text-tertiary);text-decoration:none">← Tools</a>
+  </div>
+
+  <div style="margin-bottom:24px">
+    <div class="atrium-page-eyebrow">Tools / <%= @tool.label %></div>
+    <h1 class="atrium-page-title">Access requests</h1>
+  </div>
+
+  <div class="atrium-card">
+    <table class="atrium-table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Message</th>
+          <th>Submitted</th>
+          <th>Status</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <%= for req <- @requests do %>
+          <tr>
+            <td style="font-weight:500"><%= req.user_name %></td>
+            <td style="color:var(--text-secondary);font-size:.875rem"><%= req.user_email %></td>
+            <td style="max-width:240px;color:var(--text-secondary);font-size:.875rem">
+              <%= if req.message && req.message != "" do %>
+                <span title={req.message} style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"><%= req.message %></span>
+              <% else %>
+                <span style="color:var(--text-tertiary)">—</span>
+              <% end %>
+            </td>
+            <td style="font-size:.8125rem;color:var(--text-tertiary);white-space:nowrap">
+              <%= Calendar.strftime(req.inserted_at, "%d %b %Y %H:%M") %>
+            </td>
+            <td>
+              <% badge = if req.status == "approved", do: "approved", else: if(req.status == "rejected", do: "draft", else: "in_review") %>
+              <span class={"atrium-badge atrium-badge-#{badge}"}><%= req.status %></span>
+            </td>
+            <td style="text-align:right;white-space:nowrap">
+              <%= if req.status == "pending" do %>
+                <form method="post" action={~p"/tools/#{@tool.id}/requests/#{req.id}/approve"} style="display:inline">
+                  <input type="hidden" name="_csrf_token" value={Plug.CSRFProtection.get_csrf_token()} />
+                  <button class="atrium-btn atrium-btn-primary" style="height:28px;font-size:.8125rem;background:#16a34a">Approve</button>
+                </form>
+                <form method="post" action={~p"/tools/#{@tool.id}/requests/#{req.id}/reject"} style="display:inline;margin-left:4px">
+                  <input type="hidden" name="_csrf_token" value={Plug.CSRFProtection.get_csrf_token()} />
+                  <button class="atrium-btn atrium-btn-ghost" style="height:28px;font-size:.8125rem">Reject</button>
+                </form>
+              <% end %>
+            </td>
+          </tr>
+        <% end %>
+        <%= if @requests == [] do %>
+          <tr><td colspan="6" style="padding:32px;text-align:center;color:var(--text-tertiary)">No requests yet.</td></tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+</div>

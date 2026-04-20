@@ -1,0 +1,25 @@
+<div class="atrium-anim" style="max-width:720px">
+  <div style="margin-bottom:20px">
+    <a href={~p"/news"} style="font-size:.8125rem;color:var(--text-tertiary);text-decoration:none">← News</a>
+  </div>
+
+  <div style="margin-bottom:28px">
+    <div class="atrium-page-eyebrow"><%= Calendar.strftime(@article.inserted_at, "%d %B %Y") %></div>
+    <h1 class="atrium-page-title"><%= @article.title %></h1>
+    <%= if Atrium.Authorization.Policy.can?(@conn.assigns.tenant_prefix, @conn.assigns.current_user, :edit, {:section, "news"}) do %>
+      <div style="margin-top:10px">
+        <a href={~p"/sections/news/documents/#{@article.id}"} class="atrium-btn atrium-btn-ghost" style="height:28px;font-size:.8125rem">Manage in editor</a>
+      </div>
+    <% end %>
+  </div>
+
+  <div class="atrium-card">
+    <div class="atrium-card-body" style="min-height:80px;font-size:1rem;line-height:1.8;color:#1a1a1a">
+      <%= if @article.body_html && @article.body_html != "" do %>
+        <%= Phoenix.HTML.raw(@article.body_html) %>
+      <% else %>
+        <p style="color:var(--text-tertiary);font-style:italic">No content.</p>
+      <% end %>
+    </div>
+  </div>
+</div>

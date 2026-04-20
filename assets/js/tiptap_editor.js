@@ -1,8 +1,8 @@
 import { Editor } from "@tiptap/core"
 import StarterKit from "@tiptap/starter-kit"
 import Link from "@tiptap/extension-link"
-import Image from "@tiptap/extension-image"
 import { Table, TableRow, TableHeader, TableCell } from "@tiptap/extension-table"
+import { ResizableImage } from "./resizable_image.js"
 
 const TOOLBAR = [
   { cmd: "toggleBold",        label: "B",    title: "Bold",         active: "bold",        style: "font-weight:700" },
@@ -156,6 +156,42 @@ function makeLinkBtn(editor) {
   return btn
 }
 
+async function resizeImage(file, maxDim = 1500) {
+  return new Promise((resolve) => {
+    const img = new window.Image()
+    const objectUrl = URL.createObjectURL(file)
+    img.onload = () => {
+      URL.revokeObjectURL(objectUrl)
+      const { naturalWidth: w, naturalHeight: h } = img
+      if (w <= maxDim && h <= maxDim) { resolve(file); return }
+      const scale = Math.min(maxDim / w, maxDim / h)
+      const canvas = document.createElement("canvas")
+      canvas.width  = Math.round(w * scale)
+      canvas.height = Math.round(h * scale)
+      canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height)
+      canvas.toBlob(blob => resolve(blob || file), "image/jpeg", 0.8)
+    }
+    img.onerror = () => { URL.revokeObjectURL(objectUrl); resolve(file) }
+    img.src = objectUrl
+  })
+}
+
+async function uploadImage(file, sectionKey) {
+  const isHeic = /heic|heif/i.test(file.type)
+  const processed = isHeic ? file : await resizeImage(file)
+  const csrfToken = document.querySelector("meta[name='csrf-token']")?.getAttribute("content") ?? ""
+  const formData = new FormData()
+  formData.append("image", processed)
+  const resp = await fetch(`/sections/${sectionKey}/documents/upload_image`, {
+    method: "POST",
+    headers: { "x-csrf-token": csrfToken },
+    body: formData,
+  })
+  if (!resp.ok) throw new Error(`Upload failed: ${resp.status}`)
+  const { url } = await resp.json()
+  return url
+}
+
 function makeImageBtn(editor, sectionKey) {
   const fileInput = document.createElement("input")
   fileInput.type = "file"
@@ -167,24 +203,8 @@ function makeImageBtn(editor, sectionKey) {
     const file = fileInput.files[0]
     if (!file) return
     fileInput.value = ""
-
-    const formData = new FormData()
-    formData.append("image", file)
-
-    const csrfMeta = document.querySelector("meta[name='csrf-token']")
-    const csrfToken = csrfMeta ? csrfMeta.getAttribute("content") : ""
-
     try {
-      const resp = await fetch(`/sections/${sectionKey}/documents/upload_image`, {
-        method: "POST",
-        headers: { "x-csrf-token": csrfToken },
-        body: formData,
-      })
-      if (!resp.ok) {
-        console.error("Image upload failed", resp.status)
-        return
-      }
-      const { url } = await resp.json()
+      const url = await uploadImage(file, sectionKey)
       editor.chain().focus().setImage({ src: url }).run()
     } catch (err) {
       console.error("Image upload error", err)
@@ -323,7 +343,7 @@ function initEditor(container) {
     extensions: [
       StarterKit,
       Link.configure({ openOnClick: false }),
-      Image,
+      ResizableImage,
       Table.configure({ resizable: false }),
       TableRow,
       TableHeader,
@@ -344,6 +364,35 @@ function initEditor(container) {
         refreshToolbar(toolbar, contextBar, editor)
       }
     },
+  })
+
+  editorEl.addEventListener("paste", async (e) => {
+    const items = Array.from(e.clipboardData?.items ?? [])
+    const imageItem = items.find(i => i.type.startsWith("image/"))
+    if (!imageItem || !sectionKey) return
+    e.preventDefault()
+    const file = imageItem.getAsFile()
+    if (!file) return
+    try {
+      const url = await uploadImage(file, sectionKey)
+      editor.chain().focus().setImage({ src: url }).run()
+    } catch (err) {
+      console.error("Paste image upload error", err)
+    }
+  })
+
+  editorEl.addEventListener("drop", async (e) => {
+    const files = Array.from(e.dataTransfer?.files ?? []).filter(f => f.type.startsWith("image/"))
+    if (!files.length || !sectionKey) return
+    e.preventDefault()
+    for (const file of files) {
+      try {
+        const url = await uploadImage(file, sectionKey)
+        editor.chain().focus().setImage({ src: url }).run()
+      } catch (err) {
+        console.error("Drop image upload error", err)
+      }
+    }
   })
 
   toolbar = buildToolbar(editor, sectionKey)

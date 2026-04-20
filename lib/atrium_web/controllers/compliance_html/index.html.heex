@@ -1,0 +1,68 @@
+<div class="atrium-anim">
+  <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:28px">
+    <div>
+      <div class="atrium-page-eyebrow">Compliance</div>
+      <h1 class="atrium-page-title">Compliance &amp; Policies</h1>
+    </div>
+    <%= if Atrium.Authorization.Policy.can?(@conn.assigns.tenant_prefix, @conn.assigns.current_user, :edit, {:section, "compliance"}) do %>
+      <a href={~p"/sections/compliance/documents/new"} class="atrium-btn atrium-btn-primary">New policy</a>
+    <% end %>
+  </div>
+
+  <div class="atrium-card" style="margin-bottom:16px">
+    <div class="atrium-card-header"><div class="atrium-card-title">Active policies</div></div>
+    <table class="atrium-table">
+      <thead>
+        <tr>
+          <th>Policy</th>
+          <th>Approved</th>
+          <th>Version</th>
+        </tr>
+      </thead>
+      <tbody>
+        <%= for doc <- @policies do %>
+          <tr onclick={"window.location='#{~p"/sections/compliance/documents/#{doc.id}"}';"} style="cursor:pointer">
+            <td style="font-weight:500">
+              <a href={~p"/sections/compliance/documents/#{doc.id}"} style="color:var(--text-primary);text-decoration:none"><%= doc.title %></a>
+            </td>
+            <td style="font-size:.8125rem;color:var(--text-secondary)">
+              <%= if doc.approved_at, do: Calendar.strftime(doc.approved_at, "%d %b %Y"), else: "—" %>
+            </td>
+            <td style="font-family:'IBM Plex Mono',monospace;font-size:.8125rem">v<%= doc.current_version %></td>
+          </tr>
+        <% end %>
+        <%= if @policies == [] do %>
+          <tr><td colspan="3" style="padding:32px;text-align:center;color:var(--text-tertiary)">No approved policies yet.</td></tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+
+  <%= if @drafts != [] do %>
+    <div class="atrium-card">
+      <div class="atrium-card-header"><div class="atrium-card-title">In progress</div></div>
+      <table class="atrium-table">
+        <thead>
+          <tr>
+            <th>Policy</th>
+            <th>Status</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <%= for doc <- @drafts do %>
+            <tr>
+              <td style="font-weight:500"><%= doc.title %></td>
+              <td>
+                <span class={"atrium-badge atrium-badge-#{doc.status}"}><%= doc.status %></span>
+              </td>
+              <td style="text-align:right">
+                <a href={~p"/sections/compliance/documents/#{doc.id}"} class="atrium-btn atrium-btn-ghost" style="height:28px;font-size:.8125rem">View</a>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% end %>
+</div>

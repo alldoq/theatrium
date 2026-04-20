@@ -644,6 +644,18 @@ textarea.atrium-input { height: auto; padding: 8px 10px; }
 [data-tiptap-editor] .ProseMirror em { font-style: italic; }
 [data-tiptap-editor] .ProseMirror s  { text-decoration: line-through; }
 
+/* ── Resizable image alignment (editor + rendered output) ── */
+[data-image-wrapper] { display: block; margin: 4px 0; line-height: 0; }
+[data-image-wrapper][style*="text-align: center"],
+[data-image-wrapper][style*="textAlign: center"] { text-align: center; }
+[data-image-wrapper][style*="float: right"] { float: right; margin-left: 1rem; margin-bottom: .5rem; }
+[data-image-wrapper]::after { content: ""; display: table; clear: both; }
+
+/* Rendered HTML (document view — no NodeView, just bare img with data-align) */
+.atrium-prose img[data-align="center"] { display: block; margin-left: auto; margin-right: auto; }
+.atrium-prose img[data-align="right"]  { float: right; margin-left: 1rem; margin-bottom: .5rem; }
+.atrium-prose img { max-width: 100%; height: auto; border-radius: 4px; }
+
 /* Toolbar inside the doc sheet — flush top, no outer border */
 .atrium-doc-sheet [data-tiptap-editor] {
   padding: 0;

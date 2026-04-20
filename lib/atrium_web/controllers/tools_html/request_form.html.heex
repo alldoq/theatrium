@@ -1,0 +1,39 @@
+<div class="atrium-anim" style="max-width:520px">
+  <div style="margin-bottom:20px">
+    <a href={~p"/tools"} style="font-size:.8125rem;color:var(--text-tertiary);text-decoration:none">← Tools</a>
+  </div>
+
+  <div style="margin-bottom:24px">
+    <div class="atrium-page-eyebrow">Tools</div>
+    <h1 class="atrium-page-title">Request access: <%= @tool.label %></h1>
+    <%= if @tool.description do %>
+      <p style="margin-top:6px;font-size:.9375rem;color:var(--text-secondary)"><%= @tool.description %></p>
+    <% end %>
+  </div>
+
+  <form method="post" action={~p"/tools/#{@tool.id}/request"}>
+    <input type="hidden" name="_csrf_token" value={Plug.CSRFProtection.get_csrf_token()} />
+    <div class="atrium-card" style="margin-bottom:16px">
+      <div class="atrium-card-body" style="display:flex;flex-direction:column;gap:16px">
+        <div>
+          <label class="atrium-label">Your name</label>
+          <input type="text" class="atrium-input" value={@conn.assigns.current_user.name} disabled />
+        </div>
+        <div>
+          <label class="atrium-label">Your email</label>
+          <input type="text" class="atrium-input" value={@conn.assigns.current_user.email} disabled />
+        </div>
+        <div>
+          <label class="atrium-label">Message <span style="color:var(--text-tertiary);font-weight:400">(optional)</span></label>
+          <textarea name="request[message]" class="atrium-input" rows="4"
+            placeholder="Describe why you need access, your role, or any other relevant information…"
+            style="resize:vertical"></textarea>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button type="submit" class="atrium-btn atrium-btn-primary">Submit request</button>
+      <a href={~p"/tools"} class="atrium-btn atrium-btn-ghost">Cancel</a>
+    </div>
+  </form>
+</div>

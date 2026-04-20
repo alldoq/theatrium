@@ -1,0 +1,48 @@
+<div class="atrium-anim">
+  <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:28px">
+    <div>
+      <div class="atrium-page-eyebrow">News</div>
+      <h1 class="atrium-page-title">News &amp; Announcements</h1>
+    </div>
+    <%= if Atrium.Authorization.Policy.can?(@conn.assigns.tenant_prefix, @conn.assigns.current_user, :edit, {:section, "news"}) do %>
+      <a href={~p"/sections/news/documents/new"} class="atrium-btn atrium-btn-primary">Write article</a>
+    <% end %>
+  </div>
+
+  <%= if Atrium.Authorization.Policy.can?(@conn.assigns.tenant_prefix, @conn.assigns.current_user, :edit, {:section, "news"}) do %>
+    <div style="margin-bottom:16px">
+      <a href={~p"/sections/news/documents"} style="font-size:.8125rem;color:var(--text-tertiary);text-decoration:none">
+        Manage all articles (drafts, in review) →
+      </a>
+    </div>
+  <% end %>
+
+  <%= if @articles == [] do %>
+    <div style="border:2px dashed var(--border);border-radius:var(--radius);padding:48px;text-align:center;color:var(--text-tertiary)">
+      <p style="font-size:.875rem">No published articles yet.</p>
+    </div>
+  <% end %>
+
+  <div style="display:flex;flex-direction:column;gap:16px">
+    <%= for article <- @articles do %>
+      <a href={~p"/news/#{article.id}"} style="text-decoration:none">
+        <div class="atrium-card" style="transition:border-color .15s"
+          onmouseover="this.style.borderColor='var(--blue-500)'"
+          onmouseout="this.style.borderColor='var(--border)'">
+          <div class="atrium-card-body">
+            <div style="font-size:.75rem;color:var(--text-tertiary);margin-bottom:6px">
+              <%= Calendar.strftime(article.inserted_at, "%d %B %Y") %>
+            </div>
+            <div style="font-size:1.0625rem;font-weight:600;color:var(--text-primary);margin-bottom:6px"><%= article.title %></div>
+            <%= if article.body_html && article.body_html != "" do %>
+              <div style="font-size:.875rem;color:var(--text-secondary);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden">
+                <%= Phoenix.HTML.raw(article.body_html) %>
+              </div>
+            <% end %>
+            <div style="margin-top:10px;font-size:.8125rem;color:var(--blue-500);font-weight:500">Read more</div>
+          </div>
+        </div>
+      </a>
+    <% end %>
+  </div>
+</div>

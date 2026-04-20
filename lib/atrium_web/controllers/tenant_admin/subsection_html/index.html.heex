@@ -1,0 +1,44 @@
+<div class="atrium-anim" style="max-width:640px">
+  <div style="margin-bottom:20px">
+    <a href={~p"/admin/users"} style="font-size:.8125rem;color:var(--text-tertiary);text-decoration:none">← Admin</a>
+  </div>
+
+  <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:24px">
+    <div>
+      <div class="atrium-page-eyebrow">Admin / <%= @section.name %></div>
+      <h1 class="atrium-page-title">Subsections</h1>
+    </div>
+    <a href={~p"/admin/sections/#{@section_key}/subsections/new"} class="atrium-btn atrium-btn-primary">Add subsection</a>
+  </div>
+
+  <div class="atrium-card">
+    <table class="atrium-table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Slug</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <%= for ss <- @subsections do %>
+          <tr>
+            <td style="font-weight:500"><%= ss.name %></td>
+            <td style="font-family:'IBM Plex Mono',monospace;font-size:.8125rem;color:var(--text-tertiary)"><%= ss.slug %></td>
+            <td style="text-align:right">
+              <form method="post" action={~p"/admin/sections/#{@section_key}/subsections/#{ss.id}/delete"} style="display:inline">
+                <input type="hidden" name="_csrf_token" value={Plug.CSRFProtection.get_csrf_token()} />
+                <button type="submit" class="atrium-btn atrium-btn-ghost"
+                  style="height:28px;font-size:.8125rem;color:var(--color-error)"
+                  onclick="return confirm('Delete this subsection? Documents within it will not be deleted.')">Delete</button>
+              </form>
+            </td>
+          </tr>
+        <% end %>
+        <%= if @subsections == [] do %>
+          <tr><td colspan="3" style="padding:32px;text-align:center;color:var(--text-tertiary)">No subsections yet.</td></tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+</div>

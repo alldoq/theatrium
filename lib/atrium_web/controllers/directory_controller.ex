@@ -23,7 +23,12 @@ defmodule AtriumWeb.DirectoryController do
         users
       end
 
-    render(conn, :index, users: users, query: params["q"] || "")
+    groups =
+      users
+      |> Enum.group_by(fn u -> u.department || "" end)
+      |> Enum.sort_by(fn {dept, _} -> {dept == "", String.downcase(dept)} end)
+
+    render(conn, :index, groups: groups, query: params["q"] || "")
   end
 
   def show(conn, %{"id" => id}) do

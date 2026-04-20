@@ -1,0 +1,76 @@
+<div class="atrium-anim">
+  <div style="margin-bottom:28px">
+    <div class="atrium-page-eyebrow">IT Support</div>
+    <h1 class="atrium-page-title">Help Desk</h1>
+  </div>
+
+  <%= if @ticket_forms != [] do %>
+    <div class="atrium-card" style="margin-bottom:20px">
+      <div class="atrium-card-header"><div class="atrium-card-title">Submit a request</div></div>
+      <div class="atrium-card-body" style="display:flex;flex-direction:column;gap:8px">
+        <%= for form <- @ticket_forms do %>
+          <a href={~p"/sections/helpdesk/forms/#{form.id}/submit"} class="atrium-sidebar-item" style="border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75" style="width:16px;height:16px;flex-shrink:0">
+              <rect x="2" y="2" width="12" height="12" rx="1.5" stroke-linejoin="round"/>
+              <path d="M5 5.5h6M5 8h6M5 10.5h3" stroke-linecap="round"/>
+            </svg>
+            <%= form.title %>
+          </a>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+
+  <%= if @pending != [] do %>
+    <div class="atrium-card" style="margin-bottom:20px">
+      <div class="atrium-card-header">
+        <div class="atrium-card-title">Pending requests</div>
+        <span class="atrium-badge atrium-badge-in_review"><%= length(@pending) %> pending</span>
+      </div>
+      <table class="atrium-table">
+        <thead>
+          <tr><th>Form</th><th>Submitted</th><th>Status</th><th></th></tr>
+        </thead>
+        <tbody>
+          <%= for sub <- @pending do %>
+            <tr>
+              <td style="font-weight:500"><%= sub.form.title %></td>
+              <td style="font-size:.8125rem;color:var(--text-secondary)"><%= Calendar.strftime(sub.inserted_at, "%d %b %Y %H:%M") %></td>
+              <td><span class="atrium-badge atrium-badge-in_review"><%= sub.status %></span></td>
+              <td style="text-align:right">
+                <a href={~p"/sections/helpdesk/forms/#{sub.form_id}/submissions/#{sub.id}"} class="atrium-btn atrium-btn-ghost" style="height:28px;font-size:.8125rem">Review</a>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% end %>
+
+  <div class="atrium-card">
+    <div class="atrium-card-header"><div class="atrium-card-title">My requests</div></div>
+    <table class="atrium-table">
+      <thead>
+        <tr><th>Form</th><th>Submitted</th><th>Status</th><th></th></tr>
+      </thead>
+      <tbody>
+        <%= for sub <- @my_submissions do %>
+          <tr>
+            <td style="font-weight:500"><%= sub.form.title %></td>
+            <td style="font-size:.8125rem;color:var(--text-secondary)"><%= Calendar.strftime(sub.inserted_at, "%d %b %Y %H:%M") %></td>
+            <td>
+              <% badge = if sub.status == "completed", do: "atrium-badge-approved", else: "atrium-badge-in_review" %>
+              <span class={"atrium-badge #{badge}"}><%= sub.status %></span>
+            </td>
+            <td style="text-align:right">
+              <a href={~p"/sections/helpdesk/forms/#{sub.form_id}/submissions/#{sub.id}"} class="atrium-btn atrium-btn-ghost" style="height:28px;font-size:.8125rem">View</a>
+            </td>
+          </tr>
+        <% end %>
+        <%= if @my_submissions == [] do %>
+          <tr><td colspan="4" style="padding:32px;text-align:center;color:var(--text-tertiary)">No requests yet.</td></tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+</div>

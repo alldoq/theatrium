@@ -4,7 +4,7 @@
     <h1 class="atrium-page-title">Employee Directory</h1>
   </div>
 
-  <form method="get" action={~p"/directory"} style="margin-bottom:20px">
+  <form method="get" action={~p"/directory"} style="margin-bottom:24px">
     <div style="position:relative;max-width:400px">
       <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75" style="width:14px;height:14px;position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text-tertiary);pointer-events:none">
         <circle cx="7" cy="7" r="4.5"/><path d="M11 11l2.5 2.5" stroke-linecap="round"/>
@@ -14,44 +14,52 @@
     </div>
   </form>
 
-  <%= if @users == [] do %>
+  <%= if @groups == [] do %>
     <div style="padding:40px;text-align:center;color:var(--text-tertiary)">
       <%= if @query != "", do: "No results for \"#{@query}\".", else: "No users yet." %>
     </div>
   <% end %>
 
-  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px">
-    <%= for user <- @users do %>
-      <a href={~p"/directory/#{user.id}"} style="text-decoration:none">
-        <div class="atrium-card" style="transition:border-color .15s"
-          onmouseover="this.style.borderColor='var(--blue-500)'"
-          onmouseout="this.style.borderColor='var(--border)'">
-          <div class="atrium-card-body" style="display:flex;align-items:center;gap:12px">
-            <div class="atrium-user-avatar" style="width:40px;height:40px;font-size:.875rem;flex-shrink:0">
-              <%= user.name |> String.split() |> Enum.map(&String.first/1) |> Enum.take(2) |> Enum.join() %>
-            </div>
-            <div style="min-width:0">
-              <div style="font-weight:600;font-size:.875rem;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis"><%= user.name %></div>
-              <%= if user.role do %>
-                <div style="font-size:.8125rem;color:var(--text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis"><%= user.role %></div>
-              <% end %>
-              <%= if user.department do %>
-                <div style="font-size:.75rem;color:var(--text-tertiary)"><%= user.department %></div>
-              <% end %>
-              <%= if user.skills && user.skills != [] do %>
-                <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px">
-                  <%= for skill <- Enum.take(user.skills, 3) do %>
-                    <span style="font-size:.6875rem;padding:1px 6px;border-radius:999px;background:var(--blue-50);color:var(--blue-600);border:1px solid var(--blue-100)"><%= skill %></span>
+  <%= for {dept, users} <- @groups do %>
+    <div style="margin-bottom:32px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+        <div style="font-size:.75rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text-tertiary)">
+          <%= if dept == "", do: "No department", else: dept %>
+        </div>
+        <div style="flex:1;height:1px;background:var(--border)"></div>
+        <div style="font-size:.75rem;color:var(--text-tertiary)"><%= length(users) %></div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px">
+        <%= for user <- users do %>
+          <a href={~p"/directory/#{user.id}"} style="text-decoration:none">
+            <div class="atrium-card" style="transition:border-color .15s"
+              onmouseover="this.style.borderColor='var(--blue-500)'"
+              onmouseout="this.style.borderColor='var(--border)'">
+              <div class="atrium-card-body" style="display:flex;align-items:center;gap:12px">
+                <div class="atrium-user-avatar" style="width:40px;height:40px;font-size:.875rem;flex-shrink:0">
+                  <%= user.name |> String.split() |> Enum.map(&String.first/1) |> Enum.take(2) |> Enum.join() %>
+                </div>
+                <div style="min-width:0">
+                  <div style="font-weight:600;font-size:.875rem;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis"><%= user.name %></div>
+                  <%= if user.role do %>
+                    <div style="font-size:.8125rem;color:var(--text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis"><%= user.role %></div>
                   <% end %>
-                  <%= if length(user.skills) > 3 do %>
-                    <span style="font-size:.6875rem;color:var(--text-tertiary)">+<%= length(user.skills) - 3 %></span>
+                  <%= if user.skills && user.skills != [] do %>
+                    <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px">
+                      <%= for skill <- Enum.take(user.skills, 3) do %>
+                        <span style="font-size:.6875rem;padding:1px 6px;border-radius:999px;background:var(--blue-50);color:var(--blue-600);border:1px solid var(--blue-100)"><%= skill %></span>
+                      <% end %>
+                      <%= if length(user.skills) > 3 do %>
+                        <span style="font-size:.6875rem;color:var(--text-tertiary)">+<%= length(user.skills) - 3 %></span>
+                      <% end %>
+                    </div>
                   <% end %>
                 </div>
-              <% end %>
+              </div>
             </div>
-          </div>
-        </div>
-      </a>
-    <% end %>
-  </div>
+          </a>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
 </div>

@@ -1,0 +1,34 @@
+<div class="atrium-anim" style="max-width:480px">
+  <div style="margin-bottom:20px">
+    <a href={~p"/admin/sections/#{@section_key}/subsections"} style="font-size:.8125rem;color:var(--text-tertiary);text-decoration:none">← Subsections</a>
+  </div>
+
+  <div style="margin-bottom:24px">
+    <div class="atrium-page-eyebrow"><%= @section.name %></div>
+    <h1 class="atrium-page-title">New subsection</h1>
+  </div>
+
+  <form method="post" action={~p"/admin/sections/#{@section_key}/subsections"}>
+    <input type="hidden" name="_csrf_token" value={Plug.CSRFProtection.get_csrf_token()} />
+    <div class="atrium-card" style="margin-bottom:16px">
+      <div class="atrium-card-body" style="display:flex;flex-direction:column;gap:16px">
+        <div>
+          <label class="atrium-label">Name</label>
+          <input type="text" name="subsection[name]" class="atrium-input" placeholder="e.g. Payroll" required />
+        </div>
+        <div>
+          <label class="atrium-label">Slug <span style="color:var(--text-tertiary);font-weight:400">(URL-safe, lowercase)</span></label>
+          <input type="text" name="subsection[slug]" class="atrium-input" placeholder="e.g. payroll" pattern="[a-z0-9_-]+" title="Lowercase letters, numbers, hyphens and underscores only" required />
+        </div>
+        <div>
+          <label class="atrium-label">Description <span style="color:var(--text-tertiary);font-weight:400">(optional)</span></label>
+          <input type="text" name="subsection[description]" class="atrium-input" />
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button type="submit" class="atrium-btn atrium-btn-primary">Create</button>
+      <a href={~p"/admin/sections/#{@section_key}/subsections"} class="atrium-btn atrium-btn-ghost">Cancel</a>
+    </div>
+  </form>
+</div>

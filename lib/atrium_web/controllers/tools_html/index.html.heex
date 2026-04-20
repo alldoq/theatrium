@@ -1,0 +1,154 @@
+<div class="atrium-anim">
+  <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:28px">
+    <div>
+      <div class="atrium-page-eyebrow">Tools</div>
+      <h1 class="atrium-page-title">Tools &amp; Applications</h1>
+    </div>
+    <%= if @can_edit do %>
+      <button type="button"
+        onclick="document.getElementById('add-tool-form').style.display = document.getElementById('add-tool-form').style.display === 'none' ? 'block' : 'none'"
+        class="atrium-btn atrium-btn-primary">+ Add tool</button>
+    <% end %>
+  </div>
+
+  <%= if @can_edit do %>
+    <div id="add-tool-form" style="display:none;margin-bottom:24px">
+      <div class="atrium-card">
+        <div class="atrium-card-header"><div class="atrium-card-title">Add tool</div></div>
+        <div class="atrium-card-body">
+          <form method="post" action={~p"/tools"} style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end">
+            <input type="hidden" name="_csrf_token" value={Plug.CSRFProtection.get_csrf_token()} />
+            <div>
+              <label class="atrium-label">Type</label>
+              <select name="tool[kind]" class="atrium-input" style="width:120px"
+                onchange="
+                  var k = this.value;
+                  document.getElementById('field-url').style.display = k === 'link' ? '' : 'none';
+                  document.getElementById('field-upload-hint').style.display = k === 'download' ? '' : 'none';
+                ">
+                <option value="link">Link</option>
+                <option value="download">Download</option>
+                <option value="request">Request access</option>
+              </select>
+            </div>
+            <div>
+              <label class="atrium-label">Name</label>
+              <input type="text" name="tool[label]" class="atrium-input" style="width:160px" placeholder="Slack" required />
+            </div>
+            <div id="field-url">
+              <label class="atrium-label">URL</label>
+              <input type="url" name="tool[url]" class="atrium-input" style="width:220px" placeholder="https://..." />
+            </div>
+            <div id="field-upload-hint" style="display:none">
+              <label class="atrium-label">URL</label>
+              <input type="text" name="tool[url]" class="atrium-input" style="width:220px" placeholder="(upload file after creating)" disabled />
+            </div>
+            <div>
+              <label class="atrium-label">Description</label>
+              <input type="text" name="tool[description]" class="atrium-input" style="width:200px" placeholder="Short description" />
+            </div>
+            <button type="submit" class="atrium-btn atrium-btn-primary" style="margin-bottom:1px">Add</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  <% end %>
+
+  <%= if @tools == [] do %>
+    <div style="border:2px dashed var(--border);border-radius:var(--radius);padding:48px;text-align:center;color:var(--text-tertiary)">
+      <p style="font-size:.875rem">No tools added yet.</p>
+    </div>
+  <% end %>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px">
+    <%= for tool <- @tools do %>
+      <div style="position:relative">
+        <div class="atrium-card" style="height:100%">
+          <div class="atrium-card-body" style="display:flex;flex-direction:column;align-items:center;gap:10px;padding:24px 16px;text-align:center">
+            <%# Icon by kind %>
+            <%= if tool.kind == "download" do %>
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75" style="width:24px;height:24px;color:var(--blue-500)">
+                <path d="M8 2v8M5 7l3 3 3-3" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M2 12v1a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-1" stroke-linecap="round"/>
+              </svg>
+            <% else %>
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75" style="width:24px;height:24px;color:var(--blue-500)">
+                <path d="M6.5 3.5H3a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1v-3.5M9.5 2H14v4.5M14 2l-7 7" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            <% end %>
+            <div style="flex:1">
+              <div style="font-weight:600;font-size:.9375rem"><%= tool.label %></div>
+              <%= if tool.description do %>
+                <div style="font-size:.8125rem;color:var(--text-secondary);margin-top:2px"><%= tool.description %></div>
+              <% end %>
+              <div style="margin-top:4px">
+                <span style={"font-size:.6875rem;padding:1px 6px;border-radius:10px;border:1px solid var(--border);color:var(--text-tertiary);text-transform:uppercase;letter-spacing:.04em"}>
+                  <%= tool.kind %>
+                </span>
+              </div>
+            </div>
+            <%# Action button %>
+            <div style="width:100%;margin-top:4px">
+              <%= if tool.kind == "link" do %>
+                <a href={tool.url} target="_blank" rel="noopener noreferrer" class="atrium-btn atrium-btn-ghost" style="width:100%;justify-content:center">Open</a>
+              <% end %>
+              <%= if tool.kind == "download" do %>
+                <%= if tool.file_path do %>
+                  <a href={~p"/tools/#{tool.id}/download"} class="atrium-btn atrium-btn-ghost" style="width:100%;justify-content:center">
+                    Download
+                    <%= if tool.file_size do %>
+                      <span style="color:var(--text-tertiary);font-size:.75rem;margin-left:4px">(<%= format_size(tool.file_size) %>)</span>
+                    <% end %>
+                  </a>
+                <% else %>
+                  <span style="font-size:.8125rem;color:var(--text-tertiary)">No file uploaded yet</span>
+                <% end %>
+              <% end %>
+              <%= if tool.kind == "request" do %>
+                <a href={~p"/tools/#{tool.id}/request"} class="atrium-btn atrium-btn-ghost" style="width:100%;justify-content:center">Request access</a>
+              <% end %>
+            </div>
+          </div>
+          <%# Admin controls %>
+          <%= if @can_edit do %>
+            <div class="atrium-card-footer">
+              <span style="flex:1;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                <%= if tool.kind == "download" do %>
+                  <form method="post" action={~p"/tools/#{tool.id}/upload"} enctype="multipart/form-data">
+                    <input type="hidden" name="_csrf_token" value={Plug.CSRFProtection.get_csrf_token()} />
+                    <label class="atrium-btn atrium-btn-ghost" style="height:26px;font-size:.75rem;cursor:pointer;display:inline-flex;align-items:center;gap:4px">
+                      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75" style="width:12px;height:12px;flex-shrink:0">
+                        <path d="M8 10V2M5 5l3-3 3 3" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M2 12v1a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-1" stroke-linecap="round"/>
+                      </svg>
+                      Upload file
+                      <input type="file" name="file" style="display:none" onchange="this.closest('form').submit()" />
+                    </label>
+                  </form>
+                <% end %>
+                <%= if tool.kind == "request" do %>
+                  <a href={~p"/tools/#{tool.id}/requests"} class="atrium-btn atrium-btn-ghost" style="height:26px;font-size:.75rem">View requests</a>
+                <% end %>
+                <form method="post" action={~p"/tools/#{tool.id}/change_kind"} style="display:flex;align-items:center;gap:4px">
+                  <input type="hidden" name="_csrf_token" value={Plug.CSRFProtection.get_csrf_token()} />
+                  <select name="kind" class="atrium-input" style="height:26px;font-size:.75rem;padding:0 6px" onchange="this.closest('form').submit()">
+                    <option value="link" selected={tool.kind == "link"}>Link</option>
+                    <option value="download" selected={tool.kind == "download"}>Download</option>
+                    <option value="request" selected={tool.kind == "request"}>Request</option>
+                  </select>
+                </form>
+              </span>
+              <form method="post" action={~p"/tools/#{tool.id}/delete"}>
+                <input type="hidden" name="_csrf_token" value={Plug.CSRFProtection.get_csrf_token()} />
+                <button type="submit" style="border:none;background:none;cursor:pointer;padding:2px 4px;font-size:.75rem;color:var(--text-tertiary)"
+                  onmouseover="this.style.color='var(--color-error,#ef4444)'"
+                  onmouseout="this.style.color='var(--text-tertiary)'"
+                  title="Remove">Remove</button>
+              </form>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+</div>
