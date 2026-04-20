@@ -5,11 +5,11 @@ defmodule AtriumWeb.DocumentController do
 
   plug AtriumWeb.Plugs.Authorize,
        [capability: :view, target: &__MODULE__.section_target/1]
-       when action in [:index, :show, :download_pdf]
+       when action in [:index, :show, :download_pdf, :download]
 
   plug AtriumWeb.Plugs.Authorize,
        [capability: :edit, target: &__MODULE__.section_target/1]
-       when action in [:new, :create, :edit, :update, :submit, :upload_image]
+       when action in [:new, :create, :edit, :update, :submit, :upload_image, :replace]
 
   plug AtriumWeb.Plugs.Authorize,
        [capability: :approve, target: &__MODULE__.section_target/1]
@@ -34,9 +34,47 @@ defmodule AtriumWeb.DocumentController do
     render(conn, :index, documents: documents, section_key: section_key, can_edit: can_edit, section_name: section_name)
   end
 
-  def new(conn, %{"section_key" => section_key}) do
+  def new(conn, %{"section_key" => section_key} = params) do
     changeset = Document.changeset(%Document{}, %{})
-    render(conn, :new, changeset: changeset, section_key: section_key)
+    kind = Map.get(params, "kind", "rich_text")
+    render(conn, :new, changeset: changeset, section_key: section_key, kind: kind)
+  end
+
+  def create(conn, %{"section_key" => section_key, "document" => %{"kind" => "file"} = doc_params}) do
+    prefix = conn.assigns.tenant_prefix
+    user = conn.assigns.current_user
+
+    case Map.get(doc_params, "file") do
+      %Plug.Upload{} = upload ->
+        attrs = %{title: doc_params["title"], section_key: section_key, subsection_slug: doc_params["subsection_slug"]}
+
+        case Documents.create_file_document(prefix, user, section_key, attrs, upload) do
+          {:ok, doc} ->
+            conn
+            |> put_flash(:info, "File document created.")
+            |> redirect(to: ~p"/sections/#{section_key}/documents/#{doc.id}")
+
+          {:error, :invalid_mime} ->
+            conn
+            |> put_flash(:error, "File type not allowed.")
+            |> redirect(to: ~p"/sections/#{section_key}/documents/new?kind=file")
+
+          {:error, :too_large} ->
+            conn
+            |> put_flash(:error, "File is too large (max 100 MB).")
+            |> redirect(to: ~p"/sections/#{section_key}/documents/new?kind=file")
+
+          {:error, _reason} ->
+            conn
+            |> put_flash(:error, "Upload failed.")
+            |> redirect(to: ~p"/sections/#{section_key}/documents/new?kind=file")
+        end
+
+      _ ->
+        conn
+        |> put_flash(:error, "Please select a file to upload.")
+        |> redirect(to: ~p"/sections/#{section_key}/documents/new?kind=file")
+    end
   end
 
   def create(conn, %{"section_key" => section_key, "document" => doc_params}) do
@@ -53,7 +91,7 @@ defmodule AtriumWeb.DocumentController do
       {:error, %Ecto.Changeset{} = changeset} ->
         conn
         |> put_status(422)
-        |> render(:new, changeset: changeset, section_key: section_key)
+        |> render(:new, changeset: changeset, section_key: section_key, kind: "rich_text")
 
       {:error, _reason} ->
         conn
@@ -139,6 +177,79 @@ defmodule AtriumWeb.DocumentController do
     run_transition(conn, section_key, id, &Documents.archive_document/3, "Document archived.")
   end
 
+  def download(conn, %{"section_key" => section_key, "id" => id}) do
+    prefix = conn.assigns.tenant_prefix
+    user = conn.assigns.current_user
+    doc = Documents.get_document!(prefix, id)
+
+    case Documents.decrypt_for_download(prefix, doc) do
+      {:ok, tmp_path, file_name, mime} ->
+        _ = Atrium.Audit.log(prefix, "document.file_downloaded", %{
+          actor: {:user, user.id},
+          resource: {"Document", doc.id},
+          meta: %{version: doc.current_version}
+        })
+
+        conn =
+          conn
+          |> put_resp_content_type(mime)
+          |> put_resp_header("content-disposition", ~s(attachment; filename="#{file_name}"))
+
+        conn = send_file(conn, 200, tmp_path)
+        Task.start(fn -> Process.sleep(5_000); File.rm(tmp_path) end)
+        conn
+
+      {:error, :not_file_document} ->
+        conn
+        |> put_flash(:error, "This document is not an uploaded file.")
+        |> redirect(to: ~p"/sections/#{section_key}/documents/#{id}")
+
+      {:error, _reason} ->
+        conn
+        |> put_flash(:error, "Could not download file.")
+        |> redirect(to: ~p"/sections/#{section_key}/documents/#{id}")
+    end
+  end
+
+  def replace(conn, %{"section_key" => section_key, "id" => id, "file" => %Plug.Upload{} = upload}) do
+    prefix = conn.assigns.tenant_prefix
+    user = conn.assigns.current_user
+    doc = Documents.get_document!(prefix, id)
+
+    case Documents.replace_file_document(prefix, doc, user, upload) do
+      {:ok, _updated} ->
+        conn
+        |> put_flash(:info, "File replaced.")
+        |> redirect(to: ~p"/sections/#{section_key}/documents/#{id}")
+
+      {:error, :not_file_document} ->
+        conn
+        |> put_flash(:error, "Only file documents can be replaced.")
+        |> redirect(to: ~p"/sections/#{section_key}/documents/#{id}")
+
+      {:error, :invalid_mime} ->
+        conn
+        |> put_flash(:error, "File type not allowed.")
+        |> redirect(to: ~p"/sections/#{section_key}/documents/#{id}/edit")
+
+      {:error, :too_large} ->
+        conn
+        |> put_flash(:error, "File is too large (max 100 MB).")
+        |> redirect(to: ~p"/sections/#{section_key}/documents/#{id}/edit")
+
+      {:error, _reason} ->
+        conn
+        |> put_flash(:error, "Replace failed.")
+        |> redirect(to: ~p"/sections/#{section_key}/documents/#{id}/edit")
+    end
+  end
+
+  def replace(conn, %{"section_key" => section_key, "id" => id}) do
+    conn
+    |> put_flash(:error, "Please select a file.")
+    |> redirect(to: ~p"/sections/#{section_key}/documents/#{id}/edit")
+  end
+
   def download_pdf(conn, %{"section_key" => section_key, "id" => id}) do
     prefix = conn.assigns.tenant_prefix
     doc = Documents.get_document!(prefix, id)
@@ -218,8 +329,21 @@ defmodule AtriumWeb.DocumentController do
     end
   end
 
+  defp inline_images(html) do
+    Regex.replace(~r/src="(\/uploads\/[^"]+)"/, html, fn _, path ->
+      disk_path = Path.join(["priv", URI.decode(path)])
+      case File.read(disk_path) do
+        {:ok, data} ->
+          mime = MIME.from_path(disk_path)
+          ~s(src="data:#{mime};base64,#{Base.encode64(data)}")
+        {:error, _} ->
+          ~s(src="#{path}")
+      end
+    end)
+  end
+
   defp build_pdf_html(doc) do
-    body = doc.body_html || ""
+    body = doc.body_html |> Kernel.||("") |> inline_images()
 
     """
     <!DOCTYPE html>
@@ -240,6 +364,11 @@ defmodule AtriumWeb.DocumentController do
         code { background: #f1f5f9; border-radius: 3px; padding: .1em .35em; font-family: monospace; font-size: 10pt; }
         strong { font-weight: 700; }
         em { font-style: italic; }
+        img { max-width: 100%; height: auto; border-radius: 4px; }
+        [data-image-wrapper] { display: block; margin: 4px 0; line-height: 0; }
+        [data-image-wrapper][style*="float: right"] { float: right; margin-left: 1rem; margin-bottom: .5rem; }
+        [data-image-wrapper][style*="text-align: center"] { text-align: center; }
+        [data-image-wrapper]::after { content: ""; display: table; clear: both; }
         .doc-header { border-bottom: 1px solid #e2e8f0; padding-bottom: 16px; margin-bottom: 24px; }
         .doc-header h1 { font-size: 22pt; margin: 0 0 6px; }
         .doc-meta { font-size: 9pt; color: #64748b; }
