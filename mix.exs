@@ -62,6 +62,7 @@ defmodule Atrium.MixProject do
       {:cloak_ecto, "~> 1.3"},
       {:argon2_elixir, "~> 4.0"},
       {:swoosh, "~> 1.16"},
+      {:req, "~> 0.5"},
       {:assent, "~> 0.2"},
       {:jose, "~> 1.11"},
       {:plug_cowboy, "~> 2.7"},

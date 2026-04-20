@@ -1,7 +1,8 @@
 defmodule AtriumWeb.TenantAdmin.UserController do
   use AtriumWeb, :controller
 
-  alias Atrium.{Accounts, Authorization, Audit}
+  alias Atrium.{Accounts, Authorization, Audit, Mailer}
+  alias Atrium.Accounts.Emails
   alias Atrium.Authorization.SectionRegistry
 
   def index(conn, _params) do
@@ -20,7 +21,7 @@ defmodule AtriumWeb.TenantAdmin.UserController do
     actor = conn.assigns.current_user
 
     case Accounts.invite_user(prefix, %{name: params["name"], email: params["email"]}) do
-      {:ok, %{user: user}} ->
+      {:ok, %{user: user, token: token}} ->
         if params["is_admin"] == "true" do
           {:ok, _} = Accounts.set_admin(prefix, user, true)
         end
@@ -28,8 +29,10 @@ defmodule AtriumWeb.TenantAdmin.UserController do
         desired = decode_section_params(params["sections"] || %{})
         sync_permissions(prefix, user, desired, actor)
 
+        flash = deliver_invitation(conn, user, token)
+
         conn
-        |> put_flash(:info, "Invitation sent to #{user.email}")
+        |> put_flash(:info, flash)
         |> redirect(to: ~p"/admin/users/#{user.id}")
 
       {:error, changeset} ->
@@ -178,6 +181,31 @@ defmodule AtriumWeb.TenantAdmin.UserController do
     end
   end
 
+  def resend_invitation(conn, %{"id" => id}) do
+    prefix = conn.assigns.tenant_prefix
+    user = Accounts.get_user!(prefix, id)
+
+    if user.status != "invited" do
+      conn
+      |> put_flash(:error, "User is already #{user.status}; cannot resend invitation.")
+      |> redirect(to: ~p"/admin/users/#{user.id}")
+    else
+      case Accounts.reissue_invitation(prefix, user) do
+        {:ok, %{token: token}} ->
+          flash = deliver_invitation(conn, user, token)
+
+          conn
+          |> put_flash(:info, flash)
+          |> redirect(to: ~p"/admin/users/#{user.id}")
+
+        {:error, _} ->
+          conn
+          |> put_flash(:error, "Could not reissue invitation.")
+          |> redirect(to: ~p"/admin/users/#{user.id}")
+      end
+    end
+  end
+
   def restore(conn, %{"id" => id}) do
     prefix = conn.assigns.tenant_prefix
     user = Accounts.get_user!(prefix, id)
@@ -192,6 +220,20 @@ defmodule AtriumWeb.TenantAdmin.UserController do
   # ---------------------------------------------------------------------------
   # Private helpers
   # ---------------------------------------------------------------------------
+
+  defp deliver_invitation(conn, user, token) do
+    url = url(conn, ~p"/invitations/#{token}")
+
+    case Mailer.deliver(Emails.invitation_email(conn.assigns.tenant, user.email, url)) do
+      {:ok, _} ->
+        "Invitation sent to #{user.email}."
+
+      {:error, reason} ->
+        require Logger
+        Logger.error("Failed to deliver invitation to #{user.email}: #{inspect(reason)}")
+        "User created, but the invitation email could not be sent. Share this link manually: #{url}"
+    end
+  end
 
   defp enabled_sections(conn) do
     tenant = conn.assigns.tenant

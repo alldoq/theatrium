@@ -182,6 +182,7 @@ defmodule AtriumWeb.Router do
         get  "/users/:id",                UserController, :show
         post "/users/:id/permissions",    UserController, :update_permissions
         post "/users/:id/toggle_admin",   UserController, :toggle_admin
+        post "/users/:id/resend_invitation", UserController, :resend_invitation
         post "/users/:id/suspend",        UserController, :suspend
         post "/users/:id/restore",        UserController, :restore
         get  "/users/:id/profile",        UserController, :edit_profile

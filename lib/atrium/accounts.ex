@@ -27,6 +27,27 @@ defmodule Atrium.Accounts do
     end)
   end
 
+  def reissue_invitation(prefix, %User{} = user) do
+    Repo.transaction(fn ->
+      {_count, _} =
+        Repo.delete_all(
+          from(t in InvitationToken, where: t.user_id == ^user.id and is_nil(t.used_at)),
+          prefix: prefix
+        )
+
+      {raw, hash} = token_pair()
+
+      case insert_invitation_token(prefix, user, hash) do
+        {:ok, _} ->
+          {:ok, _} = Audit.log(prefix, "user.invitation_reissued", %{actor: :system, resource: {"User", user.id}})
+          %{user: user, token: raw}
+
+        {:error, cs} ->
+          Repo.rollback(cs)
+      end
+    end)
+  end
+
   def activate_user(prefix, raw_token, password) do
     hash = hash_token(raw_token)
 

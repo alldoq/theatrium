@@ -58,8 +58,12 @@ config :logger, :default_formatter,
 # Use Jason for JSON parsing in Phoenix
 config :phoenix, :json_library, Jason
 
-# Swoosh mailer — no HTTP client needed in dev/test
+# Swoosh mailer — dev/test have no adapter configured, so no HTTP client needed.
+# Runtime config sets the adapter + HTTP client for :prod.
 config :swoosh, :api_client, false
+
+# Default mailer adapter (overridden by config/runtime.exs in :prod).
+config :atrium, Atrium.Mailer, adapter: Swoosh.Adapters.Local
 
 # File-document encryption & storage
 config :atrium, :uploads_root, "priv/uploads"

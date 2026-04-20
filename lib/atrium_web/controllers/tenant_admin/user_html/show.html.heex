@@ -27,6 +27,13 @@
         </button>
       </form>
 
+      <%= if @user.status == "invited" do %>
+        <form action={~p"/admin/users/#{@user.id}/resend_invitation"} method="post" style="display:inline">
+          <input type="hidden" name="_csrf_token" value={Phoenix.Controller.get_csrf_token()} />
+          <button type="submit" class="atrium-btn atrium-btn-ghost">Resend invitation</button>
+        </form>
+      <% end %>
+
       <%= if @user.status == "active" do %>
         <form action={~p"/admin/users/#{@user.id}/suspend"} method="post" style="display:inline">
           <input type="hidden" name="_csrf_token" value={Phoenix.Controller.get_csrf_token()} />

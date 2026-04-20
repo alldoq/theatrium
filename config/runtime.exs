@@ -74,6 +74,19 @@ if config_env() == :prod do
     :uploads_root,
     System.get_env("ATRIUM_UPLOADS_ROOT") || "/home/user/atrium/shared/uploads"
 
+  sendgrid_api_key =
+    System.get_env("SENDGRID_API_KEY") ||
+      raise "SENDGRID_API_KEY must be set in production"
+
+  config :atrium, Atrium.Mailer,
+    adapter: Swoosh.Adapters.Sendgrid,
+    api_key: sendgrid_api_key
+
+  config :swoosh, :api_client, Swoosh.ApiClient.Req
+
+  config :atrium, :system_email,
+    System.get_env("SYSTEM_EMAIL") || "hello@alldoq.com"
+
   config :atrium, AtriumWeb.Endpoint,
     url: [host: host, port: 443, scheme: "https"],
     http: [
