@@ -76,6 +76,8 @@ defmodule AtriumWeb.ScormController do
   end
 
   def asset(conn, %{"id" => course_id, "package_id" => pkg_id, "path" => path_parts}) do
+    require Logger
+    Logger.info("SCORM_ASSET entered path=#{conn.request_path} parts=#{inspect(path_parts)}")
     prefix = conn.assigns.tenant_prefix
     pkg = Scorm.get_package!(prefix, pkg_id)
 

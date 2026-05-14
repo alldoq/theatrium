@@ -33,6 +33,8 @@ defmodule AtriumWeb.Plugs.Authorize do
     if Policy.can?(prefix, user, capability, resolved_target) do
       conn
     else
+      require Logger
+      Logger.warning("AUTHZ DENY path=#{conn.request_path} cap=#{capability} target=#{inspect(resolved_target)} user_id=#{inspect(user && user.id)} prefix=#{prefix}")
       conn
       |> put_resp_content_type("text/plain")
       |> send_resp(403, "Forbidden")
