@@ -1,17 +1,13 @@
 <div class="atrium-anim">
   <%!-- Hero --%>
-  <div style="background:linear-gradient(135deg,var(--blue-600) 0%,var(--blue-500) 50%,#6366f1 100%);border-radius:var(--radius);padding:32px;color:#fff;margin-bottom:24px;position:relative;overflow:hidden">
-    <div style="position:absolute;top:-40px;right:-40px;width:180px;height:180px;border-radius:50%;background:rgba(255,255,255,.08)"></div>
-    <div style="position:absolute;bottom:-60px;right:60px;width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,.06)"></div>
-    <div style="position:relative">
-      <div style="font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.08em;opacity:.85;margin-bottom:6px">Dashboard</div>
-      <h1 style="font-size:1.75rem;font-weight:700;margin:0 0 6px 0;letter-spacing:-.02em">
-        <%= if @current_user, do: "Welcome back, #{hd(String.split(@current_user.name))}", else: "Welcome to #{@tenant.name}" %>
-      </h1>
-      <p style="font-size:.9375rem;opacity:.85;margin:0">
-        <%= @tenant.name %> · <%= Calendar.strftime(Date.utc_today(), "%A, %-d %B %Y") %>
-      </p>
-    </div>
+  <div style="margin-bottom:28px">
+    <div class="atrium-page-eyebrow">Dashboard</div>
+    <h1 class="atrium-page-title">
+      <%= if @current_user, do: "Welcome back, #{hd(String.split(@current_user.name))}", else: "Welcome to #{@tenant.name}" %>
+    </h1>
+    <p class="atrium-page-subtitle">
+      <%= @tenant.name %> · <%= Calendar.strftime(Date.utc_today(), "%A, %-d %B %Y") %>
+    </p>
   </div>
 
   <%!-- Jump-to quick links --%>
@@ -22,16 +18,16 @@
     </div>
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px">
       <% jumps = [
-        %{href: "/learning", label: "Training", color: "#10b981", icon: "M3 8l5-5 5 5M8 3v10"},
-        %{href: "/compliance", label: "Policies", color: "#f59e0b", icon: "M8 2L3 4v4c0 3 2 5 5 6 3-1 5-3 5-6V4l-5-2z"},
-        %{href: "/sections/hr/forms", label: "Forms", color: "#6366f1", icon: "M3 2h10v12H3zM5 5h6M5 8h6M5 11h4"},
-        %{href: "/sections/hr/documents", label: "Onboarding", color: "#ec4899", icon: "M8 1l6 3v4c0 4-3 7-6 8-3-1-6-4-6-8V4l6-3z"},
-        %{href: "/directory", label: "Staff Directory", color: "#06b6d4", icon: "M5.5 6a2 2 0 100-4 2 2 0 000 4zM10.5 6a2 2 0 100-4 2 2 0 000 4zM2 13c0-2 1.5-3.5 3.5-3.5S9 11 9 13M7 13c0-2 1.5-3.5 3.5-3.5S14 11 14 13"},
-        %{href: "/tools", label: "Tools", color: "#8b5cf6", icon: "M10 3l3 3-7 7-3 1 1-3 7-7zM10 3l2-2 3 3-2 2"}
+        %{href: "/learning", label: "Training", icon: "M3 8l5-5 5 5M8 3v10"},
+        %{href: "/compliance", label: "Policies", icon: "M8 2L3 4v4c0 3 2 5 5 6 3-1 5-3 5-6V4l-5-2z"},
+        %{href: "/sections/hr/forms", label: "Forms", icon: "M3 2h10v12H3zM5 5h6M5 8h6M5 11h4"},
+        %{href: "/sections/hr/documents", label: "Onboarding", icon: "M8 1l6 3v4c0 4-3 7-6 8-3-1-6-4-6-8V4l6-3z"},
+        %{href: "/directory", label: "Staff Directory", icon: "M5.5 6a2 2 0 100-4 2 2 0 000 4zM10.5 6a2 2 0 100-4 2 2 0 000 4zM2 13c0-2 1.5-3.5 3.5-3.5S9 11 9 13M7 13c0-2 1.5-3.5 3.5-3.5S14 11 14 13"},
+        %{href: "/tools", label: "Tools", icon: "M10 3l3 3-7 7-3 1 1-3 7-7zM10 3l2-2 3 3-2 2"}
       ] %>
       <%= for j <- jumps do %>
-        <a href={j.href} class="atrium-jump-tile" style={"--accent:#{j.color}"}>
-          <span class="atrium-jump-icon" style={"background:#{j.color}1a;color:#{j.color}"}>
+        <a href={j.href} class="atrium-jump-tile">
+          <span class="atrium-jump-icon">
             <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
               <path d={j.icon}/>
             </svg>
@@ -83,7 +79,7 @@
         <div class="atrium-card" style="cursor:pointer;transition:transform .12s,box-shadow .12s" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 4px 16px rgba(0,0,0,.08)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
           <div class="atrium-card-body">
             <div style="display:flex;align-items:center;gap:12px">
-              <div style="width:40px;height:40px;border-radius:10px;background:#06b6d41a;color:#06b6d4;display:flex;align-items:center;justify-content:center">
+              <div style="width:40px;height:40px;border-radius:10px;background:var(--slate-50);color:var(--text-secondary);display:flex;align-items:center;justify-content:center">
                 <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75" style="width:20px;height:20px" stroke-linecap="round">
                   <circle cx="5.5" cy="6" r="2"/>
                   <circle cx="10.5" cy="6" r="2"/>
@@ -103,7 +99,7 @@
       <div class="atrium-card">
         <div class="atrium-card-body">
           <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
-            <div style="width:32px;height:32px;border-radius:8px;background:#ec48991a;color:#ec4899;display:flex;align-items:center;justify-content:center">
+            <div style="width:32px;height:32px;border-radius:8px;background:var(--slate-50);color:var(--text-secondary);display:flex;align-items:center;justify-content:center">
               <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75" style="width:16px;height:16px" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M8 1l6 3v4c0 4-3 7-6 8-3-1-6-4-6-8V4l6-3z"/>
               </svg>
@@ -179,7 +175,7 @@
     transition: border-color .15s, transform .12s, box-shadow .15s;
   }
   .atrium-jump-tile:hover {
-    border-color: var(--accent, var(--blue-500));
+    border-color: var(--blue-500);
     transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(0,0,0,.06);
   }
@@ -191,6 +187,13 @@
     height: 32px;
     border-radius: 8px;
     flex-shrink: 0;
+    background: var(--slate-50);
+    color: var(--text-secondary);
+    transition: background .12s, color .12s;
   }
   .atrium-jump-icon svg { width: 16px; height: 16px; }
+  .atrium-jump-tile:hover .atrium-jump-icon {
+    background: var(--blue-50);
+    color: var(--blue-600);
+  }
 </style>
