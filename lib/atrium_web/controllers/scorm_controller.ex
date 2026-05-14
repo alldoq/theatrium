@@ -77,27 +77,34 @@ defmodule AtriumWeb.ScormController do
 
   def asset(conn, %{"id" => course_id, "package_id" => pkg_id, "path" => path_parts}) do
     prefix = conn.assigns.tenant_prefix
-    _course = Learning.get_course!(prefix, course_id)
     pkg = Scorm.get_package!(prefix, pkg_id)
-    requested = Path.join(path_parts)
-    abs_dir = Scorm.package_dir(prefix, pkg.id)
-    candidate = Path.join(abs_dir, requested) |> Path.expand()
-    base = Path.expand(abs_dir)
 
-    cond do
-      not String.starts_with?(candidate, base) ->
-        conn |> send_resp(403, "forbidden")
+    # defensive: also confirm package belongs to course
+    if pkg.course_id != course_id do
+      conn |> send_resp(404, "not found")
+    else
+      requested = Path.join(path_parts)
+      abs_dir = Scorm.package_dir(prefix, pkg.id)
+      candidate = Path.join(abs_dir, requested) |> Path.expand()
+      base = Path.expand(abs_dir)
 
-      not File.regular?(candidate) ->
-        conn |> send_resp(404, "not found")
+      cond do
+        not String.starts_with?(candidate, base) ->
+          conn |> send_resp(403, "forbidden")
 
-      true ->
-        mime = mime_for(candidate)
-        conn
-        |> Plug.Conn.delete_resp_header("content-type")
-        |> Plug.Conn.put_resp_header("content-type", mime)
-        |> Plug.Conn.put_resp_header("x-content-type-options", "nosniff")
-        |> send_file(200, candidate)
+        not File.regular?(candidate) ->
+          conn |> send_resp(404, "not found: " <> requested)
+
+        true ->
+          mime = mime_for(candidate)
+          conn
+          |> put_root_layout(false)
+          |> put_layout(false)
+          |> Plug.Conn.delete_resp_header("content-type")
+          |> Plug.Conn.put_resp_header("content-type", mime)
+          |> Plug.Conn.put_resp_header("x-content-type-options", "nosniff")
+          |> send_file(200, candidate)
+      end
     end
   end
 
