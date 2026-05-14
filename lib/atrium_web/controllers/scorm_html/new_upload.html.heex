@@ -15,18 +15,22 @@
         <input type="hidden" name="_csrf_token" value={Plug.CSRFProtection.get_csrf_token()} />
         <div>
           <label class="atrium-label">SCORM package (.zip)</label>
-          <input type="file" name="scorm[file]" accept=".zip,application/zip" required class="atrium-input" />
-          <div style="font-size:.75rem;color:var(--text-tertiary);margin-top:4px">Max 500&nbsp;MB. Manifest <code>imsmanifest.xml</code> must be at the root of the archive.</div>
+          <div class="scorm-file-row">
+            <label for="scorm-file-input" class="atrium-btn atrium-btn-ghost" style="cursor:pointer;margin:0">Choose file…</label>
+            <input id="scorm-file-input" type="file" name="scorm[file]" accept=".zip,application/zip" required style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0" />
+            <span id="scorm-file-name" style="font-size:.875rem;color:var(--text-tertiary)">No file selected</span>
+          </div>
+          <div style="font-size:.75rem;color:var(--text-tertiary);margin-top:6px">Max 500&nbsp;MB. Manifest <code>imsmanifest.xml</code> must be at the root of the archive.</div>
         </div>
         <div>
-          <button type="submit" class="atrium-btn atrium-btn-primary">Upload</button>
+          <button type="submit" id="scorm-upload-submit" class="atrium-btn atrium-btn-primary" disabled>Upload</button>
         </div>
       </form>
     </div>
   </div>
 
   <%!-- Upload progress dialog --%>
-  <div id="scorm-upload-dialog" class="scorm-upload-backdrop" hidden>
+  <div id="scorm-upload-dialog" class="scorm-upload-backdrop" style="display:none">
     <div class="scorm-upload-modal" role="dialog" aria-modal="true" aria-labelledby="scorm-upload-title">
       <div class="scorm-upload-header">
         <div id="scorm-upload-title" class="scorm-upload-titletext">Uploading package</div>
@@ -38,10 +42,10 @@
         <span id="scorm-upload-bytes"></span>
       </div>
       <div id="scorm-upload-stage" class="scorm-upload-stage">Preparing…</div>
-      <div id="scorm-upload-error" class="scorm-upload-error" hidden></div>
+      <div id="scorm-upload-error" class="scorm-upload-error" style="display:none"></div>
       <div class="scorm-upload-actions">
         <button type="button" id="scorm-upload-cancel" class="atrium-btn atrium-btn-ghost">Cancel</button>
-        <button type="button" id="scorm-upload-close" class="atrium-btn atrium-btn-primary" hidden>Close</button>
+        <button type="button" id="scorm-upload-close" class="atrium-btn atrium-btn-primary" style="display:none">Close</button>
       </div>
     </div>
   </div>
@@ -103,6 +107,10 @@
     .scorm-upload-actions {
       display: flex; justify-content: flex-end; gap: 8px;
     }
+    .scorm-file-row {
+      display: flex; align-items: center; gap: 12px;
+      position: relative;
+    }
   </style>
 
   <script>
@@ -120,6 +128,32 @@
 
       if (!form) return;
 
+      const fileInputEl = document.getElementById("scorm-file-input");
+      const fileNameEl = document.getElementById("scorm-file-name");
+      const submitBtn = document.getElementById("scorm-upload-submit");
+
+      function fmtBytesSmall(n) {
+        if (n < 1024) return n + " B";
+        if (n < 1024*1024) return (n/1024).toFixed(1) + " KB";
+        if (n < 1024*1024*1024) return (n/(1024*1024)).toFixed(1) + " MB";
+        return (n/(1024*1024*1024)).toFixed(2) + " GB";
+      }
+
+      if (fileInputEl) {
+        fileInputEl.addEventListener("change", function() {
+          if (fileInputEl.files && fileInputEl.files.length > 0) {
+            const f = fileInputEl.files[0];
+            fileNameEl.textContent = f.name + " · " + fmtBytesSmall(f.size);
+            fileNameEl.style.color = "var(--text-primary)";
+            if (submitBtn) submitBtn.disabled = false;
+          } else {
+            fileNameEl.textContent = "No file selected";
+            fileNameEl.style.color = "var(--text-tertiary)";
+            if (submitBtn) submitBtn.disabled = true;
+          }
+        });
+      }
+
       let xhr;
       const courseShowUrl = <%= raw(Jason.encode!(~p"/learning/#{@course.id}")) %>;
 
@@ -131,25 +165,28 @@
         return (n/(1024*1024*1024)).toFixed(2) + " GB";
       }
 
+      function show(el)  { el.style.display = ""; el.hidden = false; }
+      function hide(el)  { el.style.display = "none"; el.hidden = true; }
+
       function showError(msg) {
         errBox.textContent = msg;
-        errBox.hidden = false;
+        show(errBox);
         stage.textContent = "Upload failed.";
         fill.classList.remove("indeterminate");
-        cancelBtn.hidden = true;
-        closeBtn.hidden = false;
+        hide(cancelBtn);
+        show(closeBtn);
         closeBtn.textContent = "Close";
       }
 
       function reset() {
-        dialog.hidden = true;
-        errBox.hidden = true;
+        hide(dialog);
+        hide(errBox);
         fill.style.width = "0%";
         fill.classList.remove("indeterminate");
         pct.textContent = "0%";
         bytesEl.textContent = "";
-        cancelBtn.hidden = false;
-        closeBtn.hidden = true;
+        show(cancelBtn);
+        hide(closeBtn);
       }
 
       closeBtn.addEventListener("click", reset);
@@ -162,23 +199,27 @@
       });
 
       form.addEventListener("submit", function(e) {
-        const fileInput = form.querySelector('input[type="file"]');
-        if (!fileInput || !fileInput.files || fileInput.files.length === 0) return;
+        const fileInput = fileInputEl || form.querySelector('input[type="file"]');
+        if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
+          e.preventDefault();
+          if (fileInput && fileInput.reportValidity) fileInput.reportValidity();
+          return;
+        }
         const file = fileInput.files[0];
 
         e.preventDefault();
 
         // open dialog
-        dialog.hidden = false;
+        show(dialog);
         fileEl.textContent = file.name + " · " + fmtBytes(file.size);
         stage.textContent = "Uploading…";
-        errBox.hidden = true;
+        hide(errBox);
         fill.classList.remove("indeterminate");
         fill.style.width = "0%";
         pct.textContent = "0%";
         bytesEl.textContent = "0 / " + fmtBytes(file.size);
-        cancelBtn.hidden = false;
-        closeBtn.hidden = true;
+        show(cancelBtn);
+        hide(closeBtn);
 
         const fd = new FormData(form);
 
@@ -195,7 +236,7 @@
             if (p === 100) {
               stage.textContent = "Extracting and parsing manifest…";
               fill.classList.add("indeterminate");
-              cancelBtn.hidden = true; // can't cancel server-side processing
+              hide(cancelBtn);
             }
           }
         };
