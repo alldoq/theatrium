@@ -92,8 +92,11 @@ defmodule AtriumWeb.ScormController do
         conn |> send_resp(404, "not found")
 
       true ->
+        mime = mime_for(candidate)
         conn
-        |> put_resp_content_type(mime_for(candidate))
+        |> Plug.Conn.delete_resp_header("content-type")
+        |> Plug.Conn.put_resp_header("content-type", mime)
+        |> Plug.Conn.put_resp_header("x-content-type-options", "nosniff")
         |> send_file(200, candidate)
     end
   end
