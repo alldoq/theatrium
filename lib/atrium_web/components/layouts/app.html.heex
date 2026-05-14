@@ -248,93 +248,47 @@
           </div>
         </div>
       <% end %>
+
+      <div class="atrium-hubnav-spacer"></div>
+
+      <a href={~p"/audit"} class={"atrium-hubnav-item#{if String.starts_with?(path, "/audit"), do: " active", else: ""}"}>
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75" style="width:13px;height:13px;margin-right:4px">
+          <path d="M2 4h12M2 8h8M2 12h5" stroke-linecap="round"/>
+        </svg>
+        Audit
+      </a>
+
+      <%= if assigns[:current_user] && @current_user.is_admin do %>
+        <% admin_active = String.starts_with?(path, "/admin/") %>
+        <div class="atrium-hubnav-group has-dropdown">
+          <a href={~p"/admin/users"} class={"atrium-hubnav-item#{if admin_active, do: " active", else: ""}"}>
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75" style="width:13px;height:13px;margin-right:4px" stroke-linecap="round">
+              <circle cx="8" cy="5" r="2.5"/>
+              <path d="M2.5 13c0-3 2.5-4.5 5.5-4.5s5.5 1.5 5.5 4.5"/>
+            </svg>
+            Admin
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75" style="width:10px;height:10px;margin-left:4px;opacity:.6">
+              <path d="M4 6l4 4 4-4" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </a>
+          <div class="atrium-hubnav-mega atrium-hubnav-mega--right" style="--col-count:1;min-width:220px">
+            <div class="atrium-hubnav-mega-grid">
+              <div class="atrium-hubnav-mega-col">
+                <div class="atrium-hubnav-mega-title">Administration</div>
+                <a href={~p"/admin/users"} class="atrium-hubnav-mega-link">Users</a>
+                <a href={~p"/admin/groups"} class="atrium-hubnav-mega-link">Groups</a>
+                <a href={~p"/admin/sections"} class="atrium-hubnav-mega-link">Section permissions</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      <% end %>
     </div>
   </nav>
 <% end %>
 
 <div class="atrium-layout">
-  <nav class="atrium-sidebar">
-    <%= if assigns[:nav] && @nav != [] do %>
-      <div class="atrium-sidebar-section">
-        <div class="atrium-sidebar-label">Sections</div>
-        <% dedicated = ~w(home news directory tools compliance helpdesk events learning feedback projects community) %>
-        <%= for entry <- @nav do %>
-          <% key = to_string(entry.key)
-             path = @conn.request_path
-             is_dedicated = key in dedicated
-             section_href = if is_dedicated, do: "/#{key}", else: "/sections/#{key}/documents"
-             section_active = if is_dedicated,
-               do: path == "/#{key}" or String.starts_with?(path, "/#{key}/"),
-               else: String.contains?(path, "/sections/#{key}/")
-             docs_active = !is_dedicated and section_active and String.contains?(path, "/documents")
-             forms_active = !is_dedicated and section_active and String.contains?(path, "/forms")
-          %>
-          <a href={section_href} class={"atrium-sidebar-item#{if section_active, do: " active", else: ""}"}>
-            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75">
-              <path d="M9 2H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V6L9 2z" stroke-linejoin="round"/>
-              <path d="M9 2v4h4" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-            <%= entry.name %>
-          </a>
-          <%= if section_active and not is_dedicated do %>
-            <a href={"/sections/#{key}/documents"} class={"atrium-sidebar-item#{if docs_active, do: " active", else: ""}"} style="padding-left:28px;font-size:.8125rem">
-              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75">
-                <path d="M2 4h12M2 8h8M2 12h5" stroke-linecap="round"/>
-              </svg>
-              Documents
-            </a>
-            <a href={"/sections/#{key}/forms"} class={"atrium-sidebar-item#{if forms_active, do: " active", else: ""}"} style="padding-left:28px;font-size:.8125rem">
-              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75">
-                <rect x="2" y="2" width="12" height="12" rx="1.5" stroke-linejoin="round"/>
-                <path d="M5 5.5h6M5 8h6M5 10.5h3" stroke-linecap="round"/>
-              </svg>
-              Forms
-            </a>
-          <% end %>
-        <% end %>
-      </div>
-    <% end %>
-    <div class="atrium-sidebar-section">
-      <a href={~p"/audit"} class="atrium-sidebar-item">
-        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75">
-          <path d="M2 4h12M2 8h8M2 12h5" stroke-linecap="round"/>
-        </svg>
-        Audit Log
-      </a>
-    </div>
-    <%= if assigns[:current_user] && @current_user.is_admin do %>
-      <div class="atrium-sidebar-section">
-        <div class="atrium-sidebar-label">Admin</div>
-        <% users_active = String.starts_with?(@conn.request_path, "/admin/users") %>
-        <% groups_active = String.starts_with?(@conn.request_path, "/admin/groups") %>
-        <% sections_active = String.starts_with?(@conn.request_path, "/admin/sections") %>
-        <a href={~p"/admin/users"} class={"atrium-sidebar-item#{if users_active, do: " active", else: ""}"}>
-          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75">
-            <circle cx="8" cy="5" r="2.5" stroke-linecap="round"/>
-            <path d="M2.5 13c0-3 2.5-4.5 5.5-4.5s5.5 1.5 5.5 4.5" stroke-linecap="round"/>
-          </svg>
-          Users
-        </a>
-        <a href={~p"/admin/groups"} class={"atrium-sidebar-item#{if groups_active, do: " active", else: ""}"}>
-          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round">
-            <circle cx="5.5" cy="6" r="2"/>
-            <circle cx="10.5" cy="6" r="2"/>
-            <path d="M2 13c0-2 1.5-3.5 3.5-3.5S9 11 9 13M7 13c0-2 1.5-3.5 3.5-3.5S14 11 14 13"/>
-          </svg>
-          Groups
-        </a>
-        <a href={~p"/admin/sections"} class={"atrium-sidebar-item#{if sections_active, do: " active", else: ""}"}>
-          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round">
-            <rect x="2.5" y="2.5" width="11" height="11" rx="1.5"/>
-            <path d="M2.5 6.5h11M6 6.5v7"/>
-          </svg>
-          Section permissions
-        </a>
-      </div>
-    <% end %>
-  </nav>
-
-  <main class="atrium-main">
+  <main class="atrium-main atrium-main--full">
     <.flash_group flash={@flash} />
     {@inner_content}
   </main>

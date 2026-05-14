@@ -201,6 +201,13 @@ body:not(:has(.atrium-hubnav)) .atrium-layout {
   padding: 28px 32px;
   max-width: 1200px;
 }
+.atrium-main--full {
+  margin-left: 0;
+  max-width: 1280px;
+  margin-right: auto;
+  margin-left: auto;
+  width: 100%;
+}
 
 /* ── Page header ── */
 .atrium-page-eyebrow {
@@ -712,6 +719,8 @@ textarea.atrium-input { height: auto; padding: 8px 10px; }
   color: var(--blue-600);
   border-bottom-color: var(--blue-500);
 }
+.atrium-hubnav-spacer { flex: 1; }
+.atrium-hubnav-mega--right { left: auto !important; right: 0; }
 .atrium-hubnav-mega {
   position: absolute;
   top: 100%;
