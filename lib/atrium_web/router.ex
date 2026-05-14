@@ -28,6 +28,15 @@ defmodule AtriumWeb.Router do
     plug :accepts, ["json"]
   end
 
+  # Minimal pipeline for serving SCORM static assets to authenticated users.
+  # Skips html accepts, layouts, csrf and other browser plumbing that mangles
+  # non-html responses.
+  pipeline :scorm_assets do
+    plug :fetch_session
+    plug AtriumWeb.Plugs.TenantResolver
+    plug AtriumWeb.Plugs.RequireUser
+  end
+
   pipeline :require_tenant_admin do
     plug AtriumWeb.Plugs.RequireTenantAdmin
   end
@@ -61,6 +70,12 @@ defmodule AtriumWeb.Router do
   scope "/", AtriumWeb, host: "admin." do
     pipe_through [:api]
     get "/healthz", HealthController, :index
+  end
+
+  # SCORM static assets — minimal pipeline, served outside the browser stack.
+  scope "/", AtriumWeb do
+    pipe_through [:scorm_assets]
+    get "/learning/:id/scorm/:package_id/content/*path", ScormController, :asset
   end
 
   # Tenant-scoped routes (any other host)
@@ -157,7 +172,6 @@ defmodule AtriumWeb.Router do
       post "/learning/:id/scorm",                                   ScormController, :create
       post "/learning/:id/scorm/:package_id/delete",                ScormController, :delete
       get  "/learning/:id/scorm/launch",                            ScormController, :launch
-      get  "/learning/:id/scorm/:package_id/content/*path",         ScormController, :asset
       post "/learning/:id/scorm/:package_id/commit",                ScormController, :commit
 
       get  "/events",              EventsController, :index

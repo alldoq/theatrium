@@ -4,7 +4,7 @@ defmodule AtriumWeb.ScormController do
 
   plug AtriumWeb.Plugs.Authorize,
        [capability: :view, target: {:section, "learning"}]
-       when action in [:launch, :asset, :commit]
+       when action in [:launch, :commit]
 
   plug AtriumWeb.Plugs.Authorize,
        [capability: :edit, target: {:section, "learning"}]
