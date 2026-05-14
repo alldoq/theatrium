@@ -11,7 +11,7 @@
 
   <div class="atrium-card" style="margin-bottom:24px">
     <div class="atrium-card-body">
-      <form method="post" action={~p"/learning/#{@course.id}/scorm"} enctype="multipart/form-data" style="display:flex;flex-direction:column;gap:14px">
+      <form id="scorm-upload-form" method="post" action={~p"/learning/#{@course.id}/scorm"} enctype="multipart/form-data" style="display:flex;flex-direction:column;gap:14px">
         <input type="hidden" name="_csrf_token" value={Plug.CSRFProtection.get_csrf_token()} />
         <div>
           <label class="atrium-label">SCORM package (.zip)</label>
@@ -24,6 +24,209 @@
       </form>
     </div>
   </div>
+
+  <%!-- Upload progress dialog --%>
+  <div id="scorm-upload-dialog" class="scorm-upload-backdrop" hidden>
+    <div class="scorm-upload-modal" role="dialog" aria-modal="true" aria-labelledby="scorm-upload-title">
+      <div class="scorm-upload-header">
+        <div id="scorm-upload-title" class="scorm-upload-titletext">Uploading package</div>
+        <div id="scorm-upload-filename" class="scorm-upload-sub"></div>
+      </div>
+      <div class="scorm-upload-bar"><div id="scorm-upload-fill" class="scorm-upload-fill"></div></div>
+      <div class="scorm-upload-meta">
+        <span id="scorm-upload-percent">0%</span>
+        <span id="scorm-upload-bytes"></span>
+      </div>
+      <div id="scorm-upload-stage" class="scorm-upload-stage">Preparing…</div>
+      <div id="scorm-upload-error" class="scorm-upload-error" hidden></div>
+      <div class="scorm-upload-actions">
+        <button type="button" id="scorm-upload-cancel" class="atrium-btn atrium-btn-ghost">Cancel</button>
+        <button type="button" id="scorm-upload-close" class="atrium-btn atrium-btn-primary" hidden>Close</button>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    .scorm-upload-backdrop {
+      position: fixed; inset: 0;
+      background: rgba(15,23,42,.45);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 200;
+      backdrop-filter: blur(2px);
+    }
+    .scorm-upload-modal {
+      background: #fff;
+      border-radius: var(--radius);
+      box-shadow: 0 20px 60px rgba(15,23,42,.25);
+      padding: 24px;
+      width: min(520px, 92vw);
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .scorm-upload-header { display: flex; flex-direction: column; gap: 4px; }
+    .scorm-upload-titletext { font-size: 1rem; font-weight: 600; color: var(--text-primary); }
+    .scorm-upload-sub { font-size: .8125rem; color: var(--text-tertiary); word-break: break-all; }
+    .scorm-upload-bar {
+      width: 100%; height: 8px;
+      background: var(--slate-50, #f1f5f9);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .scorm-upload-fill {
+      width: 0%; height: 100%;
+      background: linear-gradient(90deg, var(--blue-500), var(--blue-600));
+      transition: width .15s ease;
+      border-radius: 4px;
+    }
+    .scorm-upload-fill.indeterminate {
+      width: 30%;
+      animation: scorm-upload-pulse 1.4s ease-in-out infinite;
+    }
+    @keyframes scorm-upload-pulse {
+      0%   { transform: translateX(-100%); }
+      100% { transform: translateX(300%); }
+    }
+    .scorm-upload-meta {
+      display: flex; justify-content: space-between;
+      font-size: .75rem; color: var(--text-tertiary);
+      font-variant-numeric: tabular-nums;
+    }
+    .scorm-upload-stage {
+      font-size: .8125rem; color: var(--text-secondary);
+    }
+    .scorm-upload-error {
+      background: #fee2e2; color: #991b1b;
+      padding: 8px 12px; border-radius: 4px;
+      font-size: .8125rem;
+    }
+    .scorm-upload-actions {
+      display: flex; justify-content: flex-end; gap: 8px;
+    }
+  </style>
+
+  <script>
+    (function() {
+      const form = document.getElementById("scorm-upload-form");
+      const dialog = document.getElementById("scorm-upload-dialog");
+      const fill = document.getElementById("scorm-upload-fill");
+      const pct = document.getElementById("scorm-upload-percent");
+      const bytesEl = document.getElementById("scorm-upload-bytes");
+      const fileEl = document.getElementById("scorm-upload-filename");
+      const stage = document.getElementById("scorm-upload-stage");
+      const errBox = document.getElementById("scorm-upload-error");
+      const cancelBtn = document.getElementById("scorm-upload-cancel");
+      const closeBtn = document.getElementById("scorm-upload-close");
+
+      if (!form) return;
+
+      let xhr;
+      const courseShowUrl = <%= raw(Jason.encode!(~p"/learning/#{@course.id}")) %>;
+
+      function fmtBytes(n) {
+        if (!n) return "";
+        if (n < 1024) return n + " B";
+        if (n < 1024*1024) return (n/1024).toFixed(1) + " KB";
+        if (n < 1024*1024*1024) return (n/(1024*1024)).toFixed(1) + " MB";
+        return (n/(1024*1024*1024)).toFixed(2) + " GB";
+      }
+
+      function showError(msg) {
+        errBox.textContent = msg;
+        errBox.hidden = false;
+        stage.textContent = "Upload failed.";
+        fill.classList.remove("indeterminate");
+        cancelBtn.hidden = true;
+        closeBtn.hidden = false;
+        closeBtn.textContent = "Close";
+      }
+
+      function reset() {
+        dialog.hidden = true;
+        errBox.hidden = true;
+        fill.style.width = "0%";
+        fill.classList.remove("indeterminate");
+        pct.textContent = "0%";
+        bytesEl.textContent = "";
+        cancelBtn.hidden = false;
+        closeBtn.hidden = true;
+      }
+
+      closeBtn.addEventListener("click", reset);
+
+      cancelBtn.addEventListener("click", function() {
+        if (xhr) {
+          xhr.abort();
+        }
+        reset();
+      });
+
+      form.addEventListener("submit", function(e) {
+        const fileInput = form.querySelector('input[type="file"]');
+        if (!fileInput || !fileInput.files || fileInput.files.length === 0) return;
+        const file = fileInput.files[0];
+
+        e.preventDefault();
+
+        // open dialog
+        dialog.hidden = false;
+        fileEl.textContent = file.name + " · " + fmtBytes(file.size);
+        stage.textContent = "Uploading…";
+        errBox.hidden = true;
+        fill.classList.remove("indeterminate");
+        fill.style.width = "0%";
+        pct.textContent = "0%";
+        bytesEl.textContent = "0 / " + fmtBytes(file.size);
+        cancelBtn.hidden = false;
+        closeBtn.hidden = true;
+
+        const fd = new FormData(form);
+
+        xhr = new XMLHttpRequest();
+        xhr.open("POST", form.action, true);
+        xhr.setRequestHeader("Accept", "text/html");
+
+        xhr.upload.onprogress = function(ev) {
+          if (ev.lengthComputable) {
+            const p = Math.round((ev.loaded / ev.total) * 100);
+            fill.style.width = p + "%";
+            pct.textContent = p + "%";
+            bytesEl.textContent = fmtBytes(ev.loaded) + " / " + fmtBytes(ev.total);
+            if (p === 100) {
+              stage.textContent = "Extracting and parsing manifest…";
+              fill.classList.add("indeterminate");
+              cancelBtn.hidden = true; // can't cancel server-side processing
+            }
+          }
+        };
+
+        xhr.onload = function() {
+          // Phoenix redirects on success (302). XHR follows redirects to 200.
+          // On 200/302 we treat as success and navigate to the course page.
+          if (xhr.status >= 200 && xhr.status < 400) {
+            stage.textContent = "Done.";
+            fill.classList.remove("indeterminate");
+            fill.style.width = "100%";
+            window.location.href = courseShowUrl;
+          } else if (xhr.status === 413) {
+            showError("File too large. Max 500 MB.");
+          } else {
+            showError("Upload failed (HTTP " + xhr.status + "). Please try again.");
+          }
+        };
+
+        xhr.onerror = function() {
+          showError("Network error. Check your connection and try again.");
+        };
+
+        xhr.onabort = function() {
+          // user cancelled — reset() already called
+        };
+
+        xhr.send(fd);
+      });
+    })();
+  </script>
 
   <%= if @packages != [] do %>
     <div style="margin-bottom:12px">

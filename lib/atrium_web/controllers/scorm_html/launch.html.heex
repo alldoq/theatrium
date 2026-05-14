@@ -24,7 +24,8 @@
       Status: <span id="scorm-status-value"><%= @attempt.lesson_status %></span>
     </div>
   </div>
-  <iframe id="scorm-frame" class="scorm-frame" src={~p"/learning/#{@course.id}/scorm/#{@package.id}/content/#{@package.launch_url}"}></iframe>
+  <% iframe_src = "/learning/#{@course.id}/scorm/#{@package.id}/content/#{@package.launch_url}" %>
+  <iframe id="scorm-frame" class="scorm-frame" src={iframe_src}></iframe>
 
   <script>
     (function() {
