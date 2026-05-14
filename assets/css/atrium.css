@@ -25,6 +25,7 @@
   --border-subtle:  #f1f5f9;
 
   --topbar-h:  52px;
+  --hubnav-h:  44px;
   --sidebar-w: 248px;
   --radius-sm: 4px;
   --radius:    6px;
@@ -135,8 +136,11 @@ a { color: inherit; text-decoration: none; }
 /* ── Layout ── */
 .atrium-layout {
   display: flex;
-  padding-top: var(--topbar-h);
+  padding-top: calc(var(--topbar-h) + var(--hubnav-h));
   min-height: 100vh;
+}
+body:not(:has(.atrium-hubnav)) .atrium-layout {
+  padding-top: var(--topbar-h);
 }
 
 /* ── Sidebar ── */
@@ -145,7 +149,7 @@ a { color: inherit; text-decoration: none; }
   background: var(--slate-800);
   flex-shrink: 0;
   position: fixed;
-  top: var(--topbar-h); left: 0; bottom: 0;
+  top: calc(var(--topbar-h) + var(--hubnav-h)); left: 0; bottom: 0;
   overflow-y: auto;
   padding: 16px 0;
   border-right: 1px solid rgba(255,255,255,.05);
@@ -670,9 +674,12 @@ textarea.atrium-input { height: auto; padding: 8px 10px; }
 .atrium-hubnav {
   background: #fff;
   border-bottom: 1px solid var(--border);
-  position: sticky;
-  top: 0;
-  z-index: 40;
+  position: fixed;
+  top: var(--topbar-h);
+  left: 0;
+  right: 0;
+  height: var(--hubnav-h, 44px);
+  z-index: 90;
   box-shadow: 0 1px 2px rgba(0,0,0,.02);
 }
 .atrium-hubnav-inner {
