@@ -87,8 +87,16 @@ if config_env() == :prod do
   config :atrium, :system_email,
     System.get_env("SYSTEM_EMAIL") || "hello@alldoq.com"
 
-  # Optional. When unset, the AI chat widget responds with a "not configured" error.
-  config :atrium, :anthropic_api_key, System.get_env("ANTHROPIC_API_KEY")
+  # AI assistant — OpenAI-compatible endpoint (Open WebUI / Ollama).
+  # When OLLAMA_ANALYSIS_API_KEY is unset the chat widget returns 503.
+  config :atrium,
+    :ai_endpoint, System.get_env("OLLAMA_ANALYSIS_ENDPOINT") || "https://ai.alldoq.com"
+  config :atrium,
+    :ai_api_key, System.get_env("OLLAMA_ANALYSIS_API_KEY")
+  config :atrium,
+    :ai_api_path, System.get_env("OLLAMA_ANALYSIS_API_PATH") || "/api/chat/completions"
+  config :atrium,
+    :ai_model, System.get_env("OLLAMA_ANALYSIS_MODEL") || "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B-FP8"
 
   config :atrium, AtriumWeb.Endpoint,
     url: [host: host, port: 443, scheme: "https"],
