@@ -1,60 +1,3 @@
-<header class="atrium-topbar">
-  <div class="atrium-topbar-brand">
-    <% logo_url = assigns[:tenant] && get_in(@tenant.theme || %{}, ["logo_url"]) %>
-    <%= if logo_url do %>
-      <img src={logo_url} alt={@tenant.name} style="height:28px;max-width:120px;object-fit:contain" />
-    <% else %>
-      <div class="atrium-brand-icon">
-        <svg viewBox="0 0 16 16"><path d="M8 1L2 5v8h4v-4h4v4h4V5L8 1z"/></svg>
-      </div>
-      <span class="atrium-brand-name">
-        <%= if assigns[:tenant], do: @tenant.name, else: "Atrium" %>
-      </span>
-    <% end %>
-  </div>
-  <div class="atrium-brand-sep"></div>
-  <div class="atrium-topbar-search">
-    <svg class="atrium-topbar-search-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75">
-      <circle cx="7" cy="7" r="4.5"/><path d="M11 11l2.5 2.5" stroke-linecap="round"/>
-    </svg>
-    <input
-      type="text"
-      id="topbar-search"
-      data-search-input
-      placeholder="Search…"
-      autocomplete="off"
-    />
-    <kbd class="atrium-topbar-kbd">⌘K</kbd>
-  </div>
-  <div class="atrium-topbar-spacer"></div>
-  <div class="atrium-topbar-actions">
-    <a href="/notifications" class="atrium-topbar-btn" title="Notifications" style="position:relative">
-      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75">
-        <path d="M8 2a4.5 4.5 0 0 1 4.5 4.5c0 2.5.5 3.5 1.5 4.5H2c1-1 1.5-2 1.5-4.5A4.5 4.5 0 0 1 8 2zM6.5 13.5a1.5 1.5 0 0 0 3 0" stroke-linecap="round"/>
-      </svg>
-      <%= if assigns[:unread_notification_count] && @unread_notification_count > 0 do %>
-        <span style="position:absolute;top:4px;right:4px;width:7px;height:7px;border-radius:50%;background:var(--blue-500);border:1.5px solid var(--surface)"></span>
-      <% end %>
-    </a>
-    <div class="atrium-topbar-divider"></div>
-    <%= if assigns[:current_user] do %>
-      <div class="atrium-topbar-user">
-        <div class="atrium-user-avatar">
-          <%= @current_user.name |> String.split() |> Enum.map(&String.first/1) |> Enum.take(2) |> Enum.join() %>
-        </div>
-        <div>
-          <div class="atrium-user-name"><%= @current_user.name %></div>
-        </div>
-      </div>
-    <% end %>
-    <div class="atrium-topbar-divider"></div>
-    <.link href={~p"/logout"} method="delete" class="atrium-topbar-btn" title="Sign out">
-      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75">
-        <path d="M6 3H3a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h3M10 11l3-3-3-3M13 8H6" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-    </.link>
-  </div>
-</header>
 
 <%= if assigns[:nav] && @nav != [] do %>
   <% nav_keys = MapSet.new(@nav, &to_string(&1.key))
@@ -220,6 +163,24 @@
   %>
   <nav class="atrium-hubnav" aria-label="Hub navigation">
     <div class="atrium-hubnav-inner">
+      <a href="/" class="atrium-hubnav-brand">
+        <% logo_url = assigns[:tenant] && get_in(@tenant.theme || %{}, ["logo_url"]) %>
+        <%= if logo_url do %>
+          <img src={logo_url} alt={@tenant.name} style="height:24px;max-width:110px;object-fit:contain" />
+        <% else %>
+          <div class="atrium-brand-icon">
+            <svg viewBox="0 0 16 16"><path d="M8 1L2 5v8h4v-4h4v4h4V5L8 1z"/></svg>
+          </div>
+          <span class="atrium-hubnav-brand-name"><%= if assigns[:tenant], do: @tenant.name, else: "Atrium" %></span>
+        <% end %>
+      </a>
+      <div class="atrium-hubnav-search">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75" class="atrium-hubnav-search-icon">
+          <circle cx="7" cy="7" r="4.5"/><path d="M11 11l2.5 2.5" stroke-linecap="round"/>
+        </svg>
+        <input type="text" id="topbar-search" data-search-input placeholder="Search…" autocomplete="off" />
+        <kbd>⌘K</kbd>
+      </div>
       <a href="/" class={"atrium-hubnav-item#{if path == "/", do: " active", else: ""}"}>
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75" style="width:14px;height:14px">
           <path d="M2 8l6-5 6 5v6a1 1 0 0 1-1 1h-3v-4H6v4H3a1 1 0 0 1-1-1V8z" stroke-linejoin="round"/>
@@ -283,6 +244,30 @@
           </div>
         </div>
       <% end %>
+
+      <div class="atrium-hubnav-actions">
+        <a href="/notifications" class="atrium-hubnav-iconbtn" title="Notifications">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75">
+            <path d="M8 2a4.5 4.5 0 0 1 4.5 4.5c0 2.5.5 3.5 1.5 4.5H2c1-1 1.5-2 1.5-4.5A4.5 4.5 0 0 1 8 2zM6.5 13.5a1.5 1.5 0 0 0 3 0" stroke-linecap="round"/>
+          </svg>
+          <%= if assigns[:unread_notification_count] && @unread_notification_count > 0 do %>
+            <span class="atrium-hubnav-iconbtn-dot"></span>
+          <% end %>
+        </a>
+        <%= if assigns[:current_user] do %>
+          <div class="atrium-hubnav-user">
+            <div class="atrium-user-avatar">
+              <%= @current_user.name |> String.split() |> Enum.map(&String.first/1) |> Enum.take(2) |> Enum.join() %>
+            </div>
+            <span class="atrium-hubnav-user-name"><%= @current_user.name %></span>
+          </div>
+        <% end %>
+        <.link href={~p"/logout"} method="delete" class="atrium-hubnav-iconbtn" title="Sign out">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75">
+            <path d="M6 3H3a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h3M10 11l3-3-3-3M13 8H6" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </.link>
+      </div>
     </div>
   </nav>
 <% end %>
