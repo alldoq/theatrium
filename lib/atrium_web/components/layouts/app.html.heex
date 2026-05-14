@@ -57,64 +57,195 @@
 </header>
 
 <%= if assigns[:nav] && @nav != [] do %>
-  <% hub_dedicated = ~w(home news directory tools compliance helpdesk events learning feedback projects community)
-     hub_extras = %{
-       "home" => [],
-       "news" => [%{label: "All News", path: "/news"}],
-       "directory" => [%{label: "Browse Staff", path: "/directory"}],
-       "tools" => [%{label: "All Tools", path: "/tools"}],
-       "compliance" => [%{label: "Policies", path: "/compliance"}],
-       "helpdesk" => [%{label: "Submit Ticket", path: "/helpdesk"}],
-       "events" => [%{label: "Calendar", path: "/events"}, %{label: "New Event", path: "/events/new"}],
-       "learning" => [%{label: "All Courses", path: "/learning"}],
-       "feedback" => [%{label: "Surveys", path: "/feedback"}],
-       "projects" => [%{label: "All Projects", path: "/projects"}, %{label: "New Project", path: "/projects/new"}],
-       "community" => [%{label: "Discussions", path: "/community"}]
-     } %>
+  <% nav_keys = MapSet.new(@nav, &to_string(&1.key))
+     nav_by_key = Map.new(@nav, fn e -> {to_string(e.key), e} end)
+     path = @conn.request_path
+
+     section_link = fn key ->
+       dedicated = ~w(home news directory tools compliance helpdesk events learning feedback projects community)
+       if key in dedicated, do: "/#{key}", else: "/sections/#{key}/documents"
+     end
+
+     subsection_links = fn key ->
+       case Map.get(nav_by_key, key) do
+         %{children: children} when children != [] ->
+           Enum.map(children, &%{label: &1.name, path: "/sections/#{key}/documents?subsection=#{&1.slug}"})
+         _ -> []
+       end
+     end
+
+     hub_groups = [
+       %{
+         label: "News",
+         requires: ["news"],
+         href: "/news",
+         columns: [
+           %{
+             title: "News & Announcements",
+             links: [
+               %{label: "Latest news", path: "/news"},
+               %{label: "Pinned announcements", path: "/home"}
+             ]
+           },
+           %{
+             title: "Events",
+             requires: "events",
+             links: [
+               %{label: "Calendar", path: "/events"},
+               %{label: "Upcoming", path: "/events"}
+             ]
+           },
+           %{
+             title: "Community",
+             requires: "community",
+             links: [
+               %{label: "Discussions", path: "/community"}
+             ]
+           }
+         ]
+       },
+       %{
+         label: "Our Organisation",
+         requires: ["directory", "hr", "departments"],
+         href: "/directory",
+         columns: [
+           %{
+             title: "People",
+             links: [
+               %{label: "Staff Directory", path: "/directory", requires: "directory"},
+               %{label: "Org Chart", path: "/directory", requires: "directory"}
+             ]
+           },
+           %{
+             title: "HR & People Services",
+             requires: "hr",
+             links: ([%{label: "HR Portal", path: section_link.("hr")},
+                      %{label: "Policies", path: "/sections/hr/documents"},
+                      %{label: "Forms", path: "/sections/hr/forms"}]
+                     ++ subsection_links.("hr")) |> Enum.uniq_by(& &1.label)
+           },
+           %{
+             title: "Departments & Teams",
+             requires: "departments",
+             links: ([%{label: "All departments", path: section_link.("departments")}]
+                     ++ subsection_links.("departments")) |> Enum.uniq_by(& &1.label)
+           }
+         ]
+       },
+       %{
+         label: "Systems & Processes",
+         requires: ["compliance", "tools", "helpdesk"],
+         href: "/tools",
+         columns: [
+           %{
+             title: "Compliance & Quality",
+             requires: "compliance",
+             links: [
+               %{label: "Compliance Portal", path: "/compliance"},
+               %{label: "Controlled Documents", path: "/sections/docs/documents", requires: "docs"},
+               %{label: "Incident Management", path: "/sections/compliance/forms"}
+             ]
+           },
+           %{
+             title: "IT & Support",
+             requires: "helpdesk",
+             links: [
+               %{label: "Help Desk", path: "/helpdesk"},
+               %{label: "Submit Ticket", path: "/helpdesk"}
+             ]
+           },
+           %{
+             title: "Tools & Applications",
+             requires: "tools",
+             links: [
+               %{label: "All Tools", path: "/tools"}
+             ]
+           }
+         ]
+       },
+       %{
+         label: "Resources",
+         requires: ["docs", "learning"],
+         href: "/learning",
+         columns: [
+           %{
+             title: "Knowledge Base",
+             requires: "docs",
+             links: ([%{label: "Browse documents", path: section_link.("docs")}]
+                     ++ subsection_links.("docs")) |> Enum.uniq_by(& &1.label)
+           },
+           %{
+             title: "Learning & Development",
+             requires: "learning",
+             links: [
+               %{label: "All courses", path: "/learning"},
+               %{label: "New course", path: "/learning/new"}
+             ]
+           },
+           %{
+             title: "Projects",
+             requires: "projects",
+             links: [
+               %{label: "All projects", path: "/projects"},
+               %{label: "New project", path: "/projects/new"}
+             ]
+           }
+         ]
+       }
+     ]
+
+     filter_link = fn link ->
+       case Map.get(link, :requires) do
+         nil -> true
+         k -> MapSet.member?(nav_keys, k)
+       end
+     end
+
+     filter_column = fn col ->
+       case Map.get(col, :requires) do
+         nil -> col.links |> Enum.filter(filter_link) |> length() > 0
+         k -> MapSet.member?(nav_keys, k) and col.links |> Enum.filter(filter_link) |> length() > 0
+       end
+     end
+
+     visible_groups =
+       Enum.flat_map(hub_groups, fn group ->
+         if Enum.any?(group.requires, &MapSet.member?(nav_keys, &1)) do
+           cols = Enum.filter(group.columns, filter_column)
+           if cols == [], do: [], else: [%{group | columns: cols}]
+         else
+           []
+         end
+       end)
+  %>
   <nav class="atrium-hubnav" aria-label="Hub navigation">
     <div class="atrium-hubnav-inner">
-      <a href="/" class={"atrium-hubnav-item#{if @conn.request_path == "/", do: " active", else: ""}"}>
+      <a href="/" class={"atrium-hubnav-item#{if path == "/", do: " active", else: ""}"}>
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75" style="width:14px;height:14px">
           <path d="M2 8l6-5 6 5v6a1 1 0 0 1-1 1h-3v-4H6v4H3a1 1 0 0 1-1-1V8z" stroke-linejoin="round"/>
         </svg>
         Dashboard
       </a>
-      <%= for entry <- @nav do %>
-        <% key = to_string(entry.key)
-           is_dedicated = key in hub_dedicated
-           section_href = if is_dedicated, do: "/#{key}", else: "/sections/#{key}/documents"
-           path = @conn.request_path
-           active = if is_dedicated,
-             do: path == "/#{key}" or String.starts_with?(path, "/#{key}/"),
-             else: String.contains?(path, "/sections/#{key}/")
-           extras = if is_dedicated, do: Map.get(hub_extras, key, []), else: []
-           has_dropdown = entry.children != [] or extras != [] or not is_dedicated
-        %>
-        <div class={"atrium-hubnav-group#{if has_dropdown, do: " has-dropdown", else: ""}"}>
-          <a href={section_href} class={"atrium-hubnav-item#{if active, do: " active", else: ""}"}>
-            <%= entry.name %>
-            <%= if has_dropdown do %>
-              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75" style="width:10px;height:10px;margin-left:2px;opacity:.6">
-                <path d="M4 6l4 4 4-4" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            <% end %>
+      <%= for group <- visible_groups do %>
+        <div class="atrium-hubnav-group has-dropdown">
+          <a href={group.href} class="atrium-hubnav-item">
+            <%= group.label %>
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75" style="width:10px;height:10px;margin-left:4px;opacity:.6">
+              <path d="M4 6l4 4 4-4" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
           </a>
-          <%= if has_dropdown do %>
-            <div class="atrium-hubnav-dropdown">
-              <%= for child <- entry.children do %>
-                <a href={"/sections/#{key}/documents?subsection=#{child.slug}"} class="atrium-hubnav-dropdown-item">
-                  <%= child.name %>
-                </a>
-              <% end %>
-              <%= if not is_dedicated do %>
-                <a href={"/sections/#{key}/documents"} class="atrium-hubnav-dropdown-item">Documents</a>
-                <a href={"/sections/#{key}/forms"} class="atrium-hubnav-dropdown-item">Forms</a>
-              <% end %>
-              <%= for extra <- extras do %>
-                <a href={extra.path} class="atrium-hubnav-dropdown-item"><%= extra.label %></a>
+          <div class="atrium-hubnav-mega" style={"--col-count:#{length(group.columns)}"}>
+            <div class="atrium-hubnav-mega-grid">
+              <%= for col <- group.columns do %>
+                <div class="atrium-hubnav-mega-col">
+                  <div class="atrium-hubnav-mega-title"><%= col.title %></div>
+                  <%= for link <- Enum.filter(col.links, filter_link) do %>
+                    <a href={link.path} class="atrium-hubnav-mega-link"><%= link.label %></a>
+                  <% end %>
+                </div>
               <% end %>
             </div>
-          <% end %>
+          </div>
         </div>
       <% end %>
     </div>
