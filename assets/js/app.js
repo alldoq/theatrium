@@ -252,18 +252,35 @@ if (document.readyState === "loading") {
     const fab = document.getElementById("atrium-ai-fab")
     const panel = document.getElementById("atrium-ai-panel")
     const closeBtn = document.getElementById("atrium-ai-close")
+    const minimizeBtn = document.getElementById("atrium-ai-minimize")
     const form = document.getElementById("atrium-ai-form")
     const input = document.getElementById("atrium-ai-input")
     const messages = document.getElementById("atrium-ai-messages")
 
     if (!fab || !panel) return
 
-    const history = []
+    let history = []
 
-    function open() { panel.hidden = false; setTimeout(() => input && input.focus(), 50) }
-    function close() { panel.hidden = true }
+    function open() {
+      panel.hidden = false
+      panel.style.display = ""
+      setTimeout(() => input && input.focus(), 50)
+    }
+    function minimize() {
+      panel.hidden = true
+      panel.style.display = "none"
+    }
+    function close() {
+      minimize()
+      history = []
+      // reset messages to just the greeting (first child)
+      while (messages.children.length > 1) messages.removeChild(messages.lastChild)
+    }
 
-    fab.addEventListener("click", () => { panel.hidden ? open() : close() })
+    fab.addEventListener("click", () => {
+      if (panel.hidden) open(); else minimize()
+    })
+    minimizeBtn && minimizeBtn.addEventListener("click", minimize)
     closeBtn.addEventListener("click", close)
 
     function escapeHtml(s) {

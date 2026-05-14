@@ -293,15 +293,20 @@
     </svg>
   </button>
 
-  <div id="atrium-ai-panel" class="atrium-ai-panel" hidden>
+  <div id="atrium-ai-panel" class="atrium-ai-panel" hidden style="display:none">
     <div class="atrium-ai-header">
       <div>
         <div class="atrium-ai-title">Ask the intranet</div>
         <div class="atrium-ai-sub">AI assistant · uses content you can view</div>
       </div>
-      <button type="button" id="atrium-ai-close" class="atrium-ai-iconbtn" aria-label="Close">
-        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><path d="M2 2l12 12M14 2L2 14" stroke-linecap="round"/></svg>
-      </button>
+      <div style="display:flex;gap:4px">
+        <button type="button" id="atrium-ai-minimize" class="atrium-ai-iconbtn" aria-label="Minimize" title="Minimize">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><path d="M3 12h10" stroke-linecap="round"/></svg>
+        </button>
+        <button type="button" id="atrium-ai-close" class="atrium-ai-iconbtn" aria-label="Close" title="Close and reset">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><path d="M2 2l12 12M14 2L2 14" stroke-linecap="round"/></svg>
+        </button>
+      </div>
     </div>
     <div id="atrium-ai-messages" class="atrium-ai-messages">
       <div class="atrium-ai-msg atrium-ai-msg--assistant">
