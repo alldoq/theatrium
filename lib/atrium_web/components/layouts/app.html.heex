@@ -56,6 +56,71 @@
   </div>
 </header>
 
+<%= if assigns[:nav] && @nav != [] do %>
+  <% hub_dedicated = ~w(home news directory tools compliance helpdesk events learning feedback projects community)
+     hub_extras = %{
+       "home" => [],
+       "news" => [%{label: "All News", path: "/news"}],
+       "directory" => [%{label: "Browse Staff", path: "/directory"}],
+       "tools" => [%{label: "All Tools", path: "/tools"}],
+       "compliance" => [%{label: "Policies", path: "/compliance"}],
+       "helpdesk" => [%{label: "Submit Ticket", path: "/helpdesk"}],
+       "events" => [%{label: "Calendar", path: "/events"}, %{label: "New Event", path: "/events/new"}],
+       "learning" => [%{label: "All Courses", path: "/learning"}],
+       "feedback" => [%{label: "Surveys", path: "/feedback"}],
+       "projects" => [%{label: "All Projects", path: "/projects"}, %{label: "New Project", path: "/projects/new"}],
+       "community" => [%{label: "Discussions", path: "/community"}]
+     } %>
+  <nav class="atrium-hubnav" aria-label="Hub navigation">
+    <div class="atrium-hubnav-inner">
+      <a href="/" class={"atrium-hubnav-item#{if @conn.request_path == "/", do: " active", else: ""}"}>
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75" style="width:14px;height:14px">
+          <path d="M2 8l6-5 6 5v6a1 1 0 0 1-1 1h-3v-4H6v4H3a1 1 0 0 1-1-1V8z" stroke-linejoin="round"/>
+        </svg>
+        Dashboard
+      </a>
+      <%= for entry <- @nav do %>
+        <% key = to_string(entry.key)
+           is_dedicated = key in hub_dedicated
+           section_href = if is_dedicated, do: "/#{key}", else: "/sections/#{key}/documents"
+           path = @conn.request_path
+           active = if is_dedicated,
+             do: path == "/#{key}" or String.starts_with?(path, "/#{key}/"),
+             else: String.contains?(path, "/sections/#{key}/")
+           extras = if is_dedicated, do: Map.get(hub_extras, key, []), else: []
+           has_dropdown = entry.children != [] or extras != [] or not is_dedicated
+        %>
+        <div class={"atrium-hubnav-group#{if has_dropdown, do: " has-dropdown", else: ""}"}>
+          <a href={section_href} class={"atrium-hubnav-item#{if active, do: " active", else: ""}"}>
+            <%= entry.name %>
+            <%= if has_dropdown do %>
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75" style="width:10px;height:10px;margin-left:2px;opacity:.6">
+                <path d="M4 6l4 4 4-4" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            <% end %>
+          </a>
+          <%= if has_dropdown do %>
+            <div class="atrium-hubnav-dropdown">
+              <%= for child <- entry.children do %>
+                <a href={"/sections/#{key}/documents?subsection=#{child.slug}"} class="atrium-hubnav-dropdown-item">
+                  <%= child.name %>
+                </a>
+              <% end %>
+              <%= if not is_dedicated do %>
+                <a href={"/sections/#{key}/documents"} class="atrium-hubnav-dropdown-item">Documents</a>
+                <a href={"/sections/#{key}/forms"} class="atrium-hubnav-dropdown-item">Forms</a>
+              <% end %>
+              <%= for extra <- extras do %>
+                <a href={extra.path} class="atrium-hubnav-dropdown-item"><%= extra.label %></a>
+              <% end %>
+            </div>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+  </nav>
+<% end %>
+
 <div class="atrium-layout">
   <nav class="atrium-sidebar">
     <%= if assigns[:nav] && @nav != [] do %>
