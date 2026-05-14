@@ -102,14 +102,11 @@ defmodule AtriumWeb.ScormController do
 
         true ->
           mime = mime_for(candidate)
-          Logger.info("SCORM_ASSET 200 sending mime=#{mime} size=#{File.stat!(candidate).size}")
+          body = File.read!(candidate)
+          Logger.info("SCORM_ASSET 200 BODY_READ mime=#{mime} size=#{byte_size(body)}")
           conn
-          |> put_root_layout(false)
-          |> put_layout(false)
-          |> Plug.Conn.delete_resp_header("content-type")
-          |> Plug.Conn.put_resp_header("content-type", mime)
-          |> Plug.Conn.put_resp_header("x-content-type-options", "nosniff")
-          |> send_file(200, candidate)
+          |> Plug.Conn.put_resp_content_type(mime)
+          |> Plug.Conn.send_resp(200, body)
       end
     end
   end
