@@ -103,10 +103,13 @@ defmodule AtriumWeb.ScormController do
         true ->
           mime = mime_for(candidate)
           body = File.read!(candidate)
-          Logger.info("SCORM_ASSET 200 BODY_READ mime=#{mime} size=#{byte_size(body)}")
-          conn
-          |> Plug.Conn.put_resp_content_type(mime)
-          |> Plug.Conn.send_resp(200, body)
+          Logger.info("SCORM_ASSET 200 BODY_READ mime=#{mime} size=#{byte_size(body)} conn.status=#{inspect(conn.status)} conn.halted=#{inspect(conn.halted)} resp_headers=#{inspect(conn.resp_headers)}")
+          result =
+            conn
+            |> Plug.Conn.put_resp_content_type(mime)
+            |> Plug.Conn.send_resp(200, body)
+          Logger.info("SCORM_ASSET AFTER_SEND status=#{result.status} state=#{result.state}")
+          result
       end
     end
   end
