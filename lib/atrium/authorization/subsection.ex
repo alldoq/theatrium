@@ -8,12 +8,13 @@ defmodule Atrium.Authorization.Subsection do
     field :slug, :string
     field :name, :string
     field :description, :string
+    field :is_private, :boolean, default: false
     timestamps(type: :utc_datetime_usec)
   end
 
   def create_changeset(ss, attrs) do
     ss
-    |> cast(attrs, [:section_key, :slug, :name, :description])
+    |> cast(attrs, [:section_key, :slug, :name, :description, :is_private])
     |> validate_required([:section_key, :slug, :name])
     |> validate_format(:slug, ~r/^[a-z0-9_-]+$/)
     |> validate_section_supports_subsections()

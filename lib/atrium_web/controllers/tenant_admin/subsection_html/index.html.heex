@@ -23,7 +23,12 @@
       <tbody>
         <%= for ss <- @subsections do %>
           <tr>
-            <td style="font-weight:500"><%= ss.name %></td>
+            <td style="font-weight:500">
+              <%= ss.name %>
+              <%= if Map.get(ss, :is_private) do %>
+                <span style="margin-left:6px;font-size:.625rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#b45309;background:#fef3c7;padding:2px 6px;border-radius:4px">Private</span>
+              <% end %>
+            </td>
             <td style="font-family:'IBM Plex Mono',monospace;font-size:.8125rem;color:var(--text-tertiary)"><%= ss.slug %></td>
             <td style="text-align:right">
               <form method="post" action={~p"/admin/sections/#{@section_key}/subsections/#{ss.id}/delete"} style="display:inline">

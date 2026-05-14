@@ -24,6 +24,24 @@
           <label class="atrium-label">Description <span style="color:var(--text-tertiary);font-weight:400">(optional)</span></label>
           <input type="text" name="subsection[description]" class="atrium-input" />
         </div>
+        <div style="border-top:1px solid var(--border);padding-top:14px">
+          <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer">
+            <input type="checkbox" name="subsection[is_private]" value="true" id="ss-private" style="accent-color:var(--blue-500);width:14px;height:14px;margin-top:3px" onchange="document.getElementById('ss-restricted-group').style.display = this.checked ? 'block' : 'none'" />
+            <span>
+              <span style="font-size:.875rem;font-weight:500;color:var(--text-primary)">Private area (restrict to one group)</span>
+              <span style="display:block;font-size:.75rem;color:var(--text-tertiary);margin-top:2px">Only members of the selected group see documents and forms here. Useful for department-only spaces (e.g. Finance, Marketing).</span>
+            </span>
+          </label>
+          <div id="ss-restricted-group" style="display:none;margin-top:12px;margin-left:22px">
+            <label class="atrium-label">Restricted to group</label>
+            <select name="subsection[restricted_group_id]" class="atrium-input">
+              <option value="">— pick a group —</option>
+              <%= for g <- @groups do %>
+                <option value={g.id}><%= g.name %></option>
+              <% end %>
+            </select>
+          </div>
+        </div>
       </div>
     </div>
     <div style="display:flex;gap:8px">

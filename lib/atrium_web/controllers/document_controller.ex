@@ -27,7 +27,14 @@ defmodule AtriumWeb.DocumentController do
     opts = []
     opts = if s = params["subsection_slug"], do: Keyword.put(opts, :subsection_slug, s), else: opts
     opts = if st = params["status"], do: Keyword.put(opts, :status, st), else: opts
-    documents = Documents.list_documents(prefix, section_key, opts)
+    documents =
+      Documents.list_documents(prefix, section_key, opts)
+      |> Enum.filter(fn d ->
+        case d.subsection_slug do
+          nil -> true
+          slug -> Atrium.Authorization.Policy.can?(prefix, user, :view, {:subsection, section_key, slug})
+        end
+      end)
     can_edit = Atrium.Authorization.Policy.can?(prefix, user, :edit, {:section, section_key})
     section = Atrium.Authorization.SectionRegistry.get(section_key)
     section_name = if section, do: section.name, else: section_key
@@ -104,6 +111,20 @@ defmodule AtriumWeb.DocumentController do
     prefix = conn.assigns.tenant_prefix
     user = conn.assigns.current_user
     doc = Documents.get_document!(prefix, id)
+
+    if doc.subsection_slug &&
+         not Atrium.Authorization.Policy.can?(prefix, user, :view, {:subsection, section_key, doc.subsection_slug}) do
+      conn
+      |> put_flash(:error, "You do not have access to this document.")
+      |> redirect(to: ~p"/sections/#{section_key}/documents")
+    else
+      show_document(conn, section_key, doc)
+    end
+  end
+
+  defp show_document(conn, section_key, doc) do
+    prefix = conn.assigns.tenant_prefix
+    user = conn.assigns.current_user
     versions = Documents.list_versions(prefix, doc.id)
     history = Atrium.Audit.history_for(prefix, "Document", doc.id)
     comments = Documents.list_comments(prefix, doc.id)

@@ -51,19 +51,29 @@ defmodule Atrium.Authorization.Policy do
   defp resolve_subsection(prefix, user, cap, {:subsection, section_key, sub_slug}) do
     section_key = to_string(section_key)
     principals = principals_for(prefix, user)
+    private? = subsection_private?(prefix, section_key, sub_slug)
 
     # For each principal, determine effective ACL set on this subsection.
     Enum.any?(principals, fn principal ->
       case subsection_rows_for(prefix, section_key, sub_slug, principal) do
         [] ->
-          # Fall through to parent for this principal
-          section_grant?(prefix, section_key, principal, cap)
+          # Private subsections do NOT fall through — only explicit grants count.
+          if private?, do: false, else: section_grant?(prefix, section_key, principal, cap)
 
         rows ->
-          # Child decides for this principal
           Enum.any?(rows, &(&1.capability == cap))
       end
     end)
+  end
+
+  defp subsection_private?(prefix, section_key, sub_slug) do
+    Repo.one(
+      from(s in Atrium.Authorization.Subsection,
+        where: s.section_key == ^section_key and s.slug == ^sub_slug,
+        select: s.is_private
+      ),
+      prefix: prefix
+    ) || false
   end
 
   defp principals_for(prefix, %User{id: id} = user) do

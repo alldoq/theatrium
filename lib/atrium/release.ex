@@ -35,6 +35,15 @@ defmodule Atrium.Release do
     for tenant <- Atrium.Tenants.list_tenants() do
       Logger.info("Migrating tenant schema: #{tenant.slug}")
       Triplex.migrate(tenant.slug)
+      seed_tenant_idempotent(tenant.slug)
+    end
+  end
+
+  defp seed_tenant_idempotent(prefix) do
+    try do
+      Atrium.Tenants.Seed.ensure_default_acls(prefix)
+    rescue
+      e -> Logger.warning("Idempotent seed failed for #{prefix}: #{inspect(e)}")
     end
   end
 

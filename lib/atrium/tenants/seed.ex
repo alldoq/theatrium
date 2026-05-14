@@ -16,17 +16,44 @@ defmodule Atrium.Tenants.Seed do
     %{slug: "compliance_officers", name: "Compliance Officers", description: "Compliance"}
   ]
 
+  @hr_subsections [
+    %{slug: "employee-documents", name: "Employee Documents",
+      description: "Personnel files and contracts"},
+    %{slug: "recruitment", name: "Recruitment",
+      description: "Job descriptions, candidate materials"},
+    %{slug: "policies", name: "Policies",
+      description: "HR policies and procedures"},
+    %{slug: "template-docs", name: "Template Documents",
+      description: "Reusable HR templates"},
+    %{slug: "learning-development", name: "Learning & Development",
+      description: "P&C training materials and L&D planning"}
+  ]
+
   def run(prefix) do
     seed_groups(prefix)
     seed_default_acls(prefix)
+    seed_hr_subsections(prefix)
     :ok
   end
 
   # Idempotent re-seed: inserts any missing default ACLs and syncs all_staff membership.
   def ensure_default_acls(prefix) do
     seed_default_acls(prefix)
+    seed_hr_subsections(prefix)
     sync_all_staff(prefix)
     :ok
+  end
+
+  def seed_hr_subsections(prefix) do
+    existing =
+      Authorization.list_subsections(prefix, "hr")
+      |> MapSet.new(& &1.slug)
+
+    Enum.each(@hr_subsections, fn attrs ->
+      unless MapSet.member?(existing, attrs.slug) do
+        Authorization.create_subsection(prefix, Map.put(attrs, :section_key, "hr"))
+      end
+    end)
   end
 
   defp sync_all_staff(prefix) do

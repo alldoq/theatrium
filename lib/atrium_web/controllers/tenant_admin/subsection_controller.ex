@@ -17,24 +17,51 @@ defmodule AtriumWeb.TenantAdmin.SubsectionController do
 
   def new(conn, %{"section_key" => section_key}) do
     section = SectionRegistry.get(section_key)
+    prefix = conn.assigns.tenant_prefix
 
     unless section && section.supports_subsections do
       conn |> put_flash(:error, "This section does not support subsections.") |> redirect(to: ~p"/admin/users") |> halt()
     else
-      render(conn, :new, section: section, section_key: section_key, changeset: Subsection.create_changeset(%Subsection{}, %{}))
+      groups = Authorization.list_groups(prefix)
+      render(conn, :new,
+        section: section,
+        section_key: section_key,
+        groups: groups,
+        changeset: Subsection.create_changeset(%Subsection{}, %{})
+      )
     end
   end
 
   def create(conn, %{"section_key" => section_key, "subsection" => params}) do
     prefix = conn.assigns.tenant_prefix
-    attrs = Map.merge(params, %{"section_key" => section_key})
+    is_private = params["is_private"] == "true"
+    group_id = params["restricted_group_id"]
+
+    attrs =
+      params
+      |> Map.put("section_key", section_key)
+      |> Map.put("is_private", is_private)
 
     case Authorization.create_subsection(prefix, attrs) do
-      {:ok, _} ->
+      {:ok, ss} ->
+        if is_private && group_id && group_id != "" do
+          Enum.each([:view, :edit], fn cap ->
+            Authorization.grant_subsection(
+              prefix,
+              section_key,
+              ss.slug,
+              {:group, group_id},
+              cap,
+              conn.assigns.current_user.id
+            )
+          end)
+        end
+
         conn |> put_flash(:info, "Subsection created.") |> redirect(to: ~p"/admin/sections/#{section_key}/subsections")
       {:error, cs} ->
         section = SectionRegistry.get(section_key)
-        conn |> put_status(422) |> render(:new, section: section, section_key: section_key, changeset: cs)
+        groups = Authorization.list_groups(prefix)
+        conn |> put_status(422) |> render(:new, section: section, section_key: section_key, groups: groups, changeset: cs)
     end
   end
 
