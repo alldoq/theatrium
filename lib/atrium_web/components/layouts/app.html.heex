@@ -232,13 +232,19 @@
               <path d="M4 6l4 4 4-4" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
           </a>
-          <div class="atrium-hubnav-mega atrium-hubnav-mega--right" style="--col-count:1;min-width:220px">
+          <div class="atrium-hubnav-mega atrium-hubnav-mega--right" style="--col-count:2;min-width:420px">
             <div class="atrium-hubnav-mega-grid">
               <div class="atrium-hubnav-mega-col">
-                <div class="atrium-hubnav-mega-title">Administration</div>
+                <div class="atrium-hubnav-mega-title">People</div>
                 <a href={~p"/admin/users"} class="atrium-hubnav-mega-link">Users</a>
                 <a href={~p"/admin/groups"} class="atrium-hubnav-mega-link">Groups</a>
+              </div>
+              <div class="atrium-hubnav-mega-col">
+                <div class="atrium-hubnav-mega-title">Sections</div>
                 <a href={~p"/admin/sections"} class="atrium-hubnav-mega-link">Section permissions</a>
+                <a href={~p"/admin/sections/hr/subsections"} class="atrium-hubnav-mega-link">HR subsections</a>
+                <a href={~p"/admin/sections/departments/subsections"} class="atrium-hubnav-mega-link">Department subsections</a>
+                <a href={~p"/admin/sections/docs/subsections"} class="atrium-hubnav-mega-link">Knowledge base subsections</a>
               </div>
             </div>
           </div>
