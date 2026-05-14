@@ -45,4 +45,23 @@ defmodule AtriumWeb.SearchController do
       tools: tools
     )
   end
+
+  def suggest(conn, params) do
+    query = String.trim(params["q"] || "")
+    prefix = conn.assigns.tenant_prefix
+    user = conn.assigns.current_user
+
+    results =
+      if String.length(query) >= @min_query_length do
+        Atrium.Search.global_search(prefix, user, query, limit: 4)
+      else
+        []
+      end
+
+    json(conn, %{query: query, results: Enum.map(results, &serialize/1)})
+  end
+
+  defp serialize(%{type: t, id: id, title: title, snippet: snippet, path: path, section: section}) do
+    %{type: t, id: id, title: title, snippet: snippet, path: path, section: section}
+  end
 end

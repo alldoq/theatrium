@@ -112,6 +112,9 @@ defmodule AtriumWeb.Router do
       get "/audit", AuditViewerController, :index
       get "/audit/export", AuditViewerController, :export
       get "/search", SearchController, :index
+      get "/search/suggest", SearchController, :suggest
+
+      post "/ai/chat", AIController, :chat
 
       get  "/notifications",          NotificationsController, :index
       post "/notifications/:id/read", NotificationsController, :mark_read

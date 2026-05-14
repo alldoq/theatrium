@@ -87,6 +87,9 @@ if config_env() == :prod do
   config :atrium, :system_email,
     System.get_env("SYSTEM_EMAIL") || "hello@alldoq.com"
 
+  # Optional. When unset, the AI chat widget responds with a "not configured" error.
+  config :atrium, :anthropic_api_key, System.get_env("ANTHROPIC_API_KEY")
+
   config :atrium, AtriumWeb.Endpoint,
     url: [host: host, port: 443, scheme: "https"],
     http: [
