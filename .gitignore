@@ -35,3 +35,4 @@ atrium-*.tar
 npm-debug.log
 /assets/node_modules/
 
+fixtures/

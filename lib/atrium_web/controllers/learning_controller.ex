@@ -43,13 +43,18 @@ defmodule AtriumWeb.LearningController do
       materials = Learning.list_materials(prefix, id)
       completed = Learning.completed?(prefix, id, user.id)
       count = if can_edit, do: Learning.completion_count(prefix, id), else: nil
+      scorm_package = Atrium.Scorm.get_package_for_course(prefix, id)
+      scorm_attempt =
+        if scorm_package, do: Atrium.Scorm.get_attempt(prefix, scorm_package.id, user.id), else: nil
 
       render(conn, :show,
         course: course,
         materials: materials,
         completed: completed,
         completion_count: count,
-        can_edit: can_edit
+        can_edit: can_edit,
+        scorm_package: scorm_package,
+        scorm_attempt: scorm_attempt
       )
     end
   end

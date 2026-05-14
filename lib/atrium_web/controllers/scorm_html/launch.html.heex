@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title><%= @course.title %> · SCORM Player</title>
+  <meta name="csrf-token" content={Plug.CSRFProtection.get_csrf_token()} />
+  <style>
+    html, body { margin: 0; padding: 0; height: 100%; background: #0f172a; color: #fff; font-family: system-ui, -apple-system, sans-serif; }
+    .scorm-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 16px; background: #0f172a; border-bottom: 1px solid rgba(255,255,255,.1); }
+    .scorm-bar a { color: rgba(255,255,255,.7); font-size: .8125rem; text-decoration: none; }
+    .scorm-bar a:hover { color: #fff; }
+    .scorm-title { font-weight: 600; font-size: .9375rem; }
+    .scorm-status { font-size: .75rem; color: rgba(255,255,255,.6); }
+    .scorm-status.complete { color: #34d399; }
+    .scorm-frame { width: 100%; height: calc(100vh - 49px); border: 0; background: #fff; }
+  </style>
+</head>
+<body>
+  <div class="scorm-bar">
+    <a href={~p"/learning/#{@course.id}"}>← Back to course</a>
+    <div class="scorm-title"><%= @course.title %></div>
+    <div class="scorm-status" id="scorm-status" data-initial-status={@attempt.lesson_status}>
+      Status: <span id="scorm-status-value"><%= @attempt.lesson_status %></span>
+    </div>
+  </div>
+  <iframe id="scorm-frame" class="scorm-frame" src={~p"/learning/#{@course.id}/scorm/#{@package.id}/content/#{@package.launch_url}"}></iframe>
+
+  <script>
+    (function() {
+      const courseId = <%= raw(Jason.encode!(@course.id)) %>;
+      const packageId = <%= raw(Jason.encode!(@package.id)) %>;
+      const initialCmi = <%= raw(Jason.encode!(@attempt.cmi || %{})) %>;
+      const initialStatus = <%= raw(Jason.encode!(@attempt.lesson_status)) %>;
+      const csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+      // SCORM 1.2 in-memory data model
+      const cmi = Object.assign({
+        "cmi.core.student_id": "<%= @attempt.user_id %>",
+        "cmi.core.student_name": "",
+        "cmi.core.lesson_status": initialStatus || "not attempted",
+        "cmi.core.lesson_location": "",
+        "cmi.core.score.raw": "",
+        "cmi.core.score.min": "",
+        "cmi.core.score.max": "100",
+        "cmi.core.total_time": "<%= @attempt.total_time %>",
+        "cmi.core.session_time": "00:00:00",
+        "cmi.suspend_data": "",
+        "cmi.launch_data": "",
+        "cmi.core.exit": "",
+        "cmi.core.credit": "credit",
+        "cmi.core.lesson_mode": "normal"
+      }, initialCmi);
+
+      let lastError = "0";
+      let dirty = {};
+
+      function commit() {
+        if (Object.keys(dirty).length === 0) return Promise.resolve();
+        const payload = { cmi: dirty };
+        dirty = {};
+        return fetch(`/learning/${courseId}/scorm/${packageId}/commit`, {
+          method: "POST",
+          credentials: "same-origin",
+          headers: { "Content-Type": "application/json", "X-CSRF-Token": csrf, "Accept": "application/json" },
+          body: JSON.stringify(payload)
+        })
+          .then(r => r.json())
+          .then(res => {
+            if (res && res.lesson_status) {
+              const el = document.getElementById("scorm-status-value");
+              if (el) {
+                el.textContent = res.lesson_status;
+                if (res.lesson_status === "completed" || res.lesson_status === "passed") {
+                  document.getElementById("scorm-status").classList.add("complete");
+                }
+              }
+            }
+          })
+          .catch(() => {});
+      }
+
+      const API = {
+        LMSInitialize: function() { lastError = "0"; return "true"; },
+        LMSFinish: function() {
+          // include session_time in final commit
+          commit();
+          lastError = "0";
+          return "true";
+        },
+        LMSGetValue: function(key) {
+          lastError = "0";
+          return cmi[key] != null ? String(cmi[key]) : "";
+        },
+        LMSSetValue: function(key, value) {
+          cmi[key] = String(value);
+          dirty[key] = String(value);
+          lastError = "0";
+          return "true";
+        },
+        LMSCommit: function() {
+          commit();
+          lastError = "0";
+          return "true";
+        },
+        LMSGetLastError: function() { return lastError; },
+        LMSGetErrorString: function() { return ""; },
+        LMSGetDiagnostic: function() { return ""; }
+      };
+
+      // SCORM 1.2 looks for window.API on the parent or opener
+      window.API = API;
+
+      // Periodic commit
+      setInterval(commit, 30000);
+      window.addEventListener("beforeunload", function() {
+        // best-effort sync commit via sendBeacon
+        if (Object.keys(dirty).length === 0) return;
+        try {
+          const data = new Blob([JSON.stringify({ cmi: dirty })], { type: "application/json" });
+          navigator.sendBeacon(`/learning/${courseId}/scorm/${packageId}/commit?_csrf_token=${encodeURIComponent(csrf)}`, data);
+        } catch (e) {}
+      });
+    })();
+  </script>
+</body>
+</html>

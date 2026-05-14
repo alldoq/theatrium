@@ -1,0 +1,62 @@
+<div class="atrium-anim" style="max-width:720px">
+  <div style="margin-bottom:20px">
+    <a href={~p"/learning/#{@course.id}"} style="font-size:.8125rem;color:var(--text-tertiary);text-decoration:none">← Back to course</a>
+  </div>
+
+  <div style="margin-bottom:24px">
+    <div class="atrium-page-eyebrow">Learning · SCORM</div>
+    <h1 class="atrium-page-title"><%= @course.title %></h1>
+    <p class="atrium-page-subtitle">Upload a SCORM 1.2 package (.zip) to enable an interactive course.</p>
+  </div>
+
+  <div class="atrium-card" style="margin-bottom:24px">
+    <div class="atrium-card-body">
+      <form method="post" action={~p"/learning/#{@course.id}/scorm"} enctype="multipart/form-data" style="display:flex;flex-direction:column;gap:14px">
+        <input type="hidden" name="_csrf_token" value={Plug.CSRFProtection.get_csrf_token()} />
+        <div>
+          <label class="atrium-label">SCORM package (.zip)</label>
+          <input type="file" name="scorm[file]" accept=".zip,application/zip" required class="atrium-input" />
+          <div style="font-size:.75rem;color:var(--text-tertiary);margin-top:4px">Max 500&nbsp;MB. Manifest <code>imsmanifest.xml</code> must be at the root of the archive.</div>
+        </div>
+        <div>
+          <button type="submit" class="atrium-btn atrium-btn-primary">Upload</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <%= if @packages != [] do %>
+    <div style="margin-bottom:12px">
+      <div class="atrium-page-eyebrow">Uploaded packages</div>
+    </div>
+    <div class="atrium-card">
+      <table class="atrium-table">
+        <thead>
+          <tr>
+            <th>Title</th>
+            <th>Version</th>
+            <th>Size</th>
+            <th>Uploaded</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <%= for pkg <- @packages do %>
+            <tr>
+              <td style="font-weight:500"><%= pkg.title %></td>
+              <td>SCORM <%= pkg.version %></td>
+              <td><%= pkg.byte_size && "#{div(pkg.byte_size, 1024)} KB" %></td>
+              <td><%= Calendar.strftime(pkg.inserted_at, "%-d %b %Y %H:%M") %></td>
+              <td style="text-align:right">
+                <form method="post" action={~p"/learning/#{@course.id}/scorm/#{pkg.id}/delete"} style="display:inline">
+                  <input type="hidden" name="_csrf_token" value={Plug.CSRFProtection.get_csrf_token()} />
+                  <button type="submit" class="atrium-btn atrium-btn-ghost" style="height:28px;font-size:.8125rem;color:var(--color-error)" onclick="return confirm('Remove this SCORM package and its uploaded files?')">Delete</button>
+                </form>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% end %>
+</div>

@@ -153,6 +153,13 @@ defmodule AtriumWeb.Router do
       post   "/learning/:id/materials",               LearningController, :add_material
       post   "/learning/:id/materials/:mid/delete",   LearningController, :delete_material
 
+      get  "/learning/:id/scorm/upload",                            ScormController, :new_upload
+      post "/learning/:id/scorm",                                   ScormController, :create
+      post "/learning/:id/scorm/:package_id/delete",                ScormController, :delete
+      get  "/learning/:id/scorm/launch",                            ScormController, :launch
+      get  "/learning/:id/scorm/:package_id/content/*path",         ScormController, :asset
+      post "/learning/:id/scorm/:package_id/commit",                ScormController, :commit
+
       get  "/events",              EventsController, :index
       get  "/events/new",          EventsController, :new
       post "/events",              EventsController, :create

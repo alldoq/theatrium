@@ -36,6 +36,41 @@
     <p style="font-size:.9375rem;color:var(--text-secondary);line-height:1.6;margin-bottom:24px"><%= @course.description %></p>
   <% end %>
 
+  <%= if @scorm_package do %>
+    <div class="atrium-card" style="margin-bottom:24px">
+      <div class="atrium-card-body" style="display:flex;align-items:center;gap:16px">
+        <div style="width:44px;height:44px;border-radius:10px;background:var(--blue-50);color:var(--blue-600);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75" style="width:22px;height:22px" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M2 4h12v8H2zM5 4v8M10 4v8M2 8h12"/>
+          </svg>
+        </div>
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:600;font-size:.9375rem;color:var(--text-primary)">Interactive course</div>
+          <div style="font-size:.8125rem;color:var(--text-tertiary)">
+            SCORM <%= @scorm_package.version %>
+            <%= if @scorm_attempt do %>
+              · Status: <strong style={"color:#{if @scorm_attempt.lesson_status in ["completed", "passed"], do: "var(--blue-600)", else: "var(--text-secondary)"}"}><%= @scorm_attempt.lesson_status %></strong>
+              <%= if @scorm_attempt.score_raw do %>
+                · Score: <strong><%= round(@scorm_attempt.score_raw) %></strong>
+              <% end %>
+            <% end %>
+          </div>
+        </div>
+        <a href={~p"/learning/#{@course.id}/scorm/launch"} class="atrium-btn atrium-btn-primary" style="flex-shrink:0">
+          <%= if @scorm_attempt && @scorm_attempt.lesson_status in ["incomplete", "browsed"], do: "Resume", else: "Launch" %>
+        </a>
+      </div>
+    </div>
+  <% end %>
+
+  <%= if @can_edit do %>
+    <div style="margin-bottom:24px">
+      <a href={~p"/learning/#{@course.id}/scorm/upload"} class="atrium-btn atrium-btn-ghost" style="font-size:.8125rem">
+        <%= if @scorm_package, do: "Manage SCORM package", else: "Upload SCORM package" %>
+      </a>
+    </div>
+  <% end %>
+
   <%= if !Enum.empty?(@materials) do %>
     <div class="atrium-card" style="margin-bottom:24px">
       <div style="padding:14px 16px;border-bottom:1px solid var(--border);font-size:.8125rem;font-weight:600;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:.04em">
