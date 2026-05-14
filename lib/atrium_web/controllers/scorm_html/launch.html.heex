@@ -112,6 +112,15 @@
       // SCORM 1.2 looks for window.API on the parent or opener
       window.API = API;
 
+      // Articulate's scormdriver expects a few helpers on window.parent for
+      // its internal debug logging. Provide harmless no-ops so the player
+      // doesn't blow up before it can call the real API.
+      window.WriteToDebug = function() {};
+      window.WriteToDebugTrace = function() {};
+      window.DebugStart = function() {};
+      window.DebugStop = function() {};
+      window.UpdateDebugWindow = function() {};
+
       // Periodic commit
       setInterval(commit, 30000);
       window.addEventListener("beforeunload", function() {
