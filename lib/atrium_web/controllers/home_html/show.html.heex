@@ -141,6 +141,11 @@
               <input type="checkbox" name="announcement[pinned]" value="true" id="ann-pinned" style="accent-color:var(--blue-500);width:14px;height:14px" />
               <label for="ann-pinned" style="font-size:.875rem;color:var(--text-secondary)">Pin to top</label>
             </div>
+            <div>
+              <label class="atrium-label">Expires on (optional)</label>
+              <input type="datetime-local" name="announcement[expires_at]" class="atrium-input" style="max-width:240px" />
+              <div style="font-size:.75rem;color:var(--text-tertiary);margin-top:4px">Announcement is hidden from staff after this date.</div>
+            </div>
             <div><button type="submit" class="atrium-btn atrium-btn-primary">Post</button></div>
           </form>
         </div>
@@ -160,11 +165,18 @@
         <div class="atrium-card-body">
           <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px">
             <div style="flex:1;min-width:0">
-              <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+              <% expired = Atrium.Home.announcement_expired?(ann) %>
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;flex-wrap:wrap">
                 <%= if ann.pinned do %>
                   <span style="font-size:.6875rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--blue-500)">Pinned</span>
                 <% end %>
+                <%= if expired do %>
+                  <span style="font-size:.6875rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#b91c1c;background:#fee2e2;padding:2px 6px;border-radius:4px">Expired</span>
+                <% end %>
                 <span style="font-size:.75rem;color:var(--text-tertiary)"><%= Calendar.strftime(ann.inserted_at, "%d %b %Y") %></span>
+                <%= if ann.expires_at do %>
+                  <span style="font-size:.75rem;color:var(--text-tertiary)">· expires <%= Calendar.strftime(ann.expires_at, "%d %b %Y %H:%M") %></span>
+                <% end %>
               </div>
               <div style="font-weight:600;font-size:.9375rem;color:var(--text-primary);margin-bottom:4px"><%= ann.title %></div>
               <%= if ann.body_html && ann.body_html != "" do %>

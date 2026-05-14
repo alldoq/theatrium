@@ -6,10 +6,26 @@ defmodule Atrium.Home do
   alias Atrium.Notifications.Dispatcher
 
   def list_announcements(prefix) do
+    now = DateTime.utc_now()
+    Repo.all(
+      from(a in Announcement,
+        where: is_nil(a.expires_at) or a.expires_at > ^now,
+        order_by: [desc: a.pinned, desc: a.inserted_at]
+      ),
+      prefix: prefix
+    )
+  end
+
+  def list_all_announcements(prefix) do
     Repo.all(
       from(a in Announcement, order_by: [desc: a.pinned, desc: a.inserted_at]),
       prefix: prefix
     )
+  end
+
+  def announcement_expired?(%Announcement{expires_at: nil}), do: false
+  def announcement_expired?(%Announcement{expires_at: exp}) do
+    DateTime.compare(exp, DateTime.utc_now()) != :gt
   end
 
   def get_announcement!(prefix, id), do: Repo.get!(Announcement, id, prefix: prefix)

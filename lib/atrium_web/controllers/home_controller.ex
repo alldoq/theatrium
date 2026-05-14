@@ -13,9 +13,10 @@ defmodule AtriumWeb.HomeController do
   def show(conn, _params) do
     prefix = conn.assigns.tenant_prefix
     user = conn.assigns.current_user
-    announcements = Home.list_announcements(prefix)
-    quick_links = Home.list_quick_links(prefix)
     can_edit = Atrium.Authorization.Policy.can?(prefix, user, :edit, {:section, "home"})
+    announcements =
+      if can_edit, do: Home.list_all_announcements(prefix), else: Home.list_announcements(prefix)
+    quick_links = Home.list_quick_links(prefix)
     upcoming_events = Atrium.Events.list_upcoming_events(prefix)
     recent_activity = Atrium.Audit.list(prefix, limit: 10)
     all_users = Atrium.Accounts.list_users(prefix)
