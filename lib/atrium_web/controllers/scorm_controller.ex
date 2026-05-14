@@ -90,8 +90,11 @@ defmodule AtriumWeb.ScormController do
       candidate = Path.join(abs_dir, requested) |> Path.expand()
       base = Path.expand(abs_dir)
 
+      Logger.info("SCORM_ASSET base=#{base} candidate=#{candidate} starts=#{String.starts_with?(candidate, base)} regular=#{File.regular?(candidate)}")
+
       cond do
         not String.starts_with?(candidate, base) ->
+          Logger.warning("SCORM_ASSET 403 traversal candidate=#{candidate} base=#{base}")
           conn |> send_resp(403, "forbidden")
 
         not File.regular?(candidate) ->
@@ -99,6 +102,7 @@ defmodule AtriumWeb.ScormController do
 
         true ->
           mime = mime_for(candidate)
+          Logger.info("SCORM_ASSET 200 sending mime=#{mime} size=#{File.stat!(candidate).size}")
           conn
           |> put_root_layout(false)
           |> put_layout(false)
