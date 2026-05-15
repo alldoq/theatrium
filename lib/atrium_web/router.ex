@@ -117,6 +117,7 @@ defmodule AtriumWeb.Router do
       post "/ai/chat", AIController, :chat
 
       get  "/notifications",          NotificationsController, :index
+      get  "/notifications/:id/go",   NotificationsController, :go
       post "/notifications/:id/read", NotificationsController, :mark_read
 
       get  "/home",                              HomeController, :show

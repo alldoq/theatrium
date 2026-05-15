@@ -23,6 +23,43 @@ defmodule Atrium.Notifications do
     |> Repo.all(prefix: prefix)
   end
 
+  @doc """
+  Resolves the in-app destination for a notification, or nil if it has
+  no actionable target. Document links need the document's section, so
+  the row is looked up.
+  """
+  @spec link_for(String.t(), Notification.t()) :: String.t() | nil
+  def link_for(prefix, %Notification{resource_type: type, resource_id: rid}) do
+    case {type, rid} do
+      {"Document", id} when is_binary(id) ->
+        case Repo.get(Atrium.Documents.Document, id, prefix: prefix) do
+          %{section_key: sk} -> "/sections/#{sk}/documents/#{id}"
+          nil -> nil
+        end
+
+      {"FormSubmission", id} when is_binary(id) ->
+        with %{form_id: fid} <- Repo.get(Atrium.Forms.FormSubmission, id, prefix: prefix),
+             %{section_key: sk} when is_binary(sk) <- Repo.get(Atrium.Forms.Form, fid, prefix: prefix) do
+          "/sections/#{sk}/forms/#{fid}/submissions/#{id}"
+        else
+          _ -> nil
+        end
+
+      {"ToolRequest", _id} ->
+        "/tools"
+
+      {"Announcement", _id} ->
+        "/home"
+
+      _ ->
+        nil
+    end
+  rescue
+    _ -> nil
+  end
+
+  def link_for(_prefix, _), do: nil
+
   @spec count_unread(String.t(), binary()) :: non_neg_integer()
   def count_unread(prefix, user_id) do
     from(n in Notification,
@@ -30,6 +67,13 @@ defmodule Atrium.Notifications do
       select: count()
     )
     |> Repo.one(prefix: prefix) || 0
+  end
+
+  @spec get(String.t(), binary(), binary()) :: Notification.t() | nil
+  def get(prefix, user_id, notification_id) do
+    Repo.get_by(Notification, [id: notification_id, user_id: user_id], prefix: prefix)
+  rescue
+    _ -> nil
   end
 
   @spec mark_read(String.t(), binary(), binary()) ::
