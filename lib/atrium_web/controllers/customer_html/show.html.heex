@@ -3,7 +3,7 @@
 
   <div class="mt-2 flex items-center justify-between">
     <h1 class="text-2xl font-semibold">{@customer.name}</h1>
-    <div class="flex gap-2">
+    <div :if={@can_edit} class="flex gap-2">
       <.link href={~p"/customers/#{@customer.id}/edit"} class="rounded border px-3 py-1">
         Edit
       </.link>
@@ -23,9 +23,9 @@
 
   <h2 class="mt-8 mb-3 text-lg font-semibold">People</h2>
 
-  <div :if={@customer.people == []} class="text-gray-500">No people yet.</div>
+  <div :if={Enum.empty?(@customer.people)} class="text-gray-500">No people yet.</div>
 
-  <table :if={@customer.people != []} class="w-full text-left text-sm">
+  <table :if={not Enum.empty?(@customer.people)} class="w-full text-left text-sm">
     <thead>
       <tr class="border-b">
         <th class="py-2">Name</th>
@@ -46,7 +46,7 @@
         <td>{person.job_title}</td>
         <td>{person.email}</td>
         <td>{person.phone}</td>
-        <td class="text-right">
+        <td :if={@can_edit} class="text-right">
           <.link href={~p"/customers/#{@customer.id}/people/#{person.id}/edit"} class="text-blue-600">
             Edit
           </.link>
@@ -63,16 +63,18 @@
     </tbody>
   </table>
 
-  <h3 class="mt-6 mb-2 font-medium">Add a person</h3>
-  <form method="post" action={~p"/customers/#{@customer.id}/people"} class="grid grid-cols-2 gap-3">
-    <input type="hidden" name="_csrf_token" value={Plug.CSRFProtection.get_csrf_token()} />
-    <input name="person[name]" placeholder="Name" required class="rounded border px-3 py-2" />
-    <input name="person[job_title]" placeholder="Job title" class="rounded border px-3 py-2" />
-    <input name="person[email]" placeholder="Email" class="rounded border px-3 py-2" />
-    <input name="person[phone]" placeholder="Phone" class="rounded border px-3 py-2" />
-    <label class="flex items-center gap-2 text-sm">
-      <input type="checkbox" name="person[primary]" value="true" /> Primary contact
-    </label>
-    <button type="submit" class="rounded bg-blue-600 px-4 py-2 text-white">Add person</button>
-  </form>
+  <div :if={@can_edit}>
+    <h3 class="mt-6 mb-2 font-medium">Add a person</h3>
+    <form method="post" action={~p"/customers/#{@customer.id}/people"} class="grid grid-cols-2 gap-3">
+      <input type="hidden" name="_csrf_token" value={Plug.CSRFProtection.get_csrf_token()} />
+      <input name="person[name]" placeholder="Name" required class="rounded border px-3 py-2" />
+      <input name="person[job_title]" placeholder="Job title" class="rounded border px-3 py-2" />
+      <input name="person[email]" placeholder="Email" class="rounded border px-3 py-2" />
+      <input name="person[phone]" placeholder="Phone" class="rounded border px-3 py-2" />
+      <label class="flex items-center gap-2 text-sm">
+        <input type="checkbox" name="person[primary]" value="true" /> Primary contact
+      </label>
+      <button type="submit" class="rounded bg-blue-600 px-4 py-2 text-white">Add person</button>
+    </form>
+  </div>
 </div>

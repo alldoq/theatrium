@@ -32,6 +32,16 @@ defmodule AtriumWeb.CustomerControllerTest do
       password_confirmation: "Correct-horse-battery1"
     })
 
+    {:ok, %{user: viewer}} = Accounts.invite_user(prefix, %{
+      email: "viewer_#{System.unique_integer([:positive])}@example.com",
+      name: "Viewer"
+    })
+    {:ok, viewer} = Accounts.activate_user_with_password(prefix, viewer, %{
+      password: "Correct-horse-battery1",
+      password_confirmation: "Correct-horse-battery1"
+    })
+    Authorization.grant_section(prefix, "customers", {:user, viewer.id}, :view)
+
     editor_conn =
       build_conn()
       |> Map.put(:host, host)
@@ -46,7 +56,14 @@ defmodule AtriumWeb.CustomerControllerTest do
       |> recycle()
       |> Map.put(:host, host)
 
-    {:ok, editor_conn: editor_conn, outsider_conn: outsider_conn, prefix: prefix}
+    viewer_conn =
+      build_conn()
+      |> Map.put(:host, host)
+      |> post("/login", %{email: viewer.email, password: "Correct-horse-battery1"})
+      |> recycle()
+      |> Map.put(:host, host)
+
+    {:ok, editor_conn: editor_conn, outsider_conn: outsider_conn, viewer_conn: viewer_conn, prefix: prefix}
   end
 
   test "GET /customers shows index to authorized user", %{editor_conn: conn} do
@@ -67,5 +84,19 @@ defmodule AtriumWeb.CustomerControllerTest do
     body = html_response(conn, 200)
     assert body =~ "Acme Co"
     assert body =~ "Bob Vance"
+  end
+
+  test "GET /customers/:id is forbidden for unauthorized user", %{outsider_conn: conn, prefix: prefix} do
+    {:ok, c} = Customers.create_customer(prefix, %{"name" => "Acme Co"})
+    conn = get(conn, "/customers/#{c.id}")
+    assert conn.status == 403
+  end
+
+  test "view-only user sees the customer but not edit controls", %{viewer_conn: conn, prefix: prefix} do
+    {:ok, c} = Customers.create_customer(prefix, %{"name" => "Acme Co"})
+    conn = get(conn, "/customers/#{c.id}")
+    body = html_response(conn, 200)
+    assert body =~ "Acme Co"
+    refute body =~ "Add a person"
   end
 end

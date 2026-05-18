@@ -23,13 +23,17 @@ defmodule AtriumWeb.CustomerController do
 
   def index(conn, params) do
     prefix = conn.assigns.tenant_prefix
+    user = conn.assigns.current_user
+    can_edit = Atrium.Authorization.Policy.can?(prefix, user, :edit, {:section, "customers"})
     customers = Customers.list_customers(prefix, q: params["q"])
-    render(conn, :index, customers: customers, query: params["q"] || "")
+    render(conn, :index, customers: customers, query: params["q"] || "", can_edit: can_edit)
   end
 
   def show(conn, %{"id" => id}) do
     prefix = conn.assigns.tenant_prefix
+    user = conn.assigns.current_user
+    can_edit = Atrium.Authorization.Policy.can?(prefix, user, :edit, {:section, "customers"})
     customer = Customers.get_customer!(prefix, id)
-    render(conn, :show, customer: customer)
+    render(conn, :show, customer: customer, can_edit: can_edit)
   end
 end
