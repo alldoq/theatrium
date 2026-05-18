@@ -36,4 +36,55 @@ defmodule AtriumWeb.CustomerController do
     customer = Customers.get_customer!(prefix, id)
     render(conn, :show, customer: customer, can_edit: can_edit)
   end
+
+  def new(conn, _params) do
+    changeset = Customers.change_customer(%Atrium.Customers.Customer{})
+    render(conn, :new, changeset: changeset)
+  end
+
+  def create(conn, %{"customer" => params}) do
+    prefix = conn.assigns.tenant_prefix
+
+    case Customers.create_customer(prefix, params) do
+      {:ok, customer} ->
+        conn
+        |> put_flash(:info, "Customer created.")
+        |> redirect(to: ~p"/customers/#{customer.id}")
+
+      {:error, changeset} ->
+        render(conn, :new, changeset: changeset)
+    end
+  end
+
+  def edit(conn, %{"id" => id}) do
+    prefix = conn.assigns.tenant_prefix
+    customer = Customers.get_customer!(prefix, id)
+    changeset = Customers.change_customer(customer)
+    render(conn, :edit, customer: customer, changeset: changeset)
+  end
+
+  def update(conn, %{"id" => id, "customer" => params}) do
+    prefix = conn.assigns.tenant_prefix
+    customer = Customers.get_customer!(prefix, id)
+
+    case Customers.update_customer(prefix, customer, params) do
+      {:ok, customer} ->
+        conn
+        |> put_flash(:info, "Customer updated.")
+        |> redirect(to: ~p"/customers/#{customer.id}")
+
+      {:error, changeset} ->
+        render(conn, :edit, customer: customer, changeset: changeset)
+    end
+  end
+
+  def delete(conn, %{"id" => id}) do
+    prefix = conn.assigns.tenant_prefix
+    customer = Customers.get_customer!(prefix, id)
+    {:ok, _} = Customers.delete_customer(prefix, customer)
+
+    conn
+    |> put_flash(:info, "Customer deleted.")
+    |> redirect(to: ~p"/customers")
+  end
 end

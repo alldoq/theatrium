@@ -99,4 +99,28 @@ defmodule AtriumWeb.CustomerControllerTest do
     assert body =~ "Acme Co"
     refute body =~ "Add a person"
   end
+
+  test "POST /customers creates a customer", %{editor_conn: conn} do
+    conn = post(conn, "/customers", %{customer: %{name: "New Co", website: "new.co"}})
+    assert redirected_to(conn) =~ "/customers/"
+  end
+
+  test "PUT /customers/:id updates a customer", %{editor_conn: conn, prefix: prefix} do
+    {:ok, c} = Customers.create_customer(prefix, %{"name" => "Old Name"})
+    conn = put(conn, "/customers/#{c.id}", %{customer: %{name: "New Name"}})
+    assert redirected_to(conn) == "/customers/#{c.id}"
+    assert Customers.get_customer!(prefix, c.id).name == "New Name"
+  end
+
+  test "DELETE /customers/:id deletes a customer", %{editor_conn: conn, prefix: prefix} do
+    {:ok, c} = Customers.create_customer(prefix, %{"name" => "Acme Co"})
+    conn = delete(conn, "/customers/#{c.id}")
+    assert redirected_to(conn) == "/customers"
+    assert Customers.list_customers(prefix) == []
+  end
+
+  test "POST /customers is forbidden for unauthorized user", %{outsider_conn: conn} do
+    conn = post(conn, "/customers", %{customer: %{name: "Nope"}})
+    assert conn.status == 403
+  end
 end
