@@ -27,6 +27,38 @@ defmodule Atrium.AppShellTest do
     refute "compliance" in keys
   end
 
+  test "customers section appears in nav when enabled_sections includes customers", %{tenant: tenant, tenant_prefix: prefix} do
+    {:ok, _} = Atrium.Tenants.update_tenant(tenant, %{enabled_sections: ~w(customers)})
+    tenant_with_customers = Atrium.Tenants.get_tenant!(tenant.id)
+
+    {:ok, %{user: _, token: raw}} = Accounts.invite_user(prefix, %{email: "cust1@e.co", name: "CustUser"})
+    {:ok, user} = Accounts.activate_user(prefix, raw, "superSecret1234!")
+
+    super_users = Authorization.get_group_by_slug(prefix, "super_users")
+    {:ok, _} = Authorization.add_member(prefix, user, super_users)
+    {:ok, _} = Authorization.grant_section(prefix, "customers", {:group, super_users.id}, :view)
+
+    nav = AppShell.nav_for_user(tenant_with_customers, user, prefix)
+    keys = nav |> Enum.map(& &1.key) |> Enum.map(&to_string/1)
+    assert "customers" in keys
+  end
+
+  test "customers section is absent from nav when enabled_sections does not include customers", %{tenant: tenant, tenant_prefix: prefix} do
+    {:ok, _} = Atrium.Tenants.update_tenant(tenant, %{enabled_sections: ~w(home news)})
+    tenant_no_customers = Atrium.Tenants.get_tenant!(tenant.id)
+
+    {:ok, %{user: _, token: raw}} = Accounts.invite_user(prefix, %{email: "cust2@e.co", name: "NoCustUser"})
+    {:ok, user} = Accounts.activate_user(prefix, raw, "superSecret1234!")
+
+    super_users = Authorization.get_group_by_slug(prefix, "super_users")
+    {:ok, _} = Authorization.add_member(prefix, user, super_users)
+    {:ok, _} = Authorization.grant_section(prefix, "customers", {:group, super_users.id}, :view)
+
+    nav = AppShell.nav_for_user(tenant_no_customers, user, prefix)
+    keys = nav |> Enum.map(& &1.key) |> Enum.map(&to_string/1)
+    refute "customers" in keys
+  end
+
   test "subsections are included when user can view them", %{tenant: tenant, tenant_prefix: prefix} do
     {:ok, _} = Atrium.Tenants.update_tenant(tenant, %{enabled_sections: ~w(hr)})
     tenant = Atrium.Tenants.get_tenant!(tenant.id)

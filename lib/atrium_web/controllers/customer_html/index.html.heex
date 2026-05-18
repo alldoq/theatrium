@@ -1,29 +1,56 @@
-<div class="mx-auto max-w-4xl px-4 py-8">
-  <div class="flex items-center justify-between mb-6">
-    <h1 class="text-2xl font-semibold">Customers</h1>
-    <.link :if={@can_edit} href={~p"/customers/new"} class="rounded bg-blue-600 px-4 py-2 text-white">
+<div class="atrium-anim">
+  <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:28px">
+    <div>
+      <div class="atrium-page-eyebrow">Customers</div>
+      <h1 class="atrium-page-title">Contact Book</h1>
+    </div>
+    <.link :if={@can_edit} href={~p"/customers/new"} class="atrium-btn atrium-btn-primary">
       New customer
     </.link>
   </div>
 
-  <form method="get" action={~p"/customers"} class="mb-6">
+  <form method="get" action={~p"/customers"} style="margin-bottom:20px">
     <input
       type="text"
       name="q"
       value={@query}
       placeholder="Search by name"
-      class="w-full rounded border px-3 py-2"
+      class="atrium-input"
+      style="max-width:360px"
     />
   </form>
 
-  <div :if={@customers == []} class="text-gray-500">No customers yet.</div>
-
-  <ul class="divide-y rounded border">
-    <li :for={customer <- @customers} class="flex items-center justify-between px-4 py-3">
-      <.link href={~p"/customers/#{customer.id}"} class="font-medium text-blue-700">
-        {customer.name}
-      </.link>
-      <span :if={customer.website} class="text-sm text-gray-500">{customer.website}</span>
-    </li>
-  </ul>
+  <div class="atrium-card">
+    <table class="atrium-table">
+      <thead>
+        <tr>
+          <th>Customer</th>
+          <th>Website</th>
+          <th>People</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr :for={customer <- @customers}>
+          <td style="font-weight:500">
+            <a href={~p"/customers/#{customer.id}"} style="color:var(--text-primary);text-decoration:none">
+              {customer.name}
+            </a>
+          </td>
+          <td style="font-size:.875rem;color:var(--text-secondary)">{customer.website}</td>
+          <td style="font-size:.875rem;color:var(--text-secondary)">
+            {customer.people_count} {if customer.people_count == 1, do: "person", else: "people"}
+          </td>
+          <td style="text-align:right">
+            <a href={~p"/customers/#{customer.id}"} class="atrium-btn atrium-btn-ghost" style="height:28px;font-size:.8125rem">View</a>
+          </td>
+        </tr>
+        <tr :if={@customers == []}>
+          <td colspan="4" style="padding:32px;text-align:center;color:var(--text-tertiary)">
+            No customers yet.<%= if @can_edit do %> <a href={~p"/customers/new"} style="color:var(--blue-600)">Create one</a>.<% end %>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
 </div>

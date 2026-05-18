@@ -11,6 +11,7 @@ defmodule Atrium.Customers.Customer do
     field :name, :string
     field :website, :string
     field :notes, :string
+    field :people_count, :integer, virtual: true
 
     has_many :people, Person
 

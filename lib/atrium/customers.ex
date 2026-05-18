@@ -17,7 +17,16 @@ defmodule Atrium.Customers do
           from(c in query, where: like(fragment("lower(?)", c.name), ^like))
       end
 
-    Repo.all(query, prefix: prefix)
+    customers = Repo.all(query, prefix: prefix)
+
+    counts =
+      Repo.all(
+        from(p in Person, group_by: p.customer_id, select: {p.customer_id, count(p.id)}),
+        prefix: prefix
+      )
+      |> Map.new()
+
+    Enum.map(customers, fn c -> Map.put(c, :people_count, Map.get(counts, c.id, 0)) end)
   end
 
   def get_customer!(prefix, id) do

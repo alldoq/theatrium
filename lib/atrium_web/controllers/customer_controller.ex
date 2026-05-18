@@ -84,6 +84,7 @@ defmodule AtriumWeb.CustomerController do
     prefix = conn.assigns.tenant_prefix
     user = conn.assigns.current_user
     customer = Customers.get_customer!(prefix, id)
+    # Delete cannot fail under current constraints (people cascade); a 500 on {:error, _} is acceptable.
     {:ok, _} = Customers.delete_customer(prefix, customer, user)
 
     conn
@@ -137,6 +138,7 @@ defmodule AtriumWeb.CustomerController do
     prefix = conn.assigns.tenant_prefix
     user = conn.assigns.current_user
     person = Customers.get_person!(prefix, customer_id, person_id)
+    # Delete cannot fail under current constraints (people cascade); a 500 on {:error, _} is acceptable.
     {:ok, _} = Customers.delete_person(prefix, person, user)
 
     conn

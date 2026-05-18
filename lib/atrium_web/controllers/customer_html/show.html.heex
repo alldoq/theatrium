@@ -1,80 +1,94 @@
-<div class="mx-auto max-w-4xl px-4 py-8">
-  <.link href={~p"/customers"} class="text-sm text-blue-600">&larr; All customers</.link>
+<div class="atrium-anim" style="max-width:900px">
+  <div style="margin-bottom:20px">
+    <a href={~p"/customers"} style="font-size:.8125rem;color:var(--text-tertiary);text-decoration:none">
+      ← Customers
+    </a>
+  </div>
 
-  <div class="mt-2 flex items-center justify-between">
-    <h1 class="text-2xl font-semibold">{@customer.name}</h1>
-    <div :if={@can_edit} class="flex gap-2">
-      <.link href={~p"/customers/#{@customer.id}/edit"} class="rounded border px-3 py-1">
-        Edit
-      </.link>
+  <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:28px">
+    <div>
+      <div class="atrium-page-eyebrow">Customers</div>
+      <h1 class="atrium-page-title">{@customer.name}</h1>
+      <div :if={@customer.website} style="font-size:.875rem;color:var(--text-secondary);margin-top:4px">{@customer.website}</div>
+    </div>
+    <div :if={@can_edit} style="display:flex;gap:8px">
+      <a href={~p"/customers/#{@customer.id}/edit"} class="atrium-btn atrium-btn-ghost">Edit</a>
       <.link
         href={~p"/customers/#{@customer.id}"}
         method="delete"
         data-confirm="Delete this customer and all its people?"
-        class="rounded border border-red-300 px-3 py-1 text-red-700"
+        class="atrium-btn atrium-btn-ghost"
+        style="color:var(--red-600)"
       >
         Delete
       </.link>
     </div>
   </div>
 
-  <p :if={@customer.website} class="mt-1 text-gray-600">{@customer.website}</p>
-  <p :if={@customer.notes} class="mt-2 whitespace-pre-line text-gray-700">{@customer.notes}</p>
+  <div :if={@customer.notes} class="atrium-card" style="margin-bottom:24px">
+    <div class="atrium-card-header"><div class="atrium-card-title">Notes</div></div>
+    <div style="padding:16px 20px;color:var(--text-secondary);white-space:pre-wrap">{@customer.notes}</div>
+  </div>
 
-  <h2 class="mt-8 mb-3 text-lg font-semibold">People</h2>
+  <div class="atrium-card">
+    <div class="atrium-card-header">
+      <div class="atrium-card-title">People</div>
+    </div>
 
-  <div :if={Enum.empty?(@customer.people)} class="text-gray-500">No people yet.</div>
+    <div :if={Enum.empty?(@customer.people)} style="padding:32px;text-align:center;color:var(--text-tertiary)">
+      No people yet.
+    </div>
 
-  <table :if={not Enum.empty?(@customer.people)} class="w-full text-left text-sm">
-    <thead>
-      <tr class="border-b">
-        <th class="py-2">Name</th>
-        <th>Job title</th>
-        <th>Email</th>
-        <th>Phone</th>
-        <th></th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr :for={person <- @customer.people} class="border-b">
-        <td class="py-2">
-          {person.name}
-          <span :if={person.primary} class="ml-1 rounded bg-green-100 px-1 text-xs text-green-800">
-            Primary
-          </span>
-        </td>
-        <td>{person.job_title}</td>
-        <td>{person.email}</td>
-        <td>{person.phone}</td>
-        <td :if={@can_edit} class="text-right">
-          <.link href={~p"/customers/#{@customer.id}/people/#{person.id}/edit"} class="text-blue-600">
-            Edit
-          </.link>
-          <.link
-            href={~p"/customers/#{@customer.id}/people/#{person.id}"}
-            method="delete"
-            data-confirm="Delete this person?"
-            class="ml-2 text-red-700"
-          >
-            Delete
-          </.link>
-        </td>
-      </tr>
-    </tbody>
-  </table>
+    <table :if={not Enum.empty?(@customer.people)} class="atrium-table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Job title</th>
+          <th>Email</th>
+          <th>Phone</th>
+          <th :if={@can_edit}></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr :for={person <- @customer.people}>
+          <td style="font-weight:500">
+            {person.name}
+            <span :if={person.primary} style="margin-left:6px;font-size:.75rem;background:var(--green-100,#dcfce7);color:var(--green-800,#166534);padding:1px 6px;border-radius:4px">
+              Primary
+            </span>
+          </td>
+          <td style="font-size:.875rem;color:var(--text-secondary)">{person.job_title}</td>
+          <td style="font-size:.875rem;color:var(--text-secondary)">{person.email}</td>
+          <td style="font-size:.875rem;color:var(--text-secondary)">{person.phone}</td>
+          <td :if={@can_edit} style="text-align:right">
+            <a href={~p"/customers/#{@customer.id}/people/#{person.id}/edit"} class="atrium-btn atrium-btn-ghost" style="height:24px;font-size:.8125rem;padding:0 8px">Edit</a>
+            <.link
+              href={~p"/customers/#{@customer.id}/people/#{person.id}"}
+              method="delete"
+              data-confirm="Delete this person?"
+              class="atrium-btn atrium-btn-ghost"
+              style="height:24px;font-size:.8125rem;padding:0 8px;color:var(--red-600);margin-left:4px"
+            >
+              Delete
+            </.link>
+          </td>
+        </tr>
+      </tbody>
+    </table>
 
-  <div :if={@can_edit}>
-    <h3 class="mt-6 mb-2 font-medium">Add a person</h3>
-    <form method="post" action={~p"/customers/#{@customer.id}/people"} class="grid grid-cols-2 gap-3">
-      <input type="hidden" name="_csrf_token" value={Plug.CSRFProtection.get_csrf_token()} />
-      <input name="person[name]" placeholder="Name" required class="rounded border px-3 py-2" />
-      <input name="person[job_title]" placeholder="Job title" class="rounded border px-3 py-2" />
-      <input name="person[email]" placeholder="Email" class="rounded border px-3 py-2" />
-      <input name="person[phone]" placeholder="Phone" class="rounded border px-3 py-2" />
-      <label class="flex items-center gap-2 text-sm">
-        <input type="checkbox" name="person[primary]" value="true" /> Primary contact
-      </label>
-      <button type="submit" class="rounded bg-blue-600 px-4 py-2 text-white">Add person</button>
-    </form>
+    <div :if={@can_edit} style="padding:16px 20px;border-top:1px solid var(--border)">
+      <div style="font-size:.875rem;font-weight:500;margin-bottom:12px">Add a person</div>
+      <form method="post" action={~p"/customers/#{@customer.id}/people"} style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <input type="hidden" name="_csrf_token" value={Plug.CSRFProtection.get_csrf_token()} />
+        <input name="person[name]" placeholder="Name" required class="atrium-input" />
+        <input name="person[job_title]" placeholder="Job title" class="atrium-input" />
+        <input name="person[email]" placeholder="Email" class="atrium-input" />
+        <input name="person[phone]" placeholder="Phone" class="atrium-input" />
+        <label style="display:flex;align-items:center;gap:8px;font-size:.875rem;color:var(--text-secondary)">
+          <input type="checkbox" name="person[primary]" value="true" /> Primary contact
+        </label>
+        <button type="submit" class="atrium-btn atrium-btn-primary">Add person</button>
+      </form>
+    </div>
   </div>
 </div>
