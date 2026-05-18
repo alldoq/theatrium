@@ -5,7 +5,7 @@
      path = @conn.request_path
 
      section_link = fn key ->
-       dedicated = ~w(home news directory tools compliance helpdesk events learning feedback projects community)
+       dedicated = ~w(home news directory tools compliance helpdesk events learning feedback projects community customers)
        if key in dedicated, do: "/#{key}", else: "/sections/#{key}/documents"
      end
 
@@ -131,6 +131,21 @@
              links: [
                %{label: "All projects", path: "/projects"},
                %{label: "New project", path: "/projects/new"}
+             ]
+           }
+         ]
+       },
+       %{
+         label: "Customers",
+         requires: ["customers"],
+         href: "/customers",
+         columns: [
+           %{
+             title: "Contact Book",
+             requires: "customers",
+             links: [
+               %{label: "All customers", path: "/customers"},
+               %{label: "New customer", path: "/customers/new"}
              ]
            }
          ]

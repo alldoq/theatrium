@@ -1,0 +1,22 @@
+[Unit]
+Description=Atrium Phoenix application
+After=network-online.target postgresql.service
+Wants=network-online.target
+
+[Service]
+Type=exec
+User=user
+Group=user
+WorkingDirectory=/home/user/atrium/current
+EnvironmentFile=/home/user/atrium/shared/.env
+Environment=PHX_SERVER=true
+Environment=MIX_ENV=prod
+Environment=PORT=4100
+ExecStart=/home/user/atrium/current/_build/prod/rel/atrium/bin/atrium start
+ExecStop=/home/user/atrium/current/_build/prod/rel/atrium/bin/atrium stop
+Restart=on-failure
+RestartSec=5
+# Release boots on the symlinked path; restart picks up new release after deploy + systemctl restart.
+
+[Install]
+WantedBy=multi-user.target

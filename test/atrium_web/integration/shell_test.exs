@@ -21,7 +21,7 @@ defmodule AtriumWeb.Integration.ShellTest do
       |> Plug.Test.put_req_cookie("_atrium_session", st)
       |> fetch_cookies()
 
-    {:ok, conn: conn}
+    {:ok, conn: conn, prefix: prefix, user: user}
   end
 
   test "home page renders with themed nav showing home + news", %{conn: conn} do
@@ -30,5 +30,18 @@ defmodule AtriumWeb.Integration.ShellTest do
     assert body =~ "Home"
     assert body =~ "News"
     refute body =~ "Departments"
+  end
+
+  test "customers hub group renders when section enabled and user authorized",
+       %{conn: conn, prefix: prefix, user: user} do
+    tenant = Tenants.get_tenant_by_slug("shell_test")
+    {:ok, _} = Tenants.update_tenant(tenant, %{enabled_sections: ~w(home news compliance customers)})
+
+    super_users = Atrium.Authorization.get_group_by_slug(prefix, "super_users")
+    Atrium.Authorization.add_member(prefix, user, super_users)
+
+    body = conn |> get("/") |> html_response(200)
+    assert body =~ "Customers"
+    assert body =~ ~s(href="/customers")
   end
 end
