@@ -148,4 +148,43 @@ defmodule AtriumWeb.CustomerControllerTest do
     conn = put(conn, "/customers/#{c.id}", %{customer: %{name: "X"}})
     assert conn.status == 403
   end
+
+  test "POST /customers/:id/people adds a person", %{editor_conn: conn, prefix: prefix, user: user} do
+    {:ok, c} = Customers.create_customer(prefix, %{"name" => "Acme Co"}, user)
+    conn = post(conn, "/customers/#{c.id}/people", %{person: %{name: "Bob"}})
+    assert redirected_to(conn) == "/customers/#{c.id}"
+    assert [%{name: "Bob"}] = Customers.get_customer!(prefix, c.id).people
+  end
+
+  test "PUT person updates the person", %{editor_conn: conn, prefix: prefix, user: user} do
+    {:ok, c} = Customers.create_customer(prefix, %{"name" => "Acme Co"}, user)
+    {:ok, p} = Customers.add_person(prefix, c.id, %{"name" => "Bob"}, user)
+    conn = put(conn, "/customers/#{c.id}/people/#{p.id}", %{person: %{job_title: "CEO"}})
+    assert redirected_to(conn) == "/customers/#{c.id}"
+    assert Customers.get_person!(prefix, c.id, p.id).job_title == "CEO"
+  end
+
+  test "DELETE person removes the person", %{editor_conn: conn, prefix: prefix, user: user} do
+    {:ok, c} = Customers.create_customer(prefix, %{"name" => "Acme Co"}, user)
+    {:ok, p} = Customers.add_person(prefix, c.id, %{"name" => "Bob"}, user)
+    conn = delete(conn, "/customers/#{c.id}/people/#{p.id}")
+    assert redirected_to(conn) == "/customers/#{c.id}"
+    assert Customers.get_customer!(prefix, c.id).people == []
+  end
+
+  test "person actions reject a pid from a different customer", %{editor_conn: conn, prefix: prefix, user: user} do
+    {:ok, c1} = Customers.create_customer(prefix, %{"name" => "Acme Co"}, user)
+    {:ok, c2} = Customers.create_customer(prefix, %{"name" => "Globex"}, user)
+    {:ok, p} = Customers.add_person(prefix, c1.id, %{"name" => "Bob"}, user)
+
+    assert_error_sent 404, fn ->
+      delete(conn, "/customers/#{c2.id}/people/#{p.id}")
+    end
+  end
+
+  test "POST /customers/:id/people is forbidden for unauthorized user", %{outsider_conn: conn, prefix: prefix, user: user} do
+    {:ok, c} = Customers.create_customer(prefix, %{"name" => "Acme Co"}, user)
+    conn = post(conn, "/customers/#{c.id}/people", %{person: %{name: "Bob"}})
+    assert conn.status == 403
+  end
 end

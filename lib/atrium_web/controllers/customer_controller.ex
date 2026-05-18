@@ -90,4 +90,63 @@ defmodule AtriumWeb.CustomerController do
     |> put_flash(:info, "Customer deleted.")
     |> redirect(to: ~p"/customers")
   end
+
+  def create_person(conn, %{"id" => customer_id, "person" => params}) do
+    prefix = conn.assigns.tenant_prefix
+    user = conn.assigns.current_user
+    _customer = Customers.get_customer!(prefix, customer_id)
+
+    case Customers.add_person(prefix, customer_id, params, user) do
+      {:ok, _person} ->
+        conn
+        |> put_flash(:info, "Person added.")
+        |> redirect(to: ~p"/customers/#{customer_id}")
+
+      {:error, changeset} ->
+        conn
+        |> put_flash(:error, error_message(changeset))
+        |> redirect(to: ~p"/customers/#{customer_id}")
+    end
+  end
+
+  def edit_person(conn, %{"id" => customer_id, "pid" => person_id}) do
+    prefix = conn.assigns.tenant_prefix
+    person = Customers.get_person!(prefix, customer_id, person_id)
+    changeset = Customers.change_person(person)
+    render(conn, :edit_person, customer_id: customer_id, person: person, changeset: changeset)
+  end
+
+  def update_person(conn, %{"id" => customer_id, "pid" => person_id, "person" => params}) do
+    prefix = conn.assigns.tenant_prefix
+    user = conn.assigns.current_user
+    person = Customers.get_person!(prefix, customer_id, person_id)
+
+    case Customers.update_person(prefix, person, params, user) do
+      {:ok, _person} ->
+        conn
+        |> put_flash(:info, "Person updated.")
+        |> redirect(to: ~p"/customers/#{customer_id}")
+
+      {:error, changeset} ->
+        render(conn, :edit_person, customer_id: customer_id, person: person, changeset: changeset)
+    end
+  end
+
+  def delete_person(conn, %{"id" => customer_id, "pid" => person_id}) do
+    prefix = conn.assigns.tenant_prefix
+    user = conn.assigns.current_user
+    person = Customers.get_person!(prefix, customer_id, person_id)
+    {:ok, _} = Customers.delete_person(prefix, person, user)
+
+    conn
+    |> put_flash(:info, "Person removed.")
+    |> redirect(to: ~p"/customers/#{customer_id}")
+  end
+
+  defp error_message(changeset) do
+    changeset
+    |> Ecto.Changeset.traverse_errors(fn {msg, _} -> msg end)
+    |> Enum.map(fn {field, msgs} -> "#{field} #{Enum.join(msgs, ", ")}" end)
+    |> Enum.join("; ")
+  end
 end
