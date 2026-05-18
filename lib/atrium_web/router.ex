@@ -186,6 +186,19 @@ defmodule AtriumWeb.Router do
       put  "/events/:id",          EventsController, :update
       post "/events/:id/delete",   EventsController, :delete
 
+      get    "/customers",                          CustomerController, :index
+      get    "/customers/new",                      CustomerController, :new
+      post   "/customers",                          CustomerController, :create
+      get    "/customers/:id",                      CustomerController, :show
+      get    "/customers/:id/edit",                 CustomerController, :edit
+      put    "/customers/:id",                      CustomerController, :update
+      delete "/customers/:id",                      CustomerController, :delete
+
+      post   "/customers/:id/people",               CustomerController, :create_person
+      get    "/customers/:id/people/:pid/edit",     CustomerController, :edit_person
+      put    "/customers/:id/people/:pid",          CustomerController, :update_person
+      delete "/customers/:id/people/:pid",          CustomerController, :delete_person
+
       get  "/tools",                              ToolsController, :index
       post "/tools",                              ToolsController, :create_tool
       post "/tools/:id/delete",                   ToolsController, :delete_tool
