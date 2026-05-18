@@ -187,4 +187,28 @@ defmodule AtriumWeb.CustomerControllerTest do
     conn = post(conn, "/customers/#{c.id}/people", %{person: %{name: "Bob"}})
     assert conn.status == 403
   end
+
+  test "GET edit_person renders the person form", %{editor_conn: conn, prefix: prefix, user: user} do
+    {:ok, c} = Customers.create_customer(prefix, %{"name" => "Acme Co"}, user)
+    {:ok, p} = Customers.add_person(prefix, c.id, %{"name" => "Bob Vance"}, user)
+    conn = get(conn, "/customers/#{c.id}/people/#{p.id}/edit")
+    assert html_response(conn, 200) =~ "Bob Vance"
+  end
+
+  test "GET edit_person rejects a pid from a different customer", %{editor_conn: conn, prefix: prefix, user: user} do
+    {:ok, c1} = Customers.create_customer(prefix, %{"name" => "Acme Co"}, user)
+    {:ok, c2} = Customers.create_customer(prefix, %{"name" => "Globex"}, user)
+    {:ok, p} = Customers.add_person(prefix, c1.id, %{"name" => "Bob"}, user)
+
+    assert_error_sent 404, fn ->
+      get(conn, "/customers/#{c2.id}/people/#{p.id}/edit")
+    end
+  end
+
+  test "GET edit_person is forbidden for unauthorized user", %{outsider_conn: conn, prefix: prefix, user: user} do
+    {:ok, c} = Customers.create_customer(prefix, %{"name" => "Acme Co"}, user)
+    {:ok, p} = Customers.add_person(prefix, c.id, %{"name" => "Bob"}, user)
+    conn = get(conn, "/customers/#{c.id}/people/#{p.id}/edit")
+    assert conn.status == 403
+  end
 end

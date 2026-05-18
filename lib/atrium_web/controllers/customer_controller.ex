@@ -94,6 +94,7 @@ defmodule AtriumWeb.CustomerController do
   def create_person(conn, %{"id" => customer_id, "person" => params}) do
     prefix = conn.assigns.tenant_prefix
     user = conn.assigns.current_user
+    # Ensures a bogus customer id returns 404 before attempting the insert.
     _customer = Customers.get_customer!(prefix, customer_id)
 
     case Customers.add_person(prefix, customer_id, params, user) do
@@ -145,7 +146,11 @@ defmodule AtriumWeb.CustomerController do
 
   defp error_message(changeset) do
     changeset
-    |> Ecto.Changeset.traverse_errors(fn {msg, _} -> msg end)
+    |> Ecto.Changeset.traverse_errors(fn {msg, opts} ->
+      Enum.reduce(opts, msg, fn {k, v}, acc ->
+        String.replace(acc, "%{#{k}}", to_string(v))
+      end)
+    end)
     |> Enum.map(fn {field, msgs} -> "#{field} #{Enum.join(msgs, ", ")}" end)
     |> Enum.join("; ")
   end
