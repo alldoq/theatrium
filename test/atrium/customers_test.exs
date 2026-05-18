@@ -23,4 +23,21 @@ defmodule Atrium.CustomersTest do
     cs = Customer.changeset(%Customer{}, %{"name" => "Acme Co"})
     assert cs.valid?
   end
+
+  test "person changeset requires name" do
+    cs = Atrium.Customers.Person.changeset(%Atrium.Customers.Person{}, %{"email" => "a@b.com"})
+    refute cs.valid?
+    assert %{name: ["can't be blank"]} = errors_on(cs)
+  end
+
+  test "person changeset rejects malformed email" do
+    cs = Atrium.Customers.Person.changeset(%Atrium.Customers.Person{}, %{"name" => "Bob", "email" => "not-an-email"})
+    refute cs.valid?
+    assert %{email: ["must be a valid email"]} = errors_on(cs)
+  end
+
+  test "person changeset is valid without an email" do
+    cs = Atrium.Customers.Person.changeset(%Atrium.Customers.Person{}, %{"name" => "Bob"})
+    assert cs.valid?
+  end
 end
