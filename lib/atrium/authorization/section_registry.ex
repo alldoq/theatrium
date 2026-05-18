@@ -1,6 +1,6 @@
 defmodule Atrium.Authorization.SectionRegistry do
   @moduledoc """
-  The code-defined catalogue of the 14 canonical intranet sections, their
+  The code-defined catalogue of the 15 canonical intranet sections, their
   default capabilities, and the default ACLs seeded on tenant provisioning.
 
   This is the single source of truth. Adding a 15th section is a code change
@@ -121,6 +121,14 @@ defmodule Atrium.Authorization.SectionRegistry do
       supports_subsections: false,
       default_capabilities: @capabilities,
       default_acls: [{:group, :all_staff, :view}, {:group, :people_and_culture, :edit}, {:group, :people_and_culture, :approve}]
+    },
+    %{
+      key: :customers,
+      name: "Customers",
+      icon: "users",
+      supports_subsections: false,
+      default_capabilities: @capabilities,
+      default_acls: [{:group, :super_users, :view}, {:group, :super_users, :edit}]
     }
   ]
 
