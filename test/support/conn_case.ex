@@ -28,6 +28,7 @@ defmodule AtriumWeb.ConnCase do
       import Plug.Conn
       import Phoenix.ConnTest
       import AtriumWeb.ConnCase
+      import Atrium.DataCase, only: [errors_on: 1]
     end
   end
 
