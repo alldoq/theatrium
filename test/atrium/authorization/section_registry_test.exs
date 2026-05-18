@@ -4,8 +4,8 @@ defmodule Atrium.Authorization.SectionRegistryTest do
   alias Atrium.Authorization.SectionRegistry
   alias Atrium.Sections
 
-  test "all/0 returns exactly 14 sections" do
-    assert length(SectionRegistry.all()) == 14
+  test "all/0 returns exactly 15 sections" do
+    assert length(SectionRegistry.all()) == 15
   end
 
   test "each section has the required keys" do
@@ -19,7 +19,7 @@ defmodule Atrium.Authorization.SectionRegistryTest do
   end
 
   test "keys are the canonical intranet keys" do
-    expected = ~w(home news directory hr departments docs tools projects helpdesk learning events social compliance feedback)a
+    expected = ~w(home news directory hr departments docs tools projects helpdesk learning events community compliance feedback customers)a
     actual = SectionRegistry.all() |> Enum.map(& &1.key) |> Enum.sort()
     assert actual == Enum.sort(expected)
   end
@@ -34,9 +34,9 @@ defmodule Atrium.Authorization.SectionRegistryTest do
   end
 
   describe "all_with_overrides/0" do
-    test "returns all 14 sections with defaults when no customizations" do
+    test "returns all 15 sections with defaults when no customizations" do
       result = SectionRegistry.all_with_overrides()
-      assert length(result) == 14
+      assert length(result) == 15
       home = Enum.find(result, &(&1.key == :home))
       assert home.name == "Home"
       assert home.icon == "home"
