@@ -73,4 +73,39 @@ defmodule Atrium.CustomersTest do
     {:ok, _} = Customers.delete_customer(prefix, c)
     assert Customers.list_customers(prefix) == []
   end
+
+  test "add_person / get_person! / update_person / delete_person", %{prefix: prefix} do
+    {:ok, c} = Customers.create_customer(prefix, %{"name" => "Acme Co"})
+
+    {:ok, p} = Customers.add_person(prefix, c.id, %{"name" => "Bob", "email" => "bob@acme.com"})
+    assert p.customer_id == c.id
+
+    fetched = Customers.get_person!(prefix, c.id, p.id)
+    assert fetched.id == p.id
+
+    {:ok, updated} = Customers.update_person(prefix, fetched, %{"job_title" => "CEO"})
+    assert updated.job_title == "CEO"
+
+    {:ok, _} = Customers.delete_person(prefix, updated)
+    assert Customers.get_customer!(prefix, c.id).people == []
+  end
+
+  test "get_person! rejects a person from a different customer", %{prefix: prefix} do
+    {:ok, c1} = Customers.create_customer(prefix, %{"name" => "Acme Co"})
+    {:ok, c2} = Customers.create_customer(prefix, %{"name" => "Globex"})
+    {:ok, p} = Customers.add_person(prefix, c1.id, %{"name" => "Bob"})
+
+    assert_raise Ecto.NoResultsError, fn ->
+      Customers.get_person!(prefix, c2.id, p.id)
+    end
+  end
+
+  test "deleting a customer cascades to its people", %{prefix: prefix} do
+    {:ok, c} = Customers.create_customer(prefix, %{"name" => "Acme Co"})
+    {:ok, _} = Customers.add_person(prefix, c.id, %{"name" => "Bob"})
+
+    {:ok, _} = Customers.delete_customer(prefix, c)
+
+    assert Atrium.Repo.all(Atrium.Customers.Person, prefix: prefix) == []
+  end
 end

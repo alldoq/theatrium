@@ -45,4 +45,37 @@ defmodule Atrium.Customers do
   def change_customer(%Customer{} = customer, attrs \\ %{}) do
     Customer.changeset(customer, attrs)
   end
+
+  def get_person!(prefix, customer_id, person_id) do
+    Repo.one!(
+      from(p in Person, where: p.id == ^person_id and p.customer_id == ^customer_id),
+      prefix: prefix
+    )
+  end
+
+  def add_person(prefix, customer_id, attrs) do
+    attrs = Map.put(stringify(attrs), "customer_id", customer_id)
+
+    %Person{}
+    |> Person.changeset(attrs)
+    |> Repo.insert(prefix: prefix)
+  end
+
+  def update_person(prefix, %Person{} = person, attrs) do
+    person
+    |> Person.changeset(stringify(attrs))
+    |> Repo.update(prefix: prefix)
+  end
+
+  def delete_person(prefix, %Person{} = person) do
+    Repo.delete(person, prefix: prefix)
+  end
+
+  def change_person(%Person{} = person, attrs \\ %{}) do
+    Person.changeset(person, attrs)
+  end
+
+  defp stringify(map) do
+    Map.new(map, fn {k, v} -> {to_string(k), v} end)
+  end
 end
