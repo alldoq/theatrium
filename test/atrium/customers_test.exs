@@ -1,6 +1,7 @@
 defmodule Atrium.CustomersTest do
   use AtriumWeb.ConnCase, async: false
 
+  alias Atrium.Customers
   alias Atrium.Customers.Customer
   alias Atrium.Tenants
   alias Atrium.Tenants.Provisioner
@@ -39,5 +40,37 @@ defmodule Atrium.CustomersTest do
   test "person changeset is valid without an email" do
     cs = Atrium.Customers.Person.changeset(%Atrium.Customers.Person{}, %{"name" => "Bob"})
     assert cs.valid?
+  end
+
+  test "create_customer / list_customers / get_customer!", %{prefix: prefix} do
+    {:ok, c} = Customers.create_customer(prefix, %{"name" => "Acme Co", "website" => "acme.com"})
+    assert c.name == "Acme Co"
+
+    assert [listed] = Customers.list_customers(prefix)
+    assert listed.id == c.id
+
+    fetched = Customers.get_customer!(prefix, c.id)
+    assert fetched.id == c.id
+    assert fetched.people == []
+  end
+
+  test "list_customers filters by name query", %{prefix: prefix} do
+    {:ok, _} = Customers.create_customer(prefix, %{"name" => "Acme Co"})
+    {:ok, _} = Customers.create_customer(prefix, %{"name" => "Globex"})
+
+    assert [only] = Customers.list_customers(prefix, q: "acme")
+    assert only.name == "Acme Co"
+  end
+
+  test "update_customer changes fields", %{prefix: prefix} do
+    {:ok, c} = Customers.create_customer(prefix, %{"name" => "Acme Co"})
+    {:ok, updated} = Customers.update_customer(prefix, c, %{"name" => "Acme Inc"})
+    assert updated.name == "Acme Inc"
+  end
+
+  test "delete_customer removes the customer", %{prefix: prefix} do
+    {:ok, c} = Customers.create_customer(prefix, %{"name" => "Acme Co"})
+    {:ok, _} = Customers.delete_customer(prefix, c)
+    assert Customers.list_customers(prefix) == []
   end
 end
