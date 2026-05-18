@@ -1,0 +1,29 @@
+<div class="mx-auto max-w-4xl px-4 py-8">
+  <div class="flex items-center justify-between mb-6">
+    <h1 class="text-2xl font-semibold">Customers</h1>
+    <.link href={~p"/customers/new"} class="rounded bg-blue-600 px-4 py-2 text-white">
+      New customer
+    </.link>
+  </div>
+
+  <form method="get" action={~p"/customers"} class="mb-6">
+    <input
+      type="text"
+      name="q"
+      value={@query}
+      placeholder="Search by name"
+      class="w-full rounded border px-3 py-2"
+    />
+  </form>
+
+  <div :if={@customers == []} class="text-gray-500">No customers yet.</div>
+
+  <ul class="divide-y rounded border">
+    <li :for={customer <- @customers} class="flex items-center justify-between px-4 py-3">
+      <.link href={~p"/customers/#{customer.id}"} class="font-medium text-blue-700">
+        {customer.name}
+      </.link>
+      <span :if={customer.website} class="text-sm text-gray-500">{customer.website}</span>
+    </li>
+  </ul>
+</div>

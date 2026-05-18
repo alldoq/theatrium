@@ -1,0 +1,78 @@
+<div class="mx-auto max-w-4xl px-4 py-8">
+  <.link href={~p"/customers"} class="text-sm text-blue-600">&larr; All customers</.link>
+
+  <div class="mt-2 flex items-center justify-between">
+    <h1 class="text-2xl font-semibold">{@customer.name}</h1>
+    <div class="flex gap-2">
+      <.link href={~p"/customers/#{@customer.id}/edit"} class="rounded border px-3 py-1">
+        Edit
+      </.link>
+      <.link
+        href={~p"/customers/#{@customer.id}"}
+        method="delete"
+        data-confirm="Delete this customer and all its people?"
+        class="rounded border border-red-300 px-3 py-1 text-red-700"
+      >
+        Delete
+      </.link>
+    </div>
+  </div>
+
+  <p :if={@customer.website} class="mt-1 text-gray-600">{@customer.website}</p>
+  <p :if={@customer.notes} class="mt-2 whitespace-pre-line text-gray-700">{@customer.notes}</p>
+
+  <h2 class="mt-8 mb-3 text-lg font-semibold">People</h2>
+
+  <div :if={@customer.people == []} class="text-gray-500">No people yet.</div>
+
+  <table :if={@customer.people != []} class="w-full text-left text-sm">
+    <thead>
+      <tr class="border-b">
+        <th class="py-2">Name</th>
+        <th>Job title</th>
+        <th>Email</th>
+        <th>Phone</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr :for={person <- @customer.people} class="border-b">
+        <td class="py-2">
+          {person.name}
+          <span :if={person.primary} class="ml-1 rounded bg-green-100 px-1 text-xs text-green-800">
+            Primary
+          </span>
+        </td>
+        <td>{person.job_title}</td>
+        <td>{person.email}</td>
+        <td>{person.phone}</td>
+        <td class="text-right">
+          <.link href={~p"/customers/#{@customer.id}/people/#{person.id}/edit"} class="text-blue-600">
+            Edit
+          </.link>
+          <.link
+            href={~p"/customers/#{@customer.id}/people/#{person.id}"}
+            method="delete"
+            data-confirm="Delete this person?"
+            class="ml-2 text-red-700"
+          >
+            Delete
+          </.link>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 class="mt-6 mb-2 font-medium">Add a person</h3>
+  <form method="post" action={~p"/customers/#{@customer.id}/people"} class="grid grid-cols-2 gap-3">
+    <input type="hidden" name="_csrf_token" value={Plug.CSRFProtection.get_csrf_token()} />
+    <input name="person[name]" placeholder="Name" required class="rounded border px-3 py-2" />
+    <input name="person[job_title]" placeholder="Job title" class="rounded border px-3 py-2" />
+    <input name="person[email]" placeholder="Email" class="rounded border px-3 py-2" />
+    <input name="person[phone]" placeholder="Phone" class="rounded border px-3 py-2" />
+    <label class="flex items-center gap-2 text-sm">
+      <input type="checkbox" name="person[primary]" value="true" /> Primary contact
+    </label>
+    <button type="submit" class="rounded bg-blue-600 px-4 py-2 text-white">Add person</button>
+  </form>
+</div>
