@@ -63,7 +63,7 @@ defmodule AtriumWeb.CustomerControllerTest do
       |> recycle()
       |> Map.put(:host, host)
 
-    {:ok, editor_conn: editor_conn, outsider_conn: outsider_conn, viewer_conn: viewer_conn, prefix: prefix}
+    {:ok, editor_conn: editor_conn, outsider_conn: outsider_conn, viewer_conn: viewer_conn, prefix: prefix, user: editor}
   end
 
   test "GET /customers shows index to authorized user", %{editor_conn: conn} do
@@ -76,9 +76,9 @@ defmodule AtriumWeb.CustomerControllerTest do
     assert conn.status == 403
   end
 
-  test "GET /customers/:id shows a customer and its people", %{editor_conn: conn, prefix: prefix} do
-    {:ok, c} = Customers.create_customer(prefix, %{"name" => "Acme Co"})
-    {:ok, _} = Customers.add_person(prefix, c.id, %{"name" => "Bob Vance"})
+  test "GET /customers/:id shows a customer and its people", %{editor_conn: conn, prefix: prefix, user: user} do
+    {:ok, c} = Customers.create_customer(prefix, %{"name" => "Acme Co"}, user)
+    {:ok, _} = Customers.add_person(prefix, c.id, %{"name" => "Bob Vance"}, user)
 
     conn = get(conn, "/customers/#{c.id}")
     body = html_response(conn, 200)
@@ -86,14 +86,14 @@ defmodule AtriumWeb.CustomerControllerTest do
     assert body =~ "Bob Vance"
   end
 
-  test "GET /customers/:id is forbidden for unauthorized user", %{outsider_conn: conn, prefix: prefix} do
-    {:ok, c} = Customers.create_customer(prefix, %{"name" => "Acme Co"})
+  test "GET /customers/:id is forbidden for unauthorized user", %{outsider_conn: conn, prefix: prefix, user: user} do
+    {:ok, c} = Customers.create_customer(prefix, %{"name" => "Acme Co"}, user)
     conn = get(conn, "/customers/#{c.id}")
     assert conn.status == 403
   end
 
-  test "view-only user sees the customer but not edit controls", %{viewer_conn: conn, prefix: prefix} do
-    {:ok, c} = Customers.create_customer(prefix, %{"name" => "Acme Co"})
+  test "view-only user sees the customer but not edit controls", %{viewer_conn: conn, prefix: prefix, user: user} do
+    {:ok, c} = Customers.create_customer(prefix, %{"name" => "Acme Co"}, user)
     conn = get(conn, "/customers/#{c.id}")
     body = html_response(conn, 200)
     assert body =~ "Acme Co"
@@ -105,15 +105,15 @@ defmodule AtriumWeb.CustomerControllerTest do
     assert redirected_to(conn) =~ "/customers/"
   end
 
-  test "PUT /customers/:id updates a customer", %{editor_conn: conn, prefix: prefix} do
-    {:ok, c} = Customers.create_customer(prefix, %{"name" => "Old Name"})
+  test "PUT /customers/:id updates a customer", %{editor_conn: conn, prefix: prefix, user: user} do
+    {:ok, c} = Customers.create_customer(prefix, %{"name" => "Old Name"}, user)
     conn = put(conn, "/customers/#{c.id}", %{customer: %{name: "New Name"}})
     assert redirected_to(conn) == "/customers/#{c.id}"
     assert Customers.get_customer!(prefix, c.id).name == "New Name"
   end
 
-  test "DELETE /customers/:id deletes a customer", %{editor_conn: conn, prefix: prefix} do
-    {:ok, c} = Customers.create_customer(prefix, %{"name" => "Acme Co"})
+  test "DELETE /customers/:id deletes a customer", %{editor_conn: conn, prefix: prefix, user: user} do
+    {:ok, c} = Customers.create_customer(prefix, %{"name" => "Acme Co"}, user)
     conn = delete(conn, "/customers/#{c.id}")
     assert redirected_to(conn) == "/customers"
     assert Customers.list_customers(prefix) == []
@@ -121,6 +121,31 @@ defmodule AtriumWeb.CustomerControllerTest do
 
   test "POST /customers is forbidden for unauthorized user", %{outsider_conn: conn} do
     conn = post(conn, "/customers", %{customer: %{name: "Nope"}})
+    assert conn.status == 403
+  end
+
+  test "POST /customers with invalid params re-renders the form", %{editor_conn: conn} do
+    conn = post(conn, "/customers", %{customer: %{name: ""}})
+    assert conn.status == 200
+    assert html_response(conn, 200) =~ "New customer"
+  end
+
+  test "PUT /customers/:id with invalid params re-renders the form", %{editor_conn: conn, prefix: prefix, user: user} do
+    {:ok, c} = Customers.create_customer(prefix, %{"name" => "Acme Co"}, user)
+    conn = put(conn, "/customers/#{c.id}", %{customer: %{name: ""}})
+    assert conn.status == 200
+    assert html_response(conn, 200) =~ "Edit customer"
+  end
+
+  test "DELETE /customers/:id is forbidden for unauthorized user", %{outsider_conn: conn, editor_conn: _ed, prefix: prefix, user: user} do
+    {:ok, c} = Customers.create_customer(prefix, %{"name" => "Acme Co"}, user)
+    conn = delete(conn, "/customers/#{c.id}")
+    assert conn.status == 403
+  end
+
+  test "PUT /customers/:id is forbidden for unauthorized user", %{outsider_conn: conn, prefix: prefix, user: user} do
+    {:ok, c} = Customers.create_customer(prefix, %{"name" => "Acme Co"}, user)
+    conn = put(conn, "/customers/#{c.id}", %{customer: %{name: "X"}})
     assert conn.status == 403
   end
 end

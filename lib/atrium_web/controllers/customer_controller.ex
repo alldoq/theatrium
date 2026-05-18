@@ -44,8 +44,9 @@ defmodule AtriumWeb.CustomerController do
 
   def create(conn, %{"customer" => params}) do
     prefix = conn.assigns.tenant_prefix
+    user = conn.assigns.current_user
 
-    case Customers.create_customer(prefix, params) do
+    case Customers.create_customer(prefix, params, user) do
       {:ok, customer} ->
         conn
         |> put_flash(:info, "Customer created.")
@@ -65,9 +66,10 @@ defmodule AtriumWeb.CustomerController do
 
   def update(conn, %{"id" => id, "customer" => params}) do
     prefix = conn.assigns.tenant_prefix
+    user = conn.assigns.current_user
     customer = Customers.get_customer!(prefix, id)
 
-    case Customers.update_customer(prefix, customer, params) do
+    case Customers.update_customer(prefix, customer, params, user) do
       {:ok, customer} ->
         conn
         |> put_flash(:info, "Customer updated.")
@@ -80,8 +82,9 @@ defmodule AtriumWeb.CustomerController do
 
   def delete(conn, %{"id" => id}) do
     prefix = conn.assigns.tenant_prefix
+    user = conn.assigns.current_user
     customer = Customers.get_customer!(prefix, id)
-    {:ok, _} = Customers.delete_customer(prefix, customer)
+    {:ok, _} = Customers.delete_customer(prefix, customer, user)
 
     conn
     |> put_flash(:info, "Customer deleted.")

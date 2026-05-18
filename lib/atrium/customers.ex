@@ -26,20 +26,41 @@ defmodule Atrium.Customers do
     |> Repo.preload([people: from(p in Person, order_by: [desc: p.primary, asc: p.name])], prefix: prefix)
   end
 
-  def create_customer(prefix, attrs) do
-    %Customer{}
-    |> Customer.changeset(attrs)
-    |> Repo.insert(prefix: prefix)
+  def create_customer(prefix, attrs, user) do
+    changeset = Customer.changeset(%Customer{}, attrs)
+
+    Repo.transaction(fn ->
+      with {:ok, customer} <- Repo.insert(changeset, prefix: prefix),
+           {:ok, _} <- Atrium.Audit.log(prefix, "customer.created", %{actor: {:user, user.id}, resource: {"Customer", customer.id}}) do
+        customer
+      else
+        {:error, reason} -> Repo.rollback(reason)
+      end
+    end)
   end
 
-  def update_customer(prefix, %Customer{} = customer, attrs) do
-    customer
-    |> Customer.changeset(attrs)
-    |> Repo.update(prefix: prefix)
+  def update_customer(prefix, %Customer{} = customer, attrs, user) do
+    changeset = Customer.changeset(customer, attrs)
+
+    Repo.transaction(fn ->
+      with {:ok, updated} <- Repo.update(changeset, prefix: prefix),
+           {:ok, _} <- Atrium.Audit.log(prefix, "customer.updated", %{actor: {:user, user.id}, resource: {"Customer", updated.id}}) do
+        updated
+      else
+        {:error, reason} -> Repo.rollback(reason)
+      end
+    end)
   end
 
-  def delete_customer(prefix, %Customer{} = customer) do
-    Repo.delete(customer, prefix: prefix)
+  def delete_customer(prefix, %Customer{} = customer, user) do
+    Repo.transaction(fn ->
+      with {:ok, deleted} <- Repo.delete(customer, prefix: prefix),
+           {:ok, _} <- Atrium.Audit.log(prefix, "customer.deleted", %{actor: {:user, user.id}, resource: {"Customer", deleted.id}}) do
+        deleted
+      else
+        {:error, reason} -> Repo.rollback(reason)
+      end
+    end)
   end
 
   def change_customer(%Customer{} = customer, attrs \\ %{}) do
@@ -53,22 +74,42 @@ defmodule Atrium.Customers do
     )
   end
 
-  def add_person(prefix, customer_id, attrs) do
+  def add_person(prefix, customer_id, attrs, user) do
     attrs = Map.put(stringify(attrs), "customer_id", customer_id)
+    changeset = Person.changeset(%Person{}, attrs)
 
-    %Person{}
-    |> Person.changeset(attrs)
-    |> Repo.insert(prefix: prefix)
+    Repo.transaction(fn ->
+      with {:ok, person} <- Repo.insert(changeset, prefix: prefix),
+           {:ok, _} <- Atrium.Audit.log(prefix, "customer_person.created", %{actor: {:user, user.id}, resource: {"CustomerPerson", person.id}}) do
+        person
+      else
+        {:error, reason} -> Repo.rollback(reason)
+      end
+    end)
   end
 
-  def update_person(prefix, %Person{} = person, attrs) do
-    person
-    |> Person.changeset(stringify(attrs))
-    |> Repo.update(prefix: prefix)
+  def update_person(prefix, %Person{} = person, attrs, user) do
+    changeset = Person.changeset(person, stringify(attrs))
+
+    Repo.transaction(fn ->
+      with {:ok, updated} <- Repo.update(changeset, prefix: prefix),
+           {:ok, _} <- Atrium.Audit.log(prefix, "customer_person.updated", %{actor: {:user, user.id}, resource: {"CustomerPerson", updated.id}}) do
+        updated
+      else
+        {:error, reason} -> Repo.rollback(reason)
+      end
+    end)
   end
 
-  def delete_person(prefix, %Person{} = person) do
-    Repo.delete(person, prefix: prefix)
+  def delete_person(prefix, %Person{} = person, user) do
+    Repo.transaction(fn ->
+      with {:ok, deleted} <- Repo.delete(person, prefix: prefix),
+           {:ok, _} <- Atrium.Audit.log(prefix, "customer_person.deleted", %{actor: {:user, user.id}, resource: {"CustomerPerson", deleted.id}}) do
+        deleted
+      else
+        {:error, reason} -> Repo.rollback(reason)
+      end
+    end)
   end
 
   def change_person(%Person{} = person, attrs \\ %{}) do

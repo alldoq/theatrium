@@ -1,19 +1,36 @@
-<div class="mx-auto max-w-xl px-4 py-8">
-  <h1 class="mb-6 text-2xl font-semibold">New customer</h1>
+<div class="atrium-anim" style="max-width:680px">
+  <div style="margin-bottom:20px">
+    <a href={~p"/customers"} style="font-size:.8125rem;color:var(--text-tertiary);text-decoration:none">
+      ← Customers
+    </a>
+  </div>
 
-  <.form :let={f} for={@changeset} action={~p"/customers"} method="post" class="space-y-4">
-    <div>
-      <label class="block text-sm font-medium">Name</label>
-      <.input field={f[:name]} type="text" />
+  <div style="margin-bottom:24px">
+    <div class="atrium-page-eyebrow">Customers</div>
+    <h1 class="atrium-page-title">New customer</h1>
+  </div>
+
+  <.form :let={f} for={@changeset} action={~p"/customers"} method="post">
+    <div class="atrium-card" style="margin-bottom:20px">
+      <div class="atrium-card-body" style="display:flex;flex-direction:column;gap:16px">
+        <div>
+          <label class="atrium-label" for="customer_name">Name</label>
+          <.input field={f[:name]} type="text" class="atrium-input" />
+        </div>
+        <div>
+          <label class="atrium-label" for="customer_website">Website</label>
+          <.input field={f[:website]} type="text" class="atrium-input" />
+        </div>
+        <div>
+          <label class="atrium-label" for="customer_notes">Notes</label>
+          <.input field={f[:notes]} type="textarea" class="atrium-input" />
+        </div>
+      </div>
     </div>
-    <div>
-      <label class="block text-sm font-medium">Website</label>
-      <.input field={f[:website]} type="text" />
+
+    <div style="display:flex;gap:8px">
+      <button type="submit" class="atrium-btn atrium-btn-primary">Create customer</button>
+      <a href={~p"/customers"} class="atrium-btn atrium-btn-ghost">Cancel</a>
     </div>
-    <div>
-      <label class="block text-sm font-medium">Notes</label>
-      <.input field={f[:notes]} type="textarea" />
-    </div>
-    <button type="submit" class="rounded bg-blue-600 px-4 py-2 text-white">Create</button>
   </.form>
 </div>
